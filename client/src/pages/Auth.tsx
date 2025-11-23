@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
-import * as z from "zod"import { zodResolver } from "@hookform/resolvers/zod/dist/zod.js";/dist/zod.js";
+
 import { trpc } from "../trpc";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -10,19 +10,10 @@ import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { Loader2 } from "lucide-react";
 
-const loginSchema = z.object({
-  email: z.string().email("E-mail inválido"),
-  password: z.string().min(1, "Senha é obrigatória"),
-});
 
-const registerSchema = z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("E-mail inválido"),
-  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
-});
 
-type LoginForm = z.infer<typeof loginSchema>;
-type RegisterForm = z.infer<typeof registerSchema>;
+type LoginForm = { email: string; password: string };
+type RegisterForm = { name: string; email: string; password: string };
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -52,7 +43,6 @@ const AuthPage = () => {
   });
 
   const loginForm = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -60,7 +50,6 @@ const AuthPage = () => {
   });
 
   const registerForm = useForm<RegisterForm>({
-    resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -103,11 +92,7 @@ const AuthPage = () => {
                   {...loginForm.register("email")}
                   className="bg-gray-700 border-gray-600 text-white"
                 />
-                {loginForm.formState.errors.email && (
-                  <p className="text-red-400 text-sm">
-                    {loginForm.formState.errors.email.message}
-                  </p>
-                )}
+
               </div>
               <div className="space-y-2">
                 <Label htmlFor="login-password">Senha</Label>
@@ -117,11 +102,7 @@ const AuthPage = () => {
                   {...loginForm.register("password")}
                   className="bg-gray-700 border-gray-600 text-white"
                 />
-                {loginForm.formState.errors.password && (
-                  <p className="text-red-400 text-sm">
-                    {loginForm.formState.errors.password.message}
-                  </p>
-                )}
+
               </div>
               <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Entrar"}
@@ -138,11 +119,7 @@ const AuthPage = () => {
                   {...registerForm.register("name")}
                   className="bg-gray-700 border-gray-600 text-white"
                 />
-                {registerForm.formState.errors.name && (
-                  <p className="text-red-400 text-sm">
-                    {registerForm.formState.errors.name.message}
-                  </p>
-                )}
+
               </div>
               <div className="space-y-2">
                 <Label htmlFor="register-email">E-mail</Label>
@@ -153,11 +130,7 @@ const AuthPage = () => {
                   {...registerForm.register("email")}
                   className="bg-gray-700 border-gray-600 text-white"
                 />
-                {registerForm.formState.errors.email && (
-                  <p className="text-red-400 text-sm">
-                    {registerForm.formState.errors.email.message}
-                  </p>
-                )}
+
               </div>
               <div className="space-y-2">
                 <Label htmlFor="register-password">Senha</Label>
@@ -167,11 +140,7 @@ const AuthPage = () => {
                   {...registerForm.register("password")}
                   className="bg-gray-700 border-gray-600 text-white"
                 />
-                {registerForm.formState.errors.password && (
-                  <p className="text-red-400 text-sm">
-                    {registerForm.formState.errors.password.message}
-                  </p>
-                )}
+
               </div>
               <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Criar Conta"}
