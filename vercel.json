@@ -1,6 +1,0 @@
-{
-  "buildCommand": "cd client && pnpm install && pnpm build",
-  "outputDirectory": "client/dist",
-  "installCommand": "echo 'Skipping root install'",
-  "framework": null
-}
