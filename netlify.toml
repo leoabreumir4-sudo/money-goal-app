@@ -4,7 +4,7 @@
   # Comando de build a ser executado dentro do diretório base
   command = "pnpm run netlify:build"
   # Diretório de publicação (onde o build final estará)
-  publish = "client/dist"
+  publish = "dist"
 
 [context.production.environment]
   # Garante que o Netlify use o Node.js 20 (definido no .nvmrc)
