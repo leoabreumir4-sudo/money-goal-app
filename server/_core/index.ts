@@ -30,7 +30,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
-  app.use(cors({ origin: ["https://money-goal-app.vercel.app", "http://localhost:5173"], credentials: true }));
+  app.use(cors({ origin: ["https://dynamic-brioche-f9291c.netlify.app", "https://money-goal-app.vercel.app", "http://localhost:5173"], credentials: true }));
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
