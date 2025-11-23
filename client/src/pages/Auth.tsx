@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +27,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
