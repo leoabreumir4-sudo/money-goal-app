@@ -1,5 +1,6 @@
 import "dotenv/config";
-import express from "express";\nimport cors from "cors";
+import express from "express";
+import cors from "cors";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -28,7 +29,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
-  const app = express();\n  app.use(cors({ origin: ["https://money-goal-app.vercel.app", "http://localhost:5173"], credentials: true }));
+  const app = express();
+  app.use(cors({ origin: ["https://money-goal-app.vercel.app", "http://localhost:5173"], credentials: true }));
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
