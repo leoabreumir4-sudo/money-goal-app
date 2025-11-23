@@ -23,9 +23,7 @@ export default defineConfig({
   publicDir: path.resolve(import.meta.dirname, "client", "public"),
   build: {
     outDir: path.resolve(import.meta.dirname, "client", "dist"),
-    rollupOptions: {
-      external: ["zod"],
-    },
+
     emptyOutDir: true,
   },
   server: {
