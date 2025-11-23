@@ -15,6 +15,7 @@ export const chatRoleEnum = pgEnum("chat_role", ["user", "assistant", "system"])
 export const users = pgTable("users", {
   id: integer("id").primaryKey(), // PostgreSQL uses serial for auto-increment, but Drizzle handles it with integer + default value in some cases, using integer for now.
   openId: varchar("openId", { length: 64 }).notNull().unique(),
+  passwordHash: text("passwordHash"), // Campo para hash da senha
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
