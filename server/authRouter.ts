@@ -1,6 +1,7 @@
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { users } from "../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -42,7 +43,7 @@ export const authRouter = router({
           message: "Database not available",
         });
       }
-      const [newUser] = await dbInstance.insert(db.users).values({
+      const [newUser] = await dbInstance.insert(users).values({
         openId,
         email: input.email,
         name: input.name,
