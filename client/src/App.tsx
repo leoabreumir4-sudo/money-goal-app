@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Dashboard from "./pages/Dashboard";
+import AuthPage from "./pages/Auth";
 import AQWorlds from "./pages/AQWorlds";
 import Chat from "./pages/Chat";
 import Spending from "./pages/Spending";
@@ -15,6 +16,7 @@ import Settings from "./pages/Settings";
 function Router() {
   return (
     <Switch>
+      <Route path={"/auth"} component={AuthPage} />
       <Route path={"/"} component={Dashboard} />
       <Route path={"/aqworlds"} component={AQWorlds} />
       <Route path={"/chat"} component={Chat} />
