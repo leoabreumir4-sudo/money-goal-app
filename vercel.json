@@ -3,5 +3,15 @@
   "outputDirectory": "client/dist",
   "framework": null,
   "installCommand": "pnpm install",
-  "devCommand": null
+  "devCommand": null,
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
 }
