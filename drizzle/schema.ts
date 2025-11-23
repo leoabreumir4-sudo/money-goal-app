@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp, varchar, integer, boolean } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, timestamp, varchar, integer, boolean, serial } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Enums
@@ -13,7 +13,7 @@ export const chatRoleEnum = pgEnum("chat_role", ["user", "assistant", "system"])
  * Core user table backing auth flow.
  */
 export const users = pgTable("users", {
-  id: integer("id").primaryKey(), // PostgreSQL uses serial for auto-increment, but Drizzle handles it with integer + default value in some cases, using integer for now.
+  id: serial("id").primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   passwordHash: text("passwordHash"), // Campo para hash da senha
   name: text("name"),
@@ -32,7 +32,7 @@ export type InsertUser = typeof users.$inferInsert;
  * Financial goals table
  */
 export const goals = pgTable("goals", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   targetAmount: integer("targetAmount").notNull(), // Store as cents to avoid decimal issues
@@ -50,7 +50,7 @@ export type InsertGoal = typeof goals.$inferInsert;
  * Categories for transactions
  */
 export const categories = pgTable("categories", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   emoji: varchar("emoji", { length: 10 }).notNull(),
@@ -64,7 +64,7 @@ export type InsertCategory = typeof categories.$inferInsert;
  * Transactions (income/expense)
  */
 export const transactions = pgTable("transactions", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
   goalId: integer("goalId").notNull(),
   categoryId: integer("categoryId"),
@@ -81,7 +81,7 @@ export type InsertTransaction = typeof transactions.$inferInsert;
  * User settings
  */
 export const userSettings = pgTable("userSettings", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull().unique(),
   language: varchar("language", { length: 10 }).notNull().default("en"),
   currency: varchar("currency", { length: 3 }).notNull().default("USD"),
@@ -97,7 +97,7 @@ export type InsertUserSettings = typeof userSettings.$inferInsert;
  * Recurring expenses
  */
 export const recurringExpenses = pgTable("recurringExpenses", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
   categoryId: integer("categoryId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -114,7 +114,7 @@ export type InsertRecurringExpense = typeof recurringExpenses.$inferInsert;
  * Projects (for AQWorlds feature)
  */
 export const projects = pgTable("projects", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   category: varchar("category", { length: 255 }),
@@ -132,7 +132,7 @@ export type InsertProject = typeof projects.$inferInsert;
  * Events (for AQWorlds calendar)
  */
 export const events = pgTable("events", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   month: integer("month").notNull(), // 1-12
@@ -148,7 +148,7 @@ export type InsertEvent = typeof events.$inferInsert;
  * Chat messages (for OpenAI chat history)
  */
 export const chatMessages = pgTable("chatMessages", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
   role: chatRoleEnum("role").notNull(),
   content: text("content").notNull(),
@@ -162,7 +162,7 @@ export type InsertChatMessage = typeof chatMessages.$inferInsert;
  * Monthly Payments tracking (for AQWorlds Monthly Status)
  */
 export const monthlyPayments = pgTable("monthlyPayments", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
   month: integer("month").notNull(), // 1-12
   year: integer("year").notNull(),

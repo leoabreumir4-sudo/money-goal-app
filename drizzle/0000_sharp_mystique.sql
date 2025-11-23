@@ -5,7 +5,7 @@ CREATE TYPE "public"."theme" AS ENUM('dark', 'light');--> statement-breakpoint
 CREATE TYPE "public"."transaction_type" AS ENUM('income', 'expense');--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TABLE "categories" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"emoji" varchar(10) NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE "categories" (
 );
 --> statement-breakpoint
 CREATE TABLE "chatMessages" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"role" "chat_role" NOT NULL,
 	"content" text NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE "chatMessages" (
 );
 --> statement-breakpoint
 CREATE TABLE "events" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"month" integer NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE "events" (
 );
 --> statement-breakpoint
 CREATE TABLE "goals" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"targetAmount" integer NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE "goals" (
 );
 --> statement-breakpoint
 CREATE TABLE "monthlyPayments" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"month" integer NOT NULL,
 	"year" integer NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE "monthlyPayments" (
 );
 --> statement-breakpoint
 CREATE TABLE "projects" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"category" varchar(255),
@@ -65,7 +65,7 @@ CREATE TABLE "projects" (
 );
 --> statement-breakpoint
 CREATE TABLE "recurringExpenses" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"categoryId" integer NOT NULL,
 	"name" varchar(255) NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE "recurringExpenses" (
 );
 --> statement-breakpoint
 CREATE TABLE "transactions" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"goalId" integer NOT NULL,
 	"categoryId" integer,
@@ -87,7 +87,7 @@ CREATE TABLE "transactions" (
 );
 --> statement-breakpoint
 CREATE TABLE "userSettings" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer NOT NULL,
 	"language" varchar(10) DEFAULT 'en' NOT NULL,
 	"currency" varchar(3) DEFAULT 'USD' NOT NULL,
@@ -98,8 +98,9 @@ CREATE TABLE "userSettings" (
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" integer PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
 	"openId" varchar(64) NOT NULL,
+	"passwordHash" text,
 	"name" text,
 	"email" varchar(320),
 	"loginMethod" varchar(64),
