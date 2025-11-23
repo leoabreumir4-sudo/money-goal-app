@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@hookform/resolvers/zod/dist/zod.js";
 import { trpc } from "../trpc";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
