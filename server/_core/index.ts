@@ -30,7 +30,32 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
-  app.use(cors({ origin: ["https://dynamic-brioche-f9291c.netlify.app", "https://money-goal-app.vercel.app", "http://localhost:5173"], credentials: true }));
+  // Allow all Vercel preview and production domains
+  app.use(cors({ 
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Allow localhost for development
+      if (origin.includes('localhost')) return callback(null, true);
+      
+      // Allow all Vercel domains (preview and production)
+      if (origin.includes('.vercel.app')) return callback(null, true);
+      
+      // Allow specific domains
+      const allowedOrigins = [
+        'https://money-goal-app.vercel.app',
+        'https://dynamic-brioche-f9291c.netlify.app'
+      ];
+      
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true 
+  }));
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
