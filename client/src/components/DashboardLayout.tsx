@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Navigate } from "wouter";
+import { Redirect } from "wouter";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -63,7 +63,7 @@ export default function DashboardLayout({
   }
 
   if (!user) {
-    return <Navigate to="/auth" />;
+    return <Redirect to="/auth" />;
   }
 
   return (
