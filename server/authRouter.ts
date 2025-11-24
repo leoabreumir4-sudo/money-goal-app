@@ -49,12 +49,11 @@ export const authRouter = router({
           message: "Database not available",
         });
       }
-      const [newUser] = await dbInstance.insert(users).values({
+            const [newUser] = await dbInstance.insert(users).values({
         openId,
         email: input.email,
         name: input.name,
         passwordHash,
-        loginMethod: "local",
       }).returning();
 
       if (!newUser) {
