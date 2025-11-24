@@ -1,5 +1,6 @@
 // server/_core/migrate.ts
 import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { sql } from "drizzle-orm";
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 
@@ -9,6 +10,12 @@ async function runMigration() {
   }
 
   console.log("[Database] Migration started...");
+
+
+// Workaround for "type already exists" error on subsequent deploys
+  // This is a temporary fix, a proper migration strategy should be used
+  await db.execute(sql`DROP TYPE IF EXISTS "public"."chat_role" CASCADE;`);
+  console.log("[Database] Dropped chat_role type (if existed).");
 
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
