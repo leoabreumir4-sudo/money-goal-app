@@ -1,3 +1,4 @@
+// /home/ubuntu/money-goal-app/client/src/pages/Auth.tsx
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -18,7 +19,10 @@ const AuthPage = () => {
   const [, navigate] = useLocation();
 
   const loginMutation = trpc.auth.login.useMutation({
-  onSuccess: () => {
+  onSuccess: (data) => {
+    if (data.token) {
+      localStorage.setItem('sessionToken', data.token); // <--- ARMAZENA O TOKEN
+    }
     toast.success("Login bem-sucedido!");
     navigate("/");
     // preferível evitar forced reload; mas se precisar, mantenha:
@@ -31,7 +35,10 @@ const AuthPage = () => {
 });
 
   const registerMutation = trpc.auth.register.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.token) {
+        localStorage.setItem('sessionToken', data.token); // <--- ARMAZENA O TOKEN
+      }
       toast.success("Registro bem-sucedido! Você será logado automaticamente.");
       // Após o registro, faz o login automático e redireciona para a raiz
       navigate("/");
