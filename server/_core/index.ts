@@ -1,3 +1,4 @@
+// /home/ubuntu/money-goal-app/server/_core/index.ts
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -41,10 +42,8 @@ async function startServer() {
       // Allow localhost for development
       if (origin.includes('localhost')) return callback(null, true);
       
-      // Permite todos os domínios Vercel e o domínio específico do backend
-      if (origin.includes('.vercel.app') || origin.includes('money-goal-backend.onrender.com')) {
-        return callback(null, true);
-      }
+      // Allow all Vercel domains (preview and production)
+      if (origin.includes('.vercel.app')) return callback(null, true);
       
       // Allow specific domains
       const allowedOrigins = [
@@ -58,7 +57,7 @@ async function startServer() {
       
       callback(new Error('Not allowed by CORS'));
     },
-    credentials: true 
+    credentials: false // Não usamos mais cookies, então não precisamos de credenciais
   }));
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
