@@ -101,7 +101,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 }
 
-// CORREÇÃO AQUI: Usando db.query.users.findFirst para simplificar a query e evitar o erro 500
+// ---------- ATUALIZAÇÃO: Selecionar explicitamente campos essenciais ----------
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) {
@@ -109,11 +109,21 @@ export async function getUserByEmail(email: string) {
     return undefined;
   }
 
-  const result = await db.query.users.findFirst({
-    where: eq(users.email, email),
-  });
+  // Seleciona apenas campos essenciais para evitar problemas com colunas ausentes
+  const result = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      email: users.email,
+      name: users.name,
+      passwordHash: users.passwordHash,
+      role: users.role,
+    })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
 
-  return result;
+  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -123,12 +133,22 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db.query.users.findFirst({
-    where: eq(users.openId, openId),
-  });
+  const result = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      email: users.email,
+      name: users.name,
+      passwordHash: users.passwordHash,
+      role: users.role,
+    })
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
 
-  return result;
+  return result.length > 0 ? result[0] : undefined;
 }
+// -------------------------------------------------------------------------------
 
 // Goals
 export async function createGoal(goal: InsertGoal) {
