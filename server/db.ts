@@ -101,7 +101,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 }
 
-// ---------- ATUALIZAÇÃO: Selecionar explicitamente campos essenciais ----------
+// ---------- CORREÇÃO: Selecionar explicitamente campos essenciais para evitar erro de mapeamento do Drizzle ORM ----------
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) {
