@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { trpc } from "@/lib/trpc";
 import { Button } from "../components/ui/button";
@@ -9,8 +9,6 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { Loader2 } from "lucide-react";
-
-
 
 type LoginForm = { email: string; password: string };
 type RegisterForm = { name: string; email: string; password: string };
@@ -21,24 +19,26 @@ const AuthPage = () => {
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: () => {
-      // Redirecionar para o dashboard após o login
-      navigate("/dashboard");
-      window.location.reload(); // Forçar o recarregamento para buscar o usuário
+      toast.success("Login bem-sucedido!");
+      // A navegação para a raiz vai carregar o Dashboard, que é o componente da rota "/"
+      navigate("/");
+      window.location.reload(); // Força o recarregamento para buscar o estado de autenticação
     },
     onError: (error) => {
-      alert(`Erro de Login: ${error.message}`);
+      toast.error(`Erro de Login: ${error.message}`);
     },
   });
 
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: () => {
-      // Após o registro, faz o login automático
-      alert("Registro bem-sucedido! Você será logado automaticamente.");
-      navigate("/dashboard");
-      window.location.reload(); // Forçar o recarregamento para buscar o usuário
+      toast.success("Registro bem-sucedido! Você será logado automaticamente.");
+      // Após o registro, faz o login automático e redireciona para a raiz
+      navigate("/");
+      window.location.reload(); // Força o recarregamento para buscar o estado de autenticação
     },
     onError: (error) => {
-      alert(`Erro de Registro: ${error.message}`);
+      // Apenas exibe o erro e não faz mais nada
+      toast.error(`Erro de Registro: ${error.message}`);
     },
   });
 
@@ -65,7 +65,7 @@ const AuthPage = () => {
     registerMutation.mutate(data);
   };
 
-  const isLoading = loginMutation.isLoading || registerMutation.isLoading;
+  const isLoading = loginMutation.isPending || registerMutation.isPending;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900">
@@ -91,8 +91,8 @@ const AuthPage = () => {
                   placeholder="m@exemplo.com"
                   {...loginForm.register("email")}
                   className="bg-gray-700 border-gray-600 text-white"
+                  disabled={isLoading}
                 />
-
               </div>
               <div className="space-y-2">
                 <Label htmlFor="login-password">Senha</Label>
@@ -101,8 +101,8 @@ const AuthPage = () => {
                   type="password"
                   {...loginForm.register("password")}
                   className="bg-gray-700 border-gray-600 text-white"
+                  disabled={isLoading}
                 />
-
               </div>
               <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Entrar"}
@@ -118,8 +118,8 @@ const AuthPage = () => {
                   placeholder="Seu Nome"
                   {...registerForm.register("name")}
                   className="bg-gray-700 border-gray-600 text-white"
+                  disabled={isLoading}
                 />
-
               </div>
               <div className="space-y-2">
                 <Label htmlFor="register-email">E-mail</Label>
@@ -129,8 +129,8 @@ const AuthPage = () => {
                   placeholder="m@exemplo.com"
                   {...registerForm.register("email")}
                   className="bg-gray-700 border-gray-600 text-white"
+                  disabled={isLoading}
                 />
-
               </div>
               <div className="space-y-2">
                 <Label htmlFor="register-password">Senha</Label>
@@ -139,8 +139,8 @@ const AuthPage = () => {
                   type="password"
                   {...registerForm.register("password")}
                   className="bg-gray-700 border-gray-600 text-white"
+                  disabled={isLoading}
                 />
-
               </div>
               <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Criar Conta"}
