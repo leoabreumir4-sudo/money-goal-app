@@ -32,5 +32,6 @@ export function getSessionCookieOptions(
     path: "/",
     sameSite: "none",
     secure: isSecure,
+    domain: process.env.NODE_ENV === "production" ? req.hostname : undefined, // <--- LINHA ADICIONADA AQUI
   };
 }
