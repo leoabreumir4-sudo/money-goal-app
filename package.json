@@ -11,7 +11,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
 
-    "migrate": "pnpm --filter server run migrate",
+    "migrate": "tsx server/_core/migrate.ts",
     "studio": "drizzle-kit studio",
 
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
