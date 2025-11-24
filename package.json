@@ -11,7 +11,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
 
-    "migrate": "drizzle-kit migrate",
+    "migrate": "pnpm --filter server run migrate",
     "studio": "drizzle-kit studio",
 
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
