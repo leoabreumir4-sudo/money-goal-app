@@ -1,11 +1,10 @@
+// /home/ubuntu/money-goal-app/server/authRouter.ts
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc"; // protectedProcedure adicionado
 import { z } from "zod";
 import * as db from "./db";
 import { users } from "../drizzle/schema";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { COOKIE_NAME } from "@shared/const";
 import { sdk } from "./_core/sdk";
 
 const registerSchema = z.object({
@@ -63,12 +62,11 @@ export const authRouter = router({
         });
       }
 
-      // Create session cookie
+      // Create session token
       const sessionToken = await sdk.createSessionToken(newUser.openId, { name: newUser.name || "" });
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+      // REMOVED: Setting cookie. Now returning token for client to store.
 
-      return { success: true };
+      return { success: true, token: sessionToken };
     }),
 
   login: publicProcedure
@@ -95,11 +93,10 @@ export const authRouter = router({
         });
       }
 
-      // Create session cookie
+      // Create session token
       const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name || "" });
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+      // REMOVED: Setting cookie. Now returning token for client to store.
 
-      return { success: true };
+      return { success: true, token: sessionToken };
     }),
 });
