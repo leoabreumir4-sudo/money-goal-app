@@ -30,6 +30,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1);
   // Allow all Vercel preview and production domains
   app.use(cors({ 
     origin: (origin, callback) => {
