@@ -25,8 +25,8 @@ const AuthPage = () => {
     }
     toast.success("Login bem-sucedido!");
     navigate("/");
-    // preferível evitar forced reload; mas se precisar, mantenha:
-    window.location.reload();
+    // Evita forced reload, o useAuth deve lidar com a mudança de estado
+    // window.location.reload();
   },
   onError: (error) => {
     console.error('loginMutation error object:', error);
@@ -42,7 +42,8 @@ const AuthPage = () => {
       toast.success("Registro bem-sucedido! Você será logado automaticamente.");
       // Após o registro, faz o login automático e redireciona para a raiz
       navigate("/");
-      window.location.reload(); // Força o recarregamento para buscar o estado de autenticação
+      // Evita forced reload, o useAuth deve lidar com a mudança de estado
+      // window.location.reload();
     },
     onError: (error) => {
       // Apenas exibe o erro e não faz mais nada

@@ -62,11 +62,26 @@ export const authRouter = router({
         });
       }
 
-      // Create session token
-      const sessionToken = await sdk.createSessionToken(newUser.openId, { name: newUser.name || "" });
-      // REMOVED: Setting cookie. Now returning token for client to store.
+      // Use sdk.auth.login to handle session creation and cookie setting
+      const authResult = await sdk.auth.login({
+        openId: newUser.openId,
+        name: newUser.name,
+        email: newUser.email,
+        type: "local",
+      });
 
-      return { success: true, token: sessionToken };
+      if (!authResult.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to log in after registration",
+        });
+      }
+
+      // Return the token for the client to store
+      return {
+        token: authResult.token,
+        user: authResult.user,
+      };
     }),
 
   login: publicProcedure
@@ -93,10 +108,25 @@ export const authRouter = router({
         });
       }
 
-      // Create session token
-      const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name || "" });
-      // REMOVED: Setting cookie. Now returning token for client to store.
+      // Use sdk.auth.login to handle session creation and cookie setting
+      const authResult = await sdk.auth.login({
+        openId: user.openId,
+        name: user.name,
+        email: user.email,
+        type: "local",
+      });
 
-      return { success: true, token: sessionToken };
+      if (!authResult.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to log in",
+        });
+      }
+
+      // Return the token for the client to store
+      return {
+        token: authResult.token,
+        user: authResult.user,
+      };
     }),
 });
