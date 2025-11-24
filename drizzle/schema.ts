@@ -18,7 +18,6 @@ export const users = pgTable("users", {
   passwordHash: text("passwordHash"), // Campo para hash da senha
   name: text("name"),
   email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
   role: userRoleEnum("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(), // PostgreSQL does not have ON UPDATE CURRENT_TIMESTAMP natively
