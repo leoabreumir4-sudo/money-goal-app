@@ -12,18 +12,24 @@ import Spending from "./pages/Spending";
 import Analytics from "./pages/Analytics";
 import Archived from "./pages/Archived";
 import Settings from "./pages/Settings";
+import ProtectedRoute from "./components/ProtectedRoute"; // <-- NOVO IMPORT
 
 function Router() {
   return (
     <Switch>
+      {/* Rota de Autenticação (Pública) */}
       <Route path={"/auth"} component={AuthPage} />
-      <Route path={"/"} component={Dashboard} />
-      <Route path={"/aqworlds"} component={AQWorlds} />
-      <Route path={"/chat"} component={Chat} />
-      <Route path={"/spending"} component={Spending} />
-      <Route path={"/analytics"} component={Analytics} />
-      <Route path={"/archived"} component={Archived} />
-      <Route path={"/settings"} component={Settings} />
+
+      {/* Rotas Protegidas (Usam ProtectedRoute) */}
+      <ProtectedRoute path={"/"} component={Dashboard} />
+      <ProtectedRoute path={"/aqworlds"} component={AQWorlds} />
+      <ProtectedRoute path={"/chat"} component={Chat} />
+      <ProtectedRoute path={"/spending"} component={Spending} />
+      <ProtectedRoute path={"/analytics"} component={Analytics} />
+      <ProtectedRoute path={"/archived"} component={Archived} />
+      <ProtectedRoute path={"/settings"} component={Settings} />
+
+      {/* Rotas de Erro (Públicas) */}
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
