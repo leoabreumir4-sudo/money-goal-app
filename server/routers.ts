@@ -1,5 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
+// /home/ubuntu/money-goal-app/server/routers.ts
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
@@ -12,9 +11,8 @@ export const appRouter = router({
   auth: authRouter, // Usando o novo authRouter
 
   // Manter a rota de logout aqui por enquanto
-  logout: publicProcedure.mutation(({ ctx }) => {
-    const cookieOptions = getSessionCookieOptions(ctx.req);
-    ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+  logout: publicProcedure.mutation(() => {
+    // REMOVED: Cookie clearing logic. Client is now responsible for clearing localStorage.
     return {
       success: true,
     } as const;
