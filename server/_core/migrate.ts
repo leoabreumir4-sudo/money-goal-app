@@ -22,6 +22,8 @@ async function runMigration() {
   // This is a temporary fix, a proper migration strategy should be used
   await db.execute(sql`DROP TYPE IF EXISTS "public"."chat_role" CASCADE;`);
   console.log("[Database] Dropped chat_role type (if existed).");
+  await db.execute(sql`DROP TYPE IF EXISTS "public"."frequency" CASCADE;`);
+  console.log("[Database] Dropped frequency type (if existed).");
 
   // O caminho para a pasta de migrações gerada pelo Drizzle-kit
   await migrate(db, { migrationsFolder: "drizzle" });
