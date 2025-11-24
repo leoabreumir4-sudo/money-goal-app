@@ -1,3 +1,4 @@
+// /home/ubuntu/money-goal-app/client/src/main.tsx
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -7,7 +8,7 @@ import superjson from "superjson";
 import App from "./App";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient( );
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -41,10 +42,18 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: `${import.meta.env.VITE_API_URL}/api/trpc`,
       transformer: superjson,
-      fetch(input, init) {
+      fetch(input, init ) {
+        const token = localStorage.getItem('sessionToken');
+        const headers = new Headers(init?.headers);
+
+        if (token) {
+          headers.set('Authorization', `Bearer ${token}`);
+        }
+
         return globalThis.fetch(input, {
           ...(init ?? {}),
-          credentials: "include",
+          headers: headers,
+          credentials: "omit", // Não precisamos mais de cookies
         });
       },
     }),
