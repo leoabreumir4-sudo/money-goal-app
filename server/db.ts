@@ -117,7 +117,6 @@ export async function getUserByEmail(email: string) {
       email: users.email,
       name: users.name,
       passwordHash: users.passwordHash,
-      role: users.role,
     })
     .from(users)
     .where(eq(users.email, email))
@@ -140,7 +139,6 @@ export async function getUserByOpenId(openId: string) {
       email: users.email,
       name: users.name,
       passwordHash: users.passwordHash,
-      role: users.role,
     })
     .from(users)
     .where(eq(users.openId, openId))
