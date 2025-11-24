@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, router, protectedProcedure } from "./_core/trpc"; // protectedProcedure adicionado
 import { z } from "zod";
 import * as db from "./db";
 import { users } from "../drizzle/schema";
@@ -20,6 +20,12 @@ const loginSchema = z.object({
 });
 
 export const authRouter = router({
+  // NOVA PROCEDURE: auth.me
+  me: protectedProcedure.query(({ ctx }) => {
+    // Se a procedure protegida passar, ctx.user é garantido
+    return ctx.user;
+  }),
+
   register: publicProcedure
     .input(registerSchema)
     .mutation(async ({ ctx, input }) => {
