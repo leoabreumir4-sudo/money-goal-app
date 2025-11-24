@@ -9,7 +9,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
-function isPortAvailable(port: number): Promise<boolean> {
+function isPortAvailable(port: number ): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
     server.listen(port, () => {
@@ -30,7 +30,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
-   app.set('trust proxy', 1);
+  app.set('trust proxy', 1);
+
   // Allow all Vercel preview and production domains
   app.use(cors({ 
     origin: (origin, callback) => {
@@ -40,8 +41,10 @@ async function startServer() {
       // Allow localhost for development
       if (origin.includes('localhost')) return callback(null, true);
       
-      // Allow all Vercel domains (preview and production)
-      if (origin.includes('.vercel.app')) return callback(null, true);
+      // Permite todos os domínios Vercel e o domínio específico do backend
+      if (origin.includes('.vercel.app') || origin.includes('money-goal-backend.onrender.com')) {
+        return callback(null, true);
+      }
       
       // Allow specific domains
       const allowedOrigins = [
@@ -49,7 +52,7 @@ async function startServer() {
         'https://dynamic-brioche-f9291c.netlify.app'
       ];
       
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin )) {
         return callback(null, true);
       }
       
@@ -86,7 +89,7 @@ async function startServer() {
   }
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    console.log(`Server running on http://localhost:${port}/` );
   });
 }
 
