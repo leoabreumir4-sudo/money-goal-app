@@ -34,6 +34,8 @@ async function runMigration() {
   console.log("[Database] Dropped user_role type (if existed).");
   await db.execute(sql`DROP TABLE IF EXISTS "categories" CASCADE;`);
   console.log("[Database] Dropped categories table (if existed).");
+  await db.execute(sql`DROP TABLE IF EXISTS "chatMessages" CASCADE;`);
+  console.log("[Database] Dropped chatMessages table (if existed).");
 
   // O caminho para a pasta de migrações gerada pelo Drizzle-kit
   await migrate(db, { migrationsFolder: "drizzle" });
