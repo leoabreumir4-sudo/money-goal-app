@@ -1,6 +1,6 @@
 // /home/ubuntu/money-goal-app/server/auth.logout.test.ts
 import { describe, expect, it } from "vitest";
-import { appRouter } from "./routers";
+import { appRouter } from "../routers";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
