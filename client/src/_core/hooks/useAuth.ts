@@ -1,4 +1,4 @@
-
+// /home/ubuntu/money-goal-app/client/src/_core/hooks/useAuth.ts
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -20,6 +20,7 @@ export function useAuth(options?: UseAuthOptions) {
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
+      localStorage.removeItem('sessionToken'); // Limpa o token do localStorage
       utils.auth.me.setData(undefined, null);
     },
   });
