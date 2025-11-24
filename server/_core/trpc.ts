@@ -1,45 +1,44 @@
-import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
-import { initTRPC, TRPCError } from "@trpc/server";
-import superjson from "superjson";
-import type { TrpcContext } from "./context";
+// /home/ubuntu/money-goal-app/server/auth.logout.test.ts
+import { describe, expect, it } from "vitest";
+import { appRouter } from "./routers";
+import type { TrpcContext } from "./_core/context";
 
-const t = initTRPC.context<TrpcContext>().create({
-  transformer: superjson,
-});
+type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
-export const router = t.router;
-export const publicProcedure = t.procedure;
+function createAuthContext(): { ctx: TrpcContext } {
+  const user: AuthenticatedUser = {
+    id: 1,
+    openId: "sample-user",
+    email: "sample@example.com",
+    name: "Sample User",
+    loginMethod: "manus",
+    role: "user",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
 
-const requireUser = t.middleware(async opts => {
-  const { ctx, next } = opts;
+  const ctx: TrpcContext = {
+    user,
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {
+      clearCookie: ( ) => {}, // Mock function
+    } as TrpcContext["res"],
+  };
 
-  if (!ctx.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
-  }
+  return { ctx };
+}
 
-  return next({
-    ctx: {
-      ...ctx,
-      user: ctx.user,
-    },
+describe("auth.logout", () => {
+  it("reports success", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.auth.logout();
+
+    expect(result).toEqual({ success: true });
   });
 });
-
-export const protectedProcedure = t.procedure.use(requireUser);
-
-export const adminProcedure = t.procedure.use(
-  t.middleware(async opts => {
-    const { ctx, next } = opts;
-
-    if (!ctx.user || ctx.user.role !== 'admin') {
-      throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        user: ctx.user,
-      },
-    });
-  }),
-);
