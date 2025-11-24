@@ -101,6 +101,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 }
 
+// CORREÇÃO AQUI: Usando db.query.users.findFirst para simplificar a query e evitar o erro 500
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) {
@@ -108,9 +109,11 @@ export async function getUserByEmail(email: string) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const result = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
 
-  return result.length > 0 ? result[0] : undefined;
+  return result;
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -120,9 +123,11 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db.query.users.findFirst({
+    where: eq(users.openId, openId),
+  });
 
-  return result.length > 0 ? result[0] : undefined;
+  return result;
 }
 
 // Goals
@@ -339,80 +344,11 @@ export async function updateEvent(id: number, userId: number, data: Partial<Inse
   await db.update(events).set(data).where(and(eq(events.id, id), eq(events.userId, userId)));
 }
 
-export async function toggleEventSelection(id: number, userId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Get current event
-  const result = await db.select().from(events).where(and(eq(events.id, id), eq(events.userId, userId))).limit(1);
-  if (result.length === 0) return;
-  
-  const event = result[0];
-  const newStatus = event.isSelected === 1 ? 0 : 1;
-  
-  await db.update(events).set({ isSelected: newStatus }).where(and(eq(events.id, id), eq(events.userId, userId)));
-}
-
 export async function deleteEvent(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   await db.delete(events).where(and(eq(events.id, id), eq(events.userId, userId)));
-}
-
-export async function initializeDefaultEvents(userId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  // Check if user already has default events
-  const existing = await db.select().from(events).where(and(eq(events.userId, userId), eq(events.isDefault, 1))).limit(1);
-  if (existing.length > 0) return; // Already initialized
-  
-  const defaultEvents = [
-    { month: 1, name: "Australia Day" },
-    { month: 1, name: "Akiba New Year" },
-    { month: 1, name: "Nulgath's Birthday" },
-    { month: 2, name: "Carnaval" },
-    { month: 2, name: "Groundhorc's Day" },
-    { month: 2, name: "Heroes Heart Day" },
-    { month: 2, name: "Pancake Day" },
-    { month: 2, name: "Super Bowl" },
-    { month: 3, name: "Dage's Birthday" },
-    { month: 3, name: "Good Luck Day" },
-    { month: 3, name: "Grenwog" },
-    { month: 4, name: "April Fools' Day" },
-    { month: 4, name: "Earth Day" },
-    { month: 4, name: "Solar New Year" },
-    { month: 5, name: "Cinco de Mayo" },
-    { month: 5, name: "May the 4th" },
-    { month: 5, name: "Summer Break" },
-    { month: 6, name: "AQWorld Cup" },
-    { month: 6, name: "Father's Day" },
-    { month: 7, name: "Freedom Day" },
-    { month: 7, name: "Frostval in July" },
-    { month: 8, name: "Back to School" },
-    { month: 8, name: "Indonesian Day" },
-    { month: 9, name: "Obrigado Brasil" },
-    { month: 9, name: "Talk Like a Pirate Day" },
-    { month: 10, name: "AQWorlds' Birthday" },
-    { month: 10, name: "Canadian Thanksgiving" },
-    { month: 10, name: "Taco Day" },
-    { month: 11, name: "Black Friday" },
-    { month: 11, name: "Cyber Monday" },
-    { month: 11, name: "Harvest Day" },
-    { month: 12, name: "Frostval" },
-    { month: 12, name: "New Year" },
-  ];
-  
-  for (const event of defaultEvents) {
-    await db.insert(events).values({
-      userId,
-      name: event.name,
-      month: event.month,
-      isDefault: 1,
-      isSelected: 0,
-    });
-  }
 }
 
 // Chat Messages
@@ -428,16 +364,7 @@ export async function getChatMessagesByUserId(userId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return await db.select().from(chatMessages)
-    .where(eq(chatMessages.userId, userId))
-    .orderBy(chatMessages.createdDate);
-}
-
-export async function deleteChatMessagesByUserId(userId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  await db.delete(chatMessages).where(eq(chatMessages.userId, userId));
+  return await db.select().from(chatMessages).where(eq(chatMessages.userId, userId)).orderBy(desc(chatMessages.createdDate));
 }
 
 // Monthly Payments
@@ -449,32 +376,23 @@ export async function createMonthlyPayment(payment: InsertMonthlyPayment) {
   return result;
 }
 
-export async function getMonthlyPayment(userId: number, month: number, year: number) {
+export async function getMonthlyPaymentsByUserId(userId: number) {
   const db = await getDb();
-  if (!db) return null;
+  if (!db) return [];
   
-  const result = await db.select().from(monthlyPayments)
-    .where(
-      and(
-        eq(monthlyPayments.userId, userId),
-        eq(monthlyPayments.month, month),
-        eq(monthlyPayments.year, year)
-      )
-    )
-    .limit(1);
-  
-  return result.length > 0 ? result[0] : null;
+  return await db.select().from(monthlyPayments).where(eq(monthlyPayments.userId, userId)).orderBy(desc(monthlyPayments.createdDate));
 }
 
-export async function deleteMonthlyPayment(userId: number, month: number, year: number) {
+export async function updateMonthlyPayment(id: number, userId: number, data: Partial<InsertMonthlyPayment>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.delete(monthlyPayments).where(
-    and(
-      eq(monthlyPayments.userId, userId),
-      eq(monthlyPayments.month, month),
-      eq(monthlyPayments.year, year)
-    )
-  );
+  await db.update(monthlyPayments).set(data).where(and(eq(monthlyPayments.id, id), eq(monthlyPayments.userId, userId)));
+}
+
+export async function deleteMonthlyPayment(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(monthlyPayments).where(and(eq(monthlyPayments.id, id), eq(monthlyPayments.userId, userId)));
 }
