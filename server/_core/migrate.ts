@@ -32,6 +32,8 @@ async function runMigration() {
   console.log("[Database] Dropped transaction_type type (if existed).");
   await db.execute(sql`DROP TYPE IF EXISTS "public"."user_role" CASCADE;`);
   console.log("[Database] Dropped user_role type (if existed).");
+  await db.execute(sql`DROP TABLE IF EXISTS "categories" CASCADE;`);
+  console.log("[Database] Dropped categories table (if existed).");
 
   // O caminho para a pasta de migrações gerada pelo Drizzle-kit
   await migrate(db, { migrationsFolder: "drizzle" });
