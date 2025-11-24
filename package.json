@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
-  "scripts": {
+ "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "cd client && pnpm install && pnpm run build",
     "start": "NODE_ENV=production tsx server/_core/index.ts",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
+
+    "migrate": "pnpm --filter server run migrate", 
+    "studio": "drizzle-kit studio",
+
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {
