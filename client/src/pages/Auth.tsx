@@ -18,16 +18,17 @@ const AuthPage = () => {
   const [, navigate] = useLocation();
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: () => {
-      toast.success("Login bem-sucedido!");
-      // A navegação para a raiz vai carregar o Dashboard, que é o componente da rota "/"
-      navigate("/");
-      window.location.reload(); // Força o recarregamento para buscar o estado de autenticação
-    },
-    onError: (error) => {
-      toast.error(`Erro de Login: ${error.message}`);
-    },
-  });
+  onSuccess: () => {
+    toast.success("Login bem-sucedido!");
+    navigate("/");
+    // preferível evitar forced reload; mas se precisar, mantenha:
+    window.location.reload();
+  },
+  onError: (error) => {
+    console.error('loginMutation error object:', error);
+    toast.error(`Erro de Login: ${error.message}`);
+  },
+});
 
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: () => {
@@ -58,14 +59,15 @@ const AuthPage = () => {
   });
 
   const handleLogin = (data: LoginForm) => {
-    loginMutation.mutate(data);
-  };
+  console.log('handleLogin called with:', data);
+  loginMutation.mutate(data);
+};
 
   const handleRegister = (data: RegisterForm) => {
     registerMutation.mutate(data);
   };
 
-  const isLoading = loginMutation.isPending || registerMutation.isPending;
+  const isLoading = loginMutation.isLoading || registerMutation.isLoading;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900">
