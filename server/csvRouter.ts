@@ -54,8 +54,14 @@ function parseNubankCSV(csvContent: string): Array<{
 /**
  * Parse Wise CSV format
  * Format: ID,Status,Direction,"Created on","Finished on","Source name","Source amount (after fees)","Source currency","Target name","Target amount (after fees)","Target currency",...
+ * 
+ * Rules:
+ * - Only imports IN and OUT transactions (real transfers)
+ * - Skips NEUTRAL transactions (currency conversions)
+ * - Uses original transaction amounts (no conversion)
+ * - Simplified descriptions (source for IN, target for OUT)
  */
-function parseWiseCSV(csvContent: string, preferredCurrency: string): Array<{
+function parseWiseCSV(csvContent: string): Array<{
   date: string;
   description: string;
   amount: number;
@@ -77,7 +83,6 @@ function parseWiseCSV(csvContent: string, preferredCurrency: string): Array<{
   const sourceCurrencyIdx = header.findIndex(h => h.toLowerCase() === "source currency");
   const targetCurrencyIdx = header.findIndex(h => h.toLowerCase() === "target currency");
   const referenceIdx = header.findIndex(h => h.toLowerCase() === "reference");
-  const categoryIdx = header.findIndex(h => h.toLowerCase() === "category");
   const directionIdx = header.findIndex(h => h.toLowerCase() === "direction");
 
   for (let i = 1; i < lines.length; i++) {
@@ -112,53 +117,39 @@ function parseWiseCSV(csvContent: string, preferredCurrency: string): Array<{
     const sourceCurrency = parts[sourceCurrencyIdx]?.replace(/"/g, "");
     const targetCurrency = parts[targetCurrencyIdx]?.replace(/"/g, "");
     const reference = parts[referenceIdx]?.replace(/"/g, "") || "";
-    const category = parts[categoryIdx]?.replace(/"/g, "") || "";
     const direction = parts[directionIdx]?.replace(/"/g, "");
 
     if (!date || isNaN(sourceAmount) || isNaN(targetAmount)) continue;
 
-    // Determine which amount/currency to use based on preferred currency
+    // Skip NEUTRAL transactions (currency conversions)
+    if (direction === "NEUTRAL") {
+      continue;
+    }
+
     let amount: number;
     let currency: string;
     let description: string;
 
-    // Handle currency conversion transactions
-    if (direction === "NEUTRAL") {
-      // Conversion transaction - use target if it matches preferred currency, otherwise source
-      if (targetCurrency === preferredCurrency) {
-        amount = targetAmount;
-        currency = targetCurrency;
-        description = `Convert ${sourceAmount} ${sourceCurrency} to ${targetCurrency}`;
-      } else if (sourceCurrency === preferredCurrency) {
-        amount = -sourceAmount; // Negative because money left this currency
-        currency = sourceCurrency;
-        description = `Convert ${sourceCurrency} to ${targetAmount} ${targetCurrency}`;
-      } else {
-        // Neither matches preferred, skip or use target
-        amount = targetAmount;
-        currency = targetCurrency;
-        description = `${sourceName} to ${targetName}`;
-      }
-    } else if (direction === "IN") {
-      // Money coming in
+    if (direction === "IN") {
+      // Money coming in - use target amount and show source
       amount = targetAmount;
       currency = targetCurrency;
-      description = `${sourceName} - ${reference || category}`;
+      description = sourceName || "Income";
     } else if (direction === "OUT") {
-      // Money going out
+      // Money going out - use source amount (negative) and show target
       amount = -sourceAmount;
       currency = sourceCurrency;
-      description = `${targetName} - ${category || reference}`;
+      description = targetName || "Expense";
     } else {
       continue;
     }
 
     transactions.push({
       date,
-      description: description.trim() || "Wise transaction",
+      description: description.trim(),
       amount,
       currency,
-      reference: reference || `${date}-${amount}`,
+      reference: reference || `${date}-${Math.abs(amount)}`,
     });
   }
 
@@ -166,6 +157,18 @@ function parseWiseCSV(csvContent: string, preferredCurrency: string): Array<{
 }
 
 export const csvRouter = router({
+  /**
+   * Delete all Wise imported transactions for a goal
+   */
+  clearWiseTransactions: protectedProcedure
+    .input(z.object({
+      goalId: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      await db.deleteWiseTransactions(ctx.user.id, input.goalId);
+      return { success: true };
+    }),
+
   /**
    * Import Wise CSV transactions
    */
@@ -176,10 +179,7 @@ export const csvRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       try {
-        const settings = await db.getUserSettings(ctx.user.id);
-        const preferredCurrency = settings?.currency || "USD";
-        
-        const transactions = parseWiseCSV(input.csvContent, preferredCurrency);
+        const transactions = parseWiseCSV(input.csvContent);
 
         if (transactions.length === 0) {
           throw new TRPCError({
@@ -203,31 +203,12 @@ export const csvRouter = router({
             continue;
           }
 
-          // Convert amount to preferred currency if needed
-          let amount = Math.abs(Math.round(transaction.amount * 100)); // Convert to cents
+          // Use original amount (no conversion)
+          const amount = Math.abs(Math.round(transaction.amount * 100)); // Convert to cents
           const type = transaction.amount > 0 ? "income" : "expense";
 
-          // If transaction is in different currency, convert it
-          if (transaction.currency !== preferredCurrency) {
-            const { convertAmount } = await import("./_core/currencyConversion");
-            amount = await convertAmount(amount, transaction.currency, preferredCurrency);
-          }
-
-          let reason = transaction.description;
-          if (transaction.currency !== preferredCurrency) {
-            const originalAmount = Math.abs(transaction.amount);
-            reason += ` (${originalAmount.toFixed(2)} ${transaction.currency} → ${preferredCurrency})`;
-          }
-          
-          // Only add reference if it's not already in description
-          if (!reason.includes(transaction.reference)) {
-            reason += ` (Ref: ${transaction.reference})`;
-          }
-          
-          // Truncate to 255 characters (database limit)
-          if (reason.length > 255) {
-            reason = reason.substring(0, 252) + '...';
-          }
+          // Simple description with amount and currency
+          const reason = `${transaction.description} (${Math.abs(transaction.amount).toFixed(2)} ${transaction.currency})`;
 
           await db.createTransaction({
             userId: ctx.user.id,

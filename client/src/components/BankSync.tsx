@@ -84,6 +84,18 @@ export function BankSync({ goalId }: BankSyncProps) {
     },
   });
 
+  // Clear Wise transactions mutation
+  const clearWiseMutation = trpc.csv.clearWiseTransactions.useMutation({
+    onSuccess: () => {
+      toast.success('Transações Wise removidas com sucesso');
+      utils.transactions.getAll.invalidate();
+      utils.goals.getActive.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao remover transações Wise');
+    },
+  });
+
   // CSV import mutations
   const wiseCSVImportMutation = trpc.csv.importWiseCSV.useMutation({
     onSuccess: (data) => {
@@ -245,14 +257,24 @@ export function BankSync({ goalId }: BankSyncProps) {
                       {t('importFromCSV', preferences.language)}
                     </p>
                   </div>
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    size="sm"
-                    variant="outline"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {t('uploadCSV', preferences.language)}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => clearWiseMutation.mutate({ goalId })}
+                      size="sm"
+                      variant="destructive"
+                      disabled={clearWiseMutation.isPending}
+                    >
+                      Limpar Wise
+                    </Button>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {t('uploadCSV', preferences.language)}
+                    </Button>
+                  </div>
                   <input
                     ref={fileInputRef}
                     type="file"

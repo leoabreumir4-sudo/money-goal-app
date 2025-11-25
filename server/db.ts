@@ -251,6 +251,19 @@ export async function deleteTransaction(id: number, userId: string) {
   await db.delete(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
 }
 
+export async function deleteWiseTransactions(userId: string, goalId: number) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(transactions).where(
+    and(
+      eq(transactions.userId, userId),
+      eq(transactions.goalId, goalId),
+      eq(transactions.source, 'wise')
+    )
+  );
+}
+
 // Categories
 export async function createCategory(category: InsertCategory) {
   const db = getDb();
