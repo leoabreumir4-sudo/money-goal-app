@@ -145,15 +145,22 @@ export async function getBalanceStatement(
 ): Promise<WiseBalanceStatement> {
   const client = createWiseClient(apiToken);
   
+  let lastError: any;
+  
   // Try v3 endpoint first (more common)
   try {
+    console.log(`[Wise] Attempting v3 endpoint for profile ${profileId}, currency ${currency}`);
+    
     // First get borderless account
     const borderlessAccounts = await getBorderlessAccounts(apiToken, profileId);
+    console.log(`[Wise] Found ${borderlessAccounts.length} borderless accounts`);
+    
     if (borderlessAccounts.length === 0) {
       throw new Error("No borderless accounts found");
     }
     
     const accountId = borderlessAccounts[0].id;
+    console.log(`[Wise] Using account ID: ${accountId}`);
     
     const response = await client.get(
       `/v3/profiles/${profileId}/borderless-accounts/${accountId}/statement.json`,
@@ -165,11 +172,16 @@ export async function getBalanceStatement(
         },
       }
     );
+    console.log(`[Wise] v3 endpoint succeeded`);
     return response.data;
-  } catch (error) {
-    console.log("v3 endpoint failed, trying v1...");
-    
-    // Fallback to v1 endpoint
+  } catch (error: any) {
+    console.log(`[Wise] v3 endpoint failed:`, error.response?.status, error.response?.data || error.message);
+    lastError = error;
+  }
+
+  // Try v1 endpoint as fallback
+  try {
+    console.log(`[Wise] Attempting v1 endpoint for profile ${profileId}, currency ${currency}`);
     const response = await client.get(
       `/v1/profiles/${profileId}/balance-statements/${currency}/statement.json`,
       {
@@ -179,6 +191,17 @@ export async function getBalanceStatement(
         },
       }
     );
+    console.log(`[Wise] v1 endpoint succeeded`);
     return response.data;
+  } catch (error: any) {
+    console.log(`[Wise] v1 endpoint failed:`, error.response?.status, error.response?.data || error.message);
+    lastError = error;
   }
+
+  // Both endpoints failed - throw informative error
+  throw new Error(
+    `Failed to fetch Wise statement. Both v3 and v1 endpoints returned errors. ` +
+    `Last error: ${lastError.response?.data?.message || lastError.message}. ` +
+    `This may indicate the currency ${currency} has no transactions in the specified period.`
+  );
 }

@@ -163,13 +163,31 @@ export const wiseRouter = router({
         }
 
         // Get transactions for the period
-        const statement = await getBalanceStatement(
-          settings.wiseApiToken,
-          profiles[0].id,
-          input.currency,
-          input.startDate,
-          input.endDate
-        );
+        let statement;
+        try {
+          statement = await getBalanceStatement(
+            settings.wiseApiToken,
+            profiles[0].id,
+            input.currency,
+            input.startDate,
+            input.endDate
+          );
+        } catch (error: any) {
+          console.error("Error fetching Wise statement:", error);
+          
+          // Check if it's a 404 - might mean no transactions for this currency
+          if (error.response?.status === 404) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: `No transactions found for ${input.currency} in the specified period. Make sure you have a ${input.currency} balance with transaction history.`,
+            });
+          }
+          
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch Wise transactions. " + (error.response?.data?.message || error.message),
+          });
+        }
 
         // Create transactions in database
         let importedCount = 0;
