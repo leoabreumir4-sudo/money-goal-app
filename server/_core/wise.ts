@@ -147,20 +147,37 @@ export async function getBalanceStatement(
   
   let lastError: any;
   
+  // First, get borderless accounts to find the right balance ID
+  let borderlessAccounts;
+  try {
+    borderlessAccounts = await getBorderlessAccounts(apiToken, profileId);
+    console.log(`[Wise] Found ${borderlessAccounts.length} borderless accounts`);
+  } catch (error: any) {
+    console.log(`[Wise] Failed to get borderless accounts:`, error.response?.status, error.response?.data || error.message);
+    throw new Error(`Failed to access Wise account. Make sure your API token has the required permissions.`);
+  }
+  
+  if (borderlessAccounts.length === 0) {
+    throw new Error("No Wise accounts found. Make sure you have a Wise multi-currency account.");
+  }
+
+  const accountId = borderlessAccounts[0].id;
+  console.log(`[Wise] Using account ID: ${accountId}`);
+
+  // Find the balance for the requested currency
+  const balances = borderlessAccounts[0].balances || [];
+  const currencyBalance = balances.find((b: any) => b.currency === currency);
+  
+  if (!currencyBalance) {
+    throw new Error(`No ${currency} balance found in your Wise account. Please add ${currency} first.`);
+  }
+
+  const balanceId = currencyBalance.id;
+  console.log(`[Wise] Found ${currency} balance with ID: ${balanceId}`);
+  
   // Try v3 endpoint first (more common)
   try {
-    console.log(`[Wise] Attempting v3 endpoint for profile ${profileId}, currency ${currency}`);
-    
-    // First get borderless account
-    const borderlessAccounts = await getBorderlessAccounts(apiToken, profileId);
-    console.log(`[Wise] Found ${borderlessAccounts.length} borderless accounts`);
-    
-    if (borderlessAccounts.length === 0) {
-      throw new Error("No borderless accounts found");
-    }
-    
-    const accountId = borderlessAccounts[0].id;
-    console.log(`[Wise] Using account ID: ${accountId}`);
+    console.log(`[Wise] Attempting v3 endpoint for balance ${balanceId}`);
     
     const response = await client.get(
       `/v3/profiles/${profileId}/borderless-accounts/${accountId}/statement.json`,
@@ -179,9 +196,28 @@ export async function getBalanceStatement(
     lastError = error;
   }
 
-  // Try v1 endpoint as fallback
+  // Try v1 balance-specific endpoint
   try {
-    console.log(`[Wise] Attempting v1 endpoint for profile ${profileId}, currency ${currency}`);
+    console.log(`[Wise] Attempting v1 balance-specific endpoint for balance ${balanceId}`);
+    const response = await client.get(
+      `/v1/profiles/${profileId}/balance-statements/${balanceId}/statement.json`,
+      {
+        params: {
+          intervalStart,
+          intervalEnd,
+        },
+      }
+    );
+    console.log(`[Wise] v1 balance-specific endpoint succeeded`);
+    return response.data;
+  } catch (error: any) {
+    console.log(`[Wise] v1 balance-specific endpoint failed:`, error.response?.status, error.response?.data || error.message);
+    lastError = error;
+  }
+
+  // Try v1 currency endpoint as last resort
+  try {
+    console.log(`[Wise] Attempting v1 currency endpoint for ${currency}`);
     const response = await client.get(
       `/v1/profiles/${profileId}/balance-statements/${currency}/statement.json`,
       {
@@ -191,17 +227,19 @@ export async function getBalanceStatement(
         },
       }
     );
-    console.log(`[Wise] v1 endpoint succeeded`);
+    console.log(`[Wise] v1 currency endpoint succeeded`);
     return response.data;
   } catch (error: any) {
-    console.log(`[Wise] v1 endpoint failed:`, error.response?.status, error.response?.data || error.message);
+    console.log(`[Wise] v1 currency endpoint failed:`, error.response?.status, error.response?.data || error.message);
     lastError = error;
   }
 
-  // Both endpoints failed - throw informative error
+  // All endpoints failed - throw informative error
+  const errorMessage = lastError.response?.data?.message || lastError.message;
   throw new Error(
-    `Failed to fetch Wise statement. Both v3 and v1 endpoints returned errors. ` +
-    `Last error: ${lastError.response?.data?.message || lastError.message}. ` +
-    `This may indicate the currency ${currency} has no transactions in the specified period.`
+    `Failed to fetch Wise transactions for ${currency}. All API endpoints returned errors. ` +
+    `Last error: ${errorMessage}. ` +
+    `Please verify: (1) Your API token has 'Read' permission, (2) You have transactions in ${currency}, ` +
+    `(3) The date range contains activity.`
   );
 }
