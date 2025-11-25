@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Calculator, Plus } from "lucide-react";
+import { Calculator, Plus, Pencil, Trash2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const months = [
   "January", "February", "March", "April", "May", "June",
@@ -73,7 +74,11 @@ export default function AQWorlds() {
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [monthlyStatusYear, setMonthlyStatusYear] = useState(new Date().getFullYear());
+  
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [editingEventName, setEditingEventName] = useState("");
 
+  const { user } = useAuth();
   const utils = trpc.useUtils();
   const { data: projects = [] } = trpc.projects.getAll.useQuery();
   const { data: events = [] } = trpc.events.getAll.useQuery();
@@ -106,7 +111,23 @@ export default function AQWorlds() {
   });
 
   const toggleEventSelectionMutation = trpc.events.toggleSelection.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ id }) => {
+      await utils.events.getAll.cancel();
+      const previousEvents = utils.events.getAll.getData();
+      
+      utils.events.getAll.setData(undefined, (old) => {
+        if (!old) return old;
+        return old.map(e => e.id === id ? { ...e, isSelected: e.isSelected === 1 ? 0 : 1 } : e);
+      });
+      
+      return { previousEvents };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousEvents) {
+        utils.events.getAll.setData(undefined, context.previousEvents);
+      }
+    },
+    onSettled: () => {
       utils.events.getAll.invalidate();
     },
   });
@@ -214,12 +235,27 @@ export default function AQWorlds() {
     toggleEventSelectionMutation.mutate({ id: eventId });
   };
 
-  const handleDeleteEvent = (eventId: number, isDefault: boolean) => {
-    if (isDefault) {
-      toast.error("Cannot delete default events. You can unselect them instead.");
-      return;
-    }
+  const handleDeleteEvent = (eventId: number) => {
     deleteEventMutation.mutate({ id: eventId });
+  };
+
+  const startEditingEvent = (eventId: number, currentName: string) => {
+    setEditingEventId(eventId);
+    setEditingEventName(currentName);
+  };
+
+  const saveEventName = () => {
+    if (!editingEventId || !editingEventName.trim()) return;
+    
+    updateEventMutation.mutate(
+      { id: editingEventId, name: editingEventName },
+      {
+        onSuccess: () => {
+          setEditingEventId(null);
+          setEditingEventName("");
+        },
+      }
+    );
   };
 
   const openEventModal = (monthIndex: number) => {
@@ -253,7 +289,7 @@ export default function AQWorlds() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
-            <p className="text-muted-foreground">Artix Entertainment - Artist Projects</p>
+            <p className="text-muted-foreground">{user?.name} - Artist Projects</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsCalculatorModalOpen(true)}>
@@ -381,7 +417,7 @@ export default function AQWorlds() {
                       <div>
                         <div className="font-medium">{status.monthName}-{monthlyStatusYear}</div>
                         <div className="text-xs text-muted-foreground">
-                          {status.count} projects • ${(status.total / 100).toFixed(0)}
+                          {status.count} {status.count === 1 ? 'project' : 'projects'} • ${(status.total / 100).toFixed(0)}
                         </div>
                       </div>
                       <MonthlyStatusButtonComponent 
@@ -400,7 +436,7 @@ export default function AQWorlds() {
         {/* Event Calendar */}
         <Card>
           <CardHeader>
-            <CardTitle>📅 Event Calendar</CardTitle>
+            <CardTitle>📅 Event Calendar - {selectedYear}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -414,13 +450,11 @@ export default function AQWorlds() {
                   <Card 
                     key={month} 
                     className={`cursor-pointer transition-all hover:scale-105 ${
-                      hasSelectedEvents ? 'border-purple-500 border-2' : ''
-                    } ${
                       isCurrentMonth ? 'ring-2 ring-blue-500' : ''
                     }`}
                     onClick={() => openEventModal(monthIndex)}
                   >
-                    <CardHeader className="pb-2">
+                    <CardHeader className="pb-1">
                       <CardTitle className="text-base">{month}</CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -451,13 +485,63 @@ export default function AQWorlds() {
           </CardContent>
         </Card>
 
+        {/* Project Logs */}
+        <Card>
+          <CardHeader>
+            <CardTitle>📝 Project Logs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {projects.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-8">No projects yet</p>
+              ) : (
+                projects
+                  .sort((a, b) => {
+                    // Sort by year desc, then month desc
+                    if (a.year !== b.year) return b.year - a.year;
+                    return b.month - a.month;
+                  })
+                  .map((project) => (
+                    <div 
+                      key={project.id} 
+                      className="flex justify-between items-center p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{project.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {months[project.month - 1]} {project.year}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-lg font-bold text-green-500">
+                          ${(project.amount / 100).toFixed(2)}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm('Delete this project?')) {
+                              deleteProjectMutation.mutate({ id: project.id });
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Add Project Modal */}
         <Dialog open={isAddProjectModalOpen} onOpenChange={setIsAddProjectModalOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Project</DialogTitle>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl">Add New Project</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-5 py-4">
               <div>
                 <Label htmlFor="projectName">Project Name</Label>
                 <Input
@@ -513,51 +597,72 @@ export default function AQWorlds() {
 
         {/* Event Modal */}
         <Dialog open={isEventModalOpen} onOpenChange={setIsEventModalOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh]">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-2xl">
                 {selectedMonthForEvents !== null && months[selectedMonthForEvents - 1]} Events
               </DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-4">
+            <div className="space-y-6 py-2">
               {/* Event List */}
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                 {monthEvents.map(event => (
-                  <div key={event.id} className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center gap-3 flex-1">
-                      <Checkbox
-                        checked={event.isSelected === 1}
-                        onCheckedChange={() => handleToggleEvent(event.id)}
+                  <div key={event.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+                    <Checkbox
+                      checked={event.isSelected === 1}
+                      onCheckedChange={() => handleToggleEvent(event.id)}
+                    />
+                    {editingEventId === event.id ? (
+                      <Input
+                        value={editingEventName}
+                        onChange={(e) => setEditingEventName(e.target.value)}
+                        onBlur={saveEventName}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveEventName();
+                          if (e.key === 'Escape') { setEditingEventId(null); setEditingEventName(''); }
+                        }}
+                        className="flex-1"
+                        autoFocus
                       />
-                      <span className={event.isSelected === 1 ? "text-green-500 font-semibold" : ""}>
+                    ) : (
+                      <span className={`flex-1 ${event.isSelected === 1 ? "text-green-500 font-semibold" : ""}`}>
                         {event.name}
                       </span>
-                    </div>
-                    {event.isDefault === 0 && (
+                    )}
+                    <div className="flex gap-1">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteEvent(event.id, event.isDefault === 1)}
+                        onClick={() => startEditingEvent(event.id, event.name)}
                       >
-                        Delete
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                    )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteEvent(event.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
 
               {/* Add Custom Event */}
-              <div className="border-t pt-4">
-                <Label htmlFor="newEvent">Add Custom Event</Label>
-                <div className="flex gap-2 mt-2">
+              <div className="border-t pt-4 space-y-3">
+                <Label htmlFor="newEvent" className="text-base font-semibold">Add Custom Event</Label>
+                <div className="flex gap-2">
                   <Input
                     id="newEvent"
                     value={newEventName}
                     onChange={(e) => setNewEventName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddEvent()}
                     placeholder="Enter event name"
+                    className="flex-1"
                   />
-                  <Button onClick={handleAddEvent}>
+                  <Button onClick={handleAddEvent} className="bg-purple-600 hover:bg-purple-700">
                     <Plus className="h-4 w-4 mr-2" />
                     Add
                   </Button>
@@ -565,24 +670,24 @@ export default function AQWorlds() {
               </div>
             </div>
 
-            <DialogFooter>
-              <Button onClick={() => setIsEventModalOpen(false)}>Close</Button>
+            <DialogFooter className="mt-4">
+              <Button onClick={() => setIsEventModalOpen(false)} variant="outline">Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         {/* Calculator Modal */}
         <Dialog open={isCalculatorModalOpen} onOpenChange={setIsCalculatorModalOpen}>
-          <DialogContent>
-            <DialogHeader>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500 rounded-lg">
+                <div className="p-3 bg-blue-500 rounded-lg">
                   <Calculator className="h-6 w-6 text-white" />
                 </div>
-                <DialogTitle>Project Calculator</DialogTitle>
+                <DialogTitle className="text-2xl">Project Calculator</DialogTitle>
               </div>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-5 py-4">
               <div>
                 <Label htmlFor="calcAvg">Average Value per Project (USD)</Label>
                 <Input
