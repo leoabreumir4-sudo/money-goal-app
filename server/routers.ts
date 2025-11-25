@@ -5,12 +5,14 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { authRouter } from "./authRouter";
-import { plaidRouter } from "./plaidRouter";
+import { wiseRouter } from "./wiseRouter";
+import { csvRouter } from "./csvRouter";
 
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter, // Usando o novo authRouter
-  plaid: plaidRouter, // Bank synchronization via Plaid
+  wise: wiseRouter, // Wise bank synchronization
+  csv: csvRouter, // CSV import (Nubank, etc.)
 
   // TEMPORARY: Delete all users (REMOVE AFTER USE!)
   _dangerDeleteAllUsers: publicProcedure.mutation(async () => {
