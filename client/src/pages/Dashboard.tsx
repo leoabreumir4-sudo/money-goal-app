@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { ArrowDown, ArrowUp, Pencil, Sparkles } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { BankSync } from "@/components/BankSync";
 
 export default function Dashboard() {
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
@@ -297,6 +298,11 @@ export default function Dashboard() {
             </Dialog>
           </div>
         </div>
+
+        {/* Bank Synchronization Section */}
+        {activeGoal && (
+          <BankSync goalId={activeGoal.id} />
+        )}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
