@@ -101,19 +101,34 @@ export default function AQWorlds() {
   const { user, loading } = useAuth();
   const utils = trpc.useUtils();
   
-  // Don't render or make queries until auth is loaded
-  if (loading || !user) {
+  // Query data - but only enable when user is authenticated
+  const { data: projects = [] } = trpc.projects.getAll.useQuery(undefined, {
+    enabled: !!user && !loading,
+  });
+  const { data: events = [] } = trpc.events.getAll.useQuery(undefined, {
+    enabled: !!user && !loading,
+  });
+  
+  // Don't render content until auth is loaded
+  if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-muted-foreground">Loading...</div>
+          <div className="text-muted-foreground">Loading authentication...</div>
         </div>
       </DashboardLayout>
     );
   }
   
-  const { data: projects = [] } = trpc.projects.getAll.useQuery();
-  const { data: events = [] } = trpc.events.getAll.useQuery();
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-muted-foreground">Not authenticated. Redirecting...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const createProjectMutation = trpc.projects.create.useMutation({
     onSuccess: () => {
