@@ -219,6 +219,9 @@ export const csvRouter = router({
           // Simple description without amount
           const reason = transaction.description;
 
+          // Parse date from CSV (format: "2025-11-25 19:36:10")
+          const transactionDate = new Date(transaction.date);
+
           await db.createTransaction({
             userId: ctx.user.id,
             goalId: input.goalId,
@@ -226,6 +229,7 @@ export const csvRouter = router({
             amount,
             reason,
             source: 'wise',
+            createdDate: transactionDate,
           });
 
           importedCount++;
