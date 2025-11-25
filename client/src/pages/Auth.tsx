@@ -25,7 +25,7 @@ const AuthPage = () => {
     if (data.token) {
       localStorage.setItem('sessionToken', data.token);
     }
-    toast.success("Login bem-sucedido!");
+    toast.success("Login successful!");
     // Small delay to ensure token is persisted
     await new Promise(resolve => setTimeout(resolve, 100));
     // Invalidate and refetch
@@ -34,7 +34,7 @@ const AuthPage = () => {
   },
   onError: (error) => {
     console.error('loginMutation error object:', error);
-    toast.error(`Erro de Login: ${error.message}`);
+    toast.error(`Login Error: ${error.message}`);
   },
 });
 
@@ -43,7 +43,7 @@ const AuthPage = () => {
       if (data.token) {
         localStorage.setItem('sessionToken', data.token);
       }
-      toast.success("Registro bem-sucedido! Você será logado automaticamente.");
+      toast.success("Registration successful! You will be logged in automatically.");
       // Small delay to ensure token is persisted
       await new Promise(resolve => setTimeout(resolve, 100));
       // Invalidate and refetch
@@ -51,8 +51,7 @@ const AuthPage = () => {
       navigate("/");
     },
     onError: (error) => {
-      // Apenas exibe o erro e não faz mais nada
-      toast.error(`Erro de Registro: ${error.message}`);
+      toast.error(`Registration Error: ${error.message}`);
     },
   });
 
@@ -87,30 +86,30 @@ const AuthPage = () => {
       <Card className="w-[350px] bg-gray-800 text-white border-gray-700">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            {isLogin ? "Entrar" : "Criar Conta"}
+            {isLogin ? "Sign In" : "Create Account"}
           </CardTitle>
           <CardDescription className="text-center text-gray-400">
             {isLogin
-              ? "Insira suas credenciais para acessar o painel."
-              : "Preencha os campos para criar sua conta."}
+              ? "Enter your credentials to access your dashboard."
+              : "Fill in the fields to create your account."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLogin ? (
             <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-email">E-mail</Label>
+                <Label htmlFor="login-email">Email</Label>
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="m@exemplo.com"
+                  placeholder="you@example.com"
                   {...loginForm.register("email")}
                   className="bg-gray-700 border-gray-600 text-white"
                   disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="login-password">Senha</Label>
+                <Label htmlFor="login-password">Password</Label>
                 <Input
                   id="login-password"
                   type="password"
@@ -119,36 +118,47 @@ const AuthPage = () => {
                   disabled={isLoading}
                 />
               </div>
-              <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Entrar"}
+              <Button 
+                type="submit" 
+                className="w-full bg-indigo-600 hover:bg-indigo-700 transition-all" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
           ) : (
             <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="register-name">Nome</Label>
+                <Label htmlFor="register-name">Name</Label>
                 <Input
                   id="register-name"
                   type="text"
-                  placeholder="Seu Nome"
+                  placeholder="Your Name"
                   {...registerForm.register("name")}
                   className="bg-gray-700 border-gray-600 text-white"
                   disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-email">E-mail</Label>
+                <Label htmlFor="register-email">Email</Label>
                 <Input
                   id="register-email"
                   type="email"
-                  placeholder="m@exemplo.com"
+                  placeholder="you@example.com"
                   {...registerForm.register("email")}
                   className="bg-gray-700 border-gray-600 text-white"
                   disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-password">Senha</Label>
+                <Label htmlFor="register-password">Password</Label>
                 <Input
                   id="register-password"
                   type="password"
@@ -157,8 +167,19 @@ const AuthPage = () => {
                   disabled={isLoading}
                 />
               </div>
-              <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Criar Conta"}
+              <Button 
+                type="submit" 
+                className="w-full bg-indigo-600 hover:bg-indigo-700 transition-all" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create Account"
+                )}
               </Button>
             </form>
           )}
@@ -171,8 +192,8 @@ const AuthPage = () => {
             disabled={isLoading}
           >
             {isLogin
-              ? "Não tem uma conta? Crie uma."
-              : "Já tem uma conta? Faça login."}
+              ? "Don't have an account? Sign up."
+              : "Already have an account? Sign in."}
           </Button>
         </CardFooter>
       </Card>
