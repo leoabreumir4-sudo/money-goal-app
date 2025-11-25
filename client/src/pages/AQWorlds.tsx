@@ -284,7 +284,11 @@ export default function AQWorlds() {
     if (selectedMonthForEvents === null) return [];
     return events
       .filter(e => e.month === selectedMonthForEvents)
-      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      .sort((a, b) => {
+        const orderA = typeof a.sortOrder === 'number' ? a.sortOrder : 0;
+        const orderB = typeof b.sortOrder === 'number' ? b.sortOrder : 0;
+        return orderA - orderB;
+      });
   }, [events, selectedMonthForEvents]);
 
   const handleDragEnd = async (result: DropResult) => {
@@ -295,13 +299,20 @@ export default function AQWorlds() {
     items.splice(result.destination.index, 0, reorderedItem);
     
     // Update sortOrder for all items
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].sortOrder !== i) {
-        await updateEventMutation.mutateAsync({ id: items[i].id, sortOrder: i });
+    try {
+      for (let i = 0; i < items.length; i++) {
+        const currentOrder = typeof items[i].sortOrder === 'number' ? items[i].sortOrder : -1;
+        if (currentOrder !== i) {
+          await updateEventMutation.mutateAsync({ id: items[i].id, sortOrder: i });
+        }
       }
+      
+      utils.events.getAll.invalidate();
+    } catch (error) {
+      console.error('Failed to reorder events:', error);
+      toast.error('Failed to reorder events');
+      utils.events.getAll.invalidate();
     }
-    
-    utils.events.getAll.invalidate();
   };
 
   // Check if a month has selected events
@@ -325,7 +336,7 @@ export default function AQWorlds() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
-            <p className="text-muted-foreground">{user?.name} - Artist Projects</p>
+            <p className="text-muted-foreground">{user?.name || 'Artist'} - Artist Projects</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsCalculatorModalOpen(true)}>
