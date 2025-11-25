@@ -37,7 +37,10 @@ export const appRouter = router({
       }),
 
     getActive: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getActiveGoal(ctx.user.id);
+      console.log("[Goals] getActive called for user:", ctx.user.id, "type:", typeof ctx.user.id);
+      const result = await db.getActiveGoal(ctx.user.id);
+      console.log("[Goals] getActive result:", result);
+      return result;
     }),
 
     getArchived: protectedProcedure.query(async ({ ctx }) => {
