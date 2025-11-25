@@ -131,6 +131,50 @@ export const wiseRouter = router({
   }),
 
   /**
+   * Get total Wise balance converted to user's preferred currency
+   * Returns the sum of all balances in cents
+   */
+  getTotalBalanceConverted: protectedProcedure.query(async ({ ctx }) => {
+    const settings = await db.getUserSettings(ctx.user.id);
+    
+    // Return 0 if no Wise token configured
+    if (!settings?.wiseApiToken) {
+      return 0;
+    }
+
+    const preferredCurrency = settings.currency || "USD";
+
+    try {
+      const profiles = await getProfiles(settings.wiseApiToken);
+      
+      if (profiles.length === 0) {
+        return 0;
+      }
+
+      // Get balances for first profile (personal account)
+      const balances = await getBalances(settings.wiseApiToken, profiles[0].id);
+      
+      // Convert to cents and map to our format
+      const balancesInCents = balances.map(balance => ({
+        currency: balance.currency,
+        amount: Math.round(balance.amount.value * 100), // Convert to cents
+      }));
+
+      // Convert all balances to preferred currency
+      const converted = await convertBalances(balancesInCents, preferredCurrency);
+      
+      // Sum all converted amounts
+      const totalAmount = converted.reduce((sum, balance) => sum + balance.convertedAmount, 0);
+      
+      return totalAmount; // in cents
+    } catch (error) {
+      console.error("Error fetching total Wise balance:", error);
+      // Return 0 on error instead of throwing, so it doesn't break the goal display
+      return 0;
+    }
+  }),
+
+  /**
    * Sync transactions from Wise for a date range
    */
   syncTransactions: protectedProcedure

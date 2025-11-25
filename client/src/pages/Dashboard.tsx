@@ -33,6 +33,7 @@ export default function Dashboard() {
   const utils = trpc.useUtils();
   const { data: activeGoal, isLoading: goalLoading } = trpc.goals.getActive.useQuery();
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
+  const { data: wiseBalance = 0 } = trpc.wise.getTotalBalanceConverted.useQuery();
 
   const createGoalMutation = trpc.goals.create.useMutation({
     onSuccess: () => {
@@ -409,6 +410,16 @@ export default function Dashboard() {
                           {formatCurrency(activeGoal.currentAmount, preferences.currency)}
                         </span>
                       </div>
+                      {wiseBalance > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-purple-400 flex items-center gap-1">
+                            <span className="text-xs">💳</span> Wise Balance
+                          </span>
+                          <span className="font-semibold text-purple-400">
+                            {formatCurrency(wiseBalance, preferences.currency)}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">{t('targetAmount', preferences.language)}</span>
                         <span className="font-semibold text-foreground">

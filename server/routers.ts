@@ -63,12 +63,43 @@ export const appRouter = router({
           return t.type === "income" ? sum + t.amount : sum - t.amount;
         }, 0);
         
+        // Get total Wise balance converted to user's currency
+        let wiseBalance = 0;
+        try {
+          const settings = await db.getUserSettings(ctx.user.id);
+          if (settings?.wiseApiToken) {
+            // Import Wise functions
+            const { getProfiles, getBalances } = await import("./_core/wise");
+            const { convertBalances } = await import("./_core/currencyConversion");
+            
+            const preferredCurrency = settings.currency || "USD";
+            const profiles = await getProfiles(settings.wiseApiToken);
+            
+            if (profiles.length > 0) {
+              const balances = await getBalances(settings.wiseApiToken, profiles[0].id);
+              const balancesInCents = balances.map(balance => ({
+                currency: balance.currency,
+                amount: Math.round(balance.amount.value * 100),
+              }));
+              
+              const converted = await convertBalances(balancesInCents, preferredCurrency);
+              wiseBalance = converted.reduce((sum, balance) => sum + balance.convertedAmount, 0);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching Wise balance for goal:", error);
+          // Continue without Wise balance on error
+        }
+        
+        // Combine transactions amount with Wise balance
+        const totalAmount = calculatedAmount + wiseBalance;
+        
         // Update if different
-        if (calculatedAmount !== goal.currentAmount) {
+        if (totalAmount !== goal.currentAmount) {
           await db.updateGoal(goal.id, ctx.user.id, {
-            currentAmount: Math.max(0, calculatedAmount),
+            currentAmount: Math.max(0, totalAmount),
           });
-          goal.currentAmount = Math.max(0, calculatedAmount);
+          goal.currentAmount = Math.max(0, totalAmount);
         }
       }
       
