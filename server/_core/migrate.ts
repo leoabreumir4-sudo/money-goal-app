@@ -15,17 +15,24 @@ async function main() {
   }
 
   try {
-    if (isProduction) {
-      console.log("[Database] Production detected — running `prisma migrate deploy`");
-      // Apply already-created migrations without destructive reset
-      run("npx prisma migrate deploy");
-    } else {
-      console.log("[Database] Development detected — running `prisma migrate dev`");
-      // In development, allow iterative work. `--skip-generate` can be removed if you want generate to run.
-      run("npx prisma migrate dev --skip-generate");
-    }
-
-    console.log("[Database] Migration finished.");
+    console.log("[Database] Running Drizzle migrations...");
+    // Use drizzle-kit push for production (applies schema directly)
+    // Or use migrate command if you have migration files
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { migrate } = await import("drizzle-orm/node-postgres/migrator");
+    const { Pool } = await import("pg");
+    
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+    
+    const db = drizzle(pool);
+    
+    // Run migrations from the drizzle folder
+    await migrate(db, { migrationsFolder: "./drizzle" });
+    
+    console.log("[Database] Drizzle migrations completed successfully.");
+    await pool.end();
     process.exit(0);
   } catch (err: any) {
     console.error("[Database] Migration failed:", err?.message ?? err);
