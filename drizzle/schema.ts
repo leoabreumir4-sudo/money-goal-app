@@ -89,6 +89,7 @@ export const userSettings = pgTable("userSettings", {
   monthlySavingTarget: integer("monthlySavingTarget").notNull().default(0), // Store as cents
   hasUnreadArchived: boolean("hasUnreadArchived").notNull().default(false),
   wiseApiToken: text("wiseApiToken"), // Wise API token for bank sync
+  wiseWebhookSecret: text("wiseWebhookSecret"), // Secret for validating Wise webhooks
 });
 
 export type UserSettings = typeof userSettings.$inferSelect;

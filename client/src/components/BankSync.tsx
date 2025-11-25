@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -44,17 +44,23 @@ export function BankSync({ goalId }: BankSyncProps) {
   const { data: balances = [], error: wiseError } = trpc.wise.getBalances.useQuery(undefined, {
     enabled: hasWiseToken, // Only run query if token exists
   });
+  
+  // Get converted balances with user's preferred currency
+  const { data: convertedBalances = [] } = trpc.wise.getBalancesConverted.useQuery(undefined, {
+    enabled: hasWiseToken,
+  });
+  
   const isWiseNotConfigured = !hasWiseToken || wiseError?.data?.code === "PRECONDITION_FAILED";
 
   // Wise sync mutation
   const wiseSyncMutation = trpc.wise.syncTransactions.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast.success(t('wiseImportSuccess', preferences.language).replace('{0}', data.importedCount.toString()).replace('{1}', data.totalTransactions.toString()));
       setWiseSyncDialogOpen(false);
       utils.transactions.getAll.invalidate();
       utils.goals.getActive.invalidate();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error(error.message || t('wiseSyncFailed', preferences.language));
     },
   });
@@ -159,12 +165,19 @@ export function BankSync({ goalId }: BankSyncProps) {
                     </Button>
                   )}
                 </div>
-                {!isWiseNotConfigured && balances.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {balances.filter(b => b.amount > 0).map((balance) => (
-                      <div key={balance.currency} className="text-sm p-2 bg-secondary/50 rounded">
+                {!isWiseNotConfigured && convertedBalances.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {convertedBalances.filter((b: any) => b.originalAmount > 0).map((balance: any) => (
+                      <div key={balance.currency} className="text-sm p-3 bg-secondary/50 rounded space-y-1">
                         <div className="font-medium">{balance.currency}</div>
-                        <div className="text-muted-foreground">{balance.amount.toFixed(2)}</div>
+                        <div className="text-muted-foreground">
+                          {(balance.originalAmount / 100).toFixed(2)}
+                        </div>
+                        {balance.currency !== balance.targetCurrency && (
+                          <div className="text-xs text-purple-400">
+                            ≈ {balance.targetCurrency} {(balance.convertedAmount / 100).toFixed(2)}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -222,7 +235,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {balances.map((balance) => (
+                  {balances.map((balance: any) => (
                     <SelectItem key={balance.currency} value={balance.currency}>
                       {balance.currency} ({balance.amount.toFixed(2)})
                     </SelectItem>

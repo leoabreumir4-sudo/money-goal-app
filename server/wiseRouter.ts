@@ -2,6 +2,7 @@ import { router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { getProfiles, getBalances, getBalanceStatement } from "./_core/wise";
+import { convertBalances, convertAmount } from "./_core/currencyConversion";
 import { TRPCError } from "@trpc/server";
 
 export const wiseRouter = router({
@@ -80,6 +81,56 @@ export const wiseRouter = router({
   }),
 
   /**
+   * Get Wise balances converted to user's preferred currency
+   */
+  getBalancesConverted: protectedProcedure.query(async ({ ctx }) => {
+    const settings = await db.getUserSettings(ctx.user.id);
+    
+    if (!settings?.wiseApiToken) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Wise API token not configured. Please add your token in Settings.",
+      });
+    }
+
+    const preferredCurrency = settings.currency || "USD";
+
+    try {
+      const profiles = await getProfiles(settings.wiseApiToken);
+      
+      if (profiles.length === 0) {
+        return [];
+      }
+
+      // Get balances for first profile (personal account)
+      const balances = await getBalances(settings.wiseApiToken, profiles[0].id);
+      
+      // Convert to cents and map to our format
+      const balancesInCents = balances.map(balance => ({
+        currency: balance.currency,
+        amount: Math.round(balance.amount.value * 100), // Convert to cents
+      }));
+
+      // Convert all balances to preferred currency
+      const converted = await convertBalances(balancesInCents, preferredCurrency);
+      
+      return converted.map((conv) => ({
+        currency: conv.currency,
+        originalAmount: conv.originalAmount, // in cents
+        convertedAmount: conv.convertedAmount, // in cents
+        conversionRate: conv.conversionRate,
+        targetCurrency: preferredCurrency,
+      }));
+    } catch (error) {
+      console.error("Error fetching converted Wise balances:", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch Wise balances. Token may have expired.",
+      });
+    }
+  }),
+
+  /**
    * Sync transactions from Wise for a date range
    */
   syncTransactions: protectedProcedure
@@ -98,6 +149,8 @@ export const wiseRouter = router({
           message: "Wise API token not configured.",
         });
       }
+
+      const preferredCurrency = settings.currency || "USD";
 
       try {
         const profiles = await getProfiles(settings.wiseApiToken);
@@ -132,8 +185,13 @@ export const wiseRouter = router({
             continue;
           }
 
-          const amount = Math.abs(Math.round(transaction.amount.value * 100)); // Convert to cents
+          let amount = Math.abs(Math.round(transaction.amount.value * 100)); // Convert to cents
           const type = transaction.amount.value > 0 ? "income" : "expense";
+          
+          // Convert amount to user's preferred currency if different
+          if (input.currency !== preferredCurrency) {
+            amount = await convertAmount(amount, input.currency, preferredCurrency);
+          }
           
           // Determine reason/description
           let reason = transaction.details.description || "Wise transaction";
@@ -142,6 +200,13 @@ export const wiseRouter = router({
           } else if (transaction.details.merchant?.name) {
             reason = `${transaction.details.merchant.name} - ${reason}`;
           }
+          
+          // Include original currency info if converted
+          if (input.currency !== preferredCurrency) {
+            const originalAmount = Math.abs(transaction.amount.value);
+            reason += ` (${originalAmount.toFixed(2)} ${input.currency} → ${preferredCurrency})`;
+          }
+          
           reason += ` (Ref: ${transaction.referenceNumber})`;
 
           await db.createTransaction({

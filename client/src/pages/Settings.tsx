@@ -19,6 +19,7 @@ export default function Settings() {
   const [currency, setCurrency] = useState("USD");
   const [theme, setTheme] = useState("dark");
   const [wiseToken, setWiseToken] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
 
   // Update state when settings are loaded
   useEffect(() => {
@@ -27,6 +28,7 @@ export default function Settings() {
       setCurrency(settings.currency);
       setTheme(settings.theme);
       setWiseToken(settings.wiseApiToken || "");
+      setWebhookSecret(settings.wiseWebhookSecret || "");
     }
   }, [settings]);
 
@@ -132,9 +134,10 @@ export default function Settings() {
         {/* Wise API Integration */}
         <Card className="bg-card border-border max-w-2xl">
           <CardHeader>
-            <CardTitle className="text-foreground">{t('wiseApiToken', preferences.language)}</CardTitle>
+            <CardTitle className="text-foreground">Wise Integration</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* API Token */}
             <div className="space-y-2">
               <Label htmlFor="wiseToken">{t('wiseApiToken', preferences.language)}</Label>
               <p className="text-sm text-muted-foreground">
@@ -156,11 +159,38 @@ export default function Settings() {
                 onChange={(e) => setWiseToken(e.target.value)}
               />
             </div>
+            
+            {/* Webhook Secret */}
+            <div className="space-y-2">
+              <Label htmlFor="webhookSecret">Webhook Secret (opcional)</Label>
+              <p className="text-sm text-muted-foreground">
+                Para sincronização automática via webhooks. Configure o webhook na Wise com a URL abaixo.
+              </p>
+              <Input
+                id="webhookSecret"
+                type="password"
+                placeholder="Digite o secret gerado pela Wise"
+                value={webhookSecret}
+                onChange={(e) => setWebhookSecret(e.target.value)}
+              />
+              <div className="mt-2 p-3 bg-secondary/50 rounded-lg">
+                <p className="text-xs font-mono break-all">
+                  {window.location.origin}/api/trpc/webhooks.wise
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Configure este URL na sua conta Wise em Settings → Webhooks
+                </p>
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <Button
                 onClick={() => {
                   updateSettingsMutation.mutate(
-                    { wiseApiToken: wiseToken },
+                    { 
+                      wiseApiToken: wiseToken || undefined,
+                      wiseWebhookSecret: webhookSecret || null,
+                    },
                     {
                       onSuccess: () => {
                         toast.success(t('tokenSaved', preferences.language));
@@ -168,17 +198,18 @@ export default function Settings() {
                     }
                   );
                 }}
-                disabled={updateSettingsMutation.isPending || !wiseToken}
+                disabled={updateSettingsMutation.isPending || (!wiseToken && !webhookSecret)}
               >
                 {t('saveToken', preferences.language)}
               </Button>
-              {settings?.wiseApiToken && (
+              {(settings?.wiseApiToken || settings?.wiseWebhookSecret) && (
                 <Button
                   variant="outline"
                   onClick={() => {
                     setWiseToken("");
+                    setWebhookSecret("");
                     updateSettingsMutation.mutate(
-                      { wiseApiToken: null },
+                      { wiseApiToken: null, wiseWebhookSecret: null },
                       {
                         onSuccess: () => {
                           toast.success(t('tokenRemoved', preferences.language));

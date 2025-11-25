@@ -7,12 +7,14 @@ import { invokeLLM } from "./_core/llm";
 import { authRouter } from "./authRouter";
 import { wiseRouter } from "./wiseRouter";
 import { csvRouter } from "./csvRouter";
+import { webhookRouter } from "./webhookRouter";
 
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter, // Usando o novo authRouter
   wise: wiseRouter, // Wise bank synchronization
   csv: csvRouter, // CSV import (Nubank, etc.)
+  webhooks: webhookRouter, // Webhook endpoints
 
   // TEMPORARY: Delete all users (REMOVE AFTER USE!)
   _dangerDeleteAllUsers: publicProcedure.mutation(async () => {
@@ -215,6 +217,7 @@ export const appRouter = router({
         monthlySavingTarget: z.number().optional(),
         hasUnreadArchived: z.boolean().optional(),
         wiseApiToken: z.string().nullable().optional(),
+        wiseWebhookSecret: z.string().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Check if settings exist
