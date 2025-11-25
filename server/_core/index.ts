@@ -1,7 +1,7 @@
-// /home/ubuntu/money-goal-app/server/_core/index.ts
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import session from "express-session";
 import { createServer } from "http";
 import net from "net";
 import fs from "fs";
@@ -12,8 +12,11 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
-function isPortAvailable(port: number ): Promise<boolean> {
-  return new Promise(resolve => {
+/**
+ * Utility: check if a TCP port is available on this machine.
+ */
+function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
     const server = net.createServer();
     server.listen(port, () => {
       server.close(() => resolve(true));
@@ -22,6 +25,9 @@ function isPortAvailable(port: number ): Promise<boolean> {
   });
 }
 
+/**
+ * Find an available port starting at startPort (tries a small range).
+ */
 async function findAvailablePort(startPort: number = 3000): Promise<number> {
   for (let port = startPort; port < startPort + 20; port++) {
     if (await isPortAvailable(port)) {
@@ -33,41 +39,76 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
-  app.set('trust proxy', 1);
 
-  // Allow all Vercel preview and production domains
-  app.use(cors({ 
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      // Allow localhost for development
-      if (origin.includes('localhost')) return callback(null, true);
-      
-      // Allow all Vercel domains (preview and production)
-      if (origin.includes('.vercel.app')) return callback(null, true);
-      
-      // Allow specific domains
-      const allowedOrigins = [
-        'https://money-goal-app.vercel.app',
-        'https://dynamic-brioche-f9291c.netlify.app'
-      ];
-      
-      if (allowedOrigins.includes(origin )) {
-        return callback(null, true);
-      }
-      
-      callback(new Error('Not allowed by CORS'));
-    },
-    credentials: false // Não usamos mais cookies, então não precisamos de credenciais
-  }));
-  const server = createServer(app);
-  // Configure body parser with larger size limit for file uploads
+  // When running behind a proxy (Render / Cloudflare), trust it so cookies/secure behave correctly.
+  app.set("trust proxy", 1);
+
+  // Body parsers
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  // OAuth callback under /api/oauth/callback
+
+  /**
+   * CORS configuration
+   * - credentials: true so the browser can send/receive cookies (Set-Cookie + Cookie).
+   * - origin is validated and echoed back (cors package will send the specific origin).
+   */
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // Allow requests with no origin (server-to-server, curl, Postman)
+        if (!origin) return callback(null, true);
+
+        // Allow localhost for dev
+        if (origin.includes("localhost")) return callback(null, true);
+
+        // Allow Vercel preview/prod domains
+        if (origin.includes(".vercel.app")) return callback(null, true);
+
+        // Add any additional allowed hosts here
+        const allowedOrigins = [
+          "https://money-goal-app.vercel.app",
+          "https://dynamic-brioche-f9291c.netlify.app",
+        ];
+
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        // Default: block
+        return callback(new Error("Not allowed by CORS"));
+      },
+      credentials: true, // IMPORTANT: allow cookies to be sent cross-site
+      methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  );
+
+  /**
+   * Session middleware
+   * - Uses express-session default MemoryStore (OK for testing / small apps).
+   * - In production you should replace with a persistent store (Redis, etc.)
+   * - cookie.sameSite = 'none' and secure = true are required for cross-site cookies on HTTPS.
+   */
+  const sessionSecret = process.env.SESSION_SECRET || process.env.JWT_SECRET || "change-me-in-prod";
+  app.use(
+    session({
+      name: process.env.SESSION_COOKIE_NAME ?? "sid",
+      secret: sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "none",
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      },
+    })
+  );
+
+  // Register OAuth routes (might use session)
   registerOAuthRoutes(app);
-  // tRPC API
+
+  // tRPC API (ensure session middleware is applied before tRPC handlers)
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -76,36 +117,36 @@ async function startServer() {
     })
   );
 
-  // development mode uses Vite, production mode uses static files (if present)
+  // Serve client: dev uses Vite, prod uses static files if present
   if (process.env.NODE_ENV === "development") {
-    await setupVite(app, server);
+    await setupVite(app, createServer(app));
   } else {
-    // Serve static client only if build exists to avoid ENOENT errors
     const clientDistPath = path.resolve(process.cwd(), "client", "dist");
     if (fs.existsSync(clientDistPath)) {
       console.log("[Server] Serving static client from", clientDistPath);
-      // If your serveStatic helper already handles existence checks, you can still call it.
-      // We call serveStatic here to keep existing behavior (history fallback, etc.)
       serveStatic(app);
     } else {
       console.log("[Server] client/dist not found — static client will not be served.");
-      // Provide a safe root route so the service responds without errors
       app.get("/", (req, res) => {
         res.json({ ok: true, note: "Backend running — client not served from this host." });
       });
     }
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
+  const preferredPort = parseInt(process.env.PORT || "3000", 10);
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  const server = createServer(app);
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/` );
+    console.log(`Server running on http://localhost:${port}/`);
   });
 }
 
-startServer().catch(console.error);
+startServer().catch((err) => {
+  console.error("Server failed to start:", err);
+  process.exit(1);
+});
