@@ -21,12 +21,14 @@ const months = [
 
 // Component for Mark Paid button
 function MonthlyStatusButtonComponent({ month, year, totalAmount }: { month: number; year: number; totalAmount: number }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const utils = trpc.useUtils();
+  
+  // Don't query if auth is loading or user is not available
   const { data: payment, isLoading, error } = trpc.monthlyPayments.getPayment.useQuery(
     { month, year },
     { 
-      enabled: !!user,
+      enabled: !loading && !!user,
       retry: false,
       refetchOnWindowFocus: false,
     }
@@ -96,14 +98,22 @@ export default function AQWorlds() {
   const [isEditProjectModalOpen, setIsEditProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
 
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const utils = trpc.useUtils();
-  const { data: projects = [] } = trpc.projects.getAll.useQuery(undefined, {
-    enabled: !!user,
-  });
-  const { data: events = [] } = trpc.events.getAll.useQuery(undefined, {
-    enabled: !!user,
-  });
+  
+  // Don't render or make queries until auth is loaded
+  if (loading || !user) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  const { data: projects = [] } = trpc.projects.getAll.useQuery();
+  const { data: events = [] } = trpc.events.getAll.useQuery();
 
   const createProjectMutation = trpc.projects.create.useMutation({
     onSuccess: () => {
