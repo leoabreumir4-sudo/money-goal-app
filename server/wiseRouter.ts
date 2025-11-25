@@ -19,7 +19,7 @@ export const wiseRouter = router({
         await getProfiles(input.token);
 
         // Update user settings with token
-        await db.updateUserSettings(ctx.user.id, {
+        await db.updateUserSettings(ctx.user.openId, {
           wiseApiToken: input.token,
         });
 
@@ -37,7 +37,7 @@ export const wiseRouter = router({
    * Remove Wise API token from user settings
    */
   removeToken: protectedProcedure.mutation(async ({ ctx }) => {
-    await db.updateUserSettings(ctx.user.id, {
+    await db.updateUserSettings(ctx.user.openId, {
       wiseApiToken: null,
     });
     return { success: true };
@@ -47,7 +47,7 @@ export const wiseRouter = router({
    * Get Wise balances for all currencies
    */
   getBalances: protectedProcedure.query(async ({ ctx }) => {
-    const settings = await db.getUserSettings(ctx.user.id);
+    const settings = await db.getUserSettings(ctx.user.openId);
     
     if (!settings?.wiseApiToken) {
       throw new TRPCError({
@@ -84,7 +84,7 @@ export const wiseRouter = router({
    * Get Wise balances converted to user's preferred currency
    */
   getBalancesConverted: protectedProcedure.query(async ({ ctx }) => {
-    const settings = await db.getUserSettings(ctx.user.id);
+    const settings = await db.getUserSettings(ctx.user.openId);
     
     if (!settings?.wiseApiToken) {
       throw new TRPCError({
@@ -141,7 +141,7 @@ export const wiseRouter = router({
       endDate: z.string(), // ISO date
     }))
     .mutation(async ({ ctx, input }) => {
-      const settings = await db.getUserSettings(ctx.user.id);
+      const settings = await db.getUserSettings(ctx.user.openId);
       
       if (!settings?.wiseApiToken) {
         throw new TRPCError({
@@ -176,7 +176,7 @@ export const wiseRouter = router({
         
         for (const transaction of statement.transactions) {
           // Skip if transaction already exists (by reference number)
-          const existing = await db.getTransactionsByGoalId(input.goalId, ctx.user.id);
+          const existing = await db.getTransactionsByGoalId(input.goalId, ctx.user.openId);
           const alreadyExists = existing.some(t => 
             t.reason.includes(transaction.referenceNumber)
           );
@@ -210,7 +210,7 @@ export const wiseRouter = router({
           reason += ` (Ref: ${transaction.referenceNumber})`;
 
           await db.createTransaction({
-            userId: ctx.user.id,
+            userId: ctx.user.openId,
             goalId: input.goalId,
             type,
             amount,
