@@ -42,7 +42,7 @@ export function BankSync({ goalId }: BankSyncProps) {
   // Wise sync mutation
   const wiseSyncMutation = trpc.wise.syncTransactions.useMutation({
     onSuccess: (data) => {
-      toast.success(t('wiseImportSuccess', preferences.language, data.importedCount.toString(), data.totalTransactions.toString()));
+      toast.success(t('wiseImportSuccess', preferences.language).replace('{0}', data.importedCount.toString()).replace('{1}', data.totalTransactions.toString()));
       setWiseSyncDialogOpen(false);
       utils.transactions.getAll.invalidate();
       utils.goals.getActive.invalidate();
@@ -55,7 +55,7 @@ export function BankSync({ goalId }: BankSyncProps) {
   // CSV import mutation
   const csvImportMutation = trpc.csv.importNubankCSV.useMutation({
     onSuccess: (data) => {
-      toast.success(t('csvImportSuccess', preferences.language, data.importedCount.toString(), data.skippedCount.toString()));
+      toast.success(t('csvImportSuccess', preferences.language).replace('{0}', data.importedCount.toString()).replace('{1}', data.skippedCount.toString()));
       utils.transactions.getAll.invalidate();
       utils.goals.getActive.invalidate();
       if (fileInputRef.current) {
