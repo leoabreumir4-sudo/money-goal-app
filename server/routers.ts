@@ -444,7 +444,7 @@ export const appRouter = router({
           content: response,
         });
 
-        return { response };
+        return { message: response };
       }),
   }),
 
