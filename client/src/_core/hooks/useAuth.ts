@@ -18,6 +18,12 @@ export function useAuth(options?: UseAuthOptions) {
     refetchOnWindowFocus: false,
   });
 
+  console.log('[useAuth] Query state:', {
+    isLoading: meQuery.isLoading,
+    hasData: !!meQuery.data,
+    hasError: !!meQuery.error,
+  });
+
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       localStorage.removeItem('sessionToken'); // Limpa o token do localStorage

@@ -48,6 +48,9 @@ const trpcClient = trpc.createClient({
 
         if (token) {
           headers.set('Authorization', `Bearer ${token}`);
+          console.log('[tRPC] Sending request with token:', token.substring(0, 20) + '...');
+        } else {
+          console.warn('[tRPC] No token found in localStorage');
         }
 
         return globalThis.fetch(input, {
