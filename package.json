@@ -6,7 +6,8 @@
  "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "cd client && pnpm install && pnpm run build",
-    "start": "NODE_ENV=production tsx server/_core/index.ts",
+    "start": "sh -c 'if [ \"$MIGRATE\" = \"1\" ]; then pnpm run migrate; fi && NODE_ENV=production tsx server/_core/index.ts'",
+    "start:prod": "NODE_ENV=production tsx server/_core/index.ts",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
