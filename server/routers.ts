@@ -59,11 +59,17 @@ export const appRouter = router({
       // Recalculate currentAmount from transactions if goal exists
       if (goal) {
         const transactions = await db.getTransactionsByGoalId(goal.id, ctx.user.id);
-        const calculatedAmount = transactions.reduce((sum, t) => {
+        
+        // Separate Wise transactions from manual transactions
+        const manualTransactions = transactions.filter(t => t.source !== 'wise');
+        const wiseTransactions = transactions.filter(t => t.source === 'wise');
+        
+        // Calculate amount from manual transactions only
+        const manualAmount = manualTransactions.reduce((sum, t) => {
           return t.type === "income" ? sum + t.amount : sum - t.amount;
         }, 0);
         
-        // Get total Wise balance converted to user's currency
+        // Get total Wise balance converted to user's currency (this is the current real balance)
         let wiseBalance = 0;
         try {
           const settings = await db.getUserSettings(ctx.user.id);
@@ -91,8 +97,9 @@ export const appRouter = router({
           // Continue without Wise balance on error
         }
         
-        // Combine transactions amount with Wise balance
-        const totalAmount = calculatedAmount + wiseBalance;
+        // Total = manual transactions + current Wise balance (not Wise transactions from CSV)
+        // Wise transactions are for history/detail only, the real balance comes from API
+        const totalAmount = manualAmount + wiseBalance;
         
         // Update if different
         if (totalAmount !== goal.currentAmount) {
