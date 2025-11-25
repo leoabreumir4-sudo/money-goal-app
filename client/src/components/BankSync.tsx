@@ -1,10 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { trpc } from "@/lib/trpc";
-import { PlaidLinkButton } from "./PlaidLinkButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Calendar, RefreshCw, Trash2, Building2, ChevronDown, ChevronUp } from "lucide-react";
+import { Building2, ChevronDown, ChevronUp, Upload, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -20,6 +18,7 @@ import {
 } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface BankSyncProps {
   goalId: number;
@@ -28,56 +27,72 @@ interface BankSyncProps {
 export function BankSync({ goalId }: BankSyncProps) {
   const { preferences } = usePreferences();
   const [isOpen, setIsOpen] = useState(false);
-  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
-  const [selectedBankId, setSelectedBankId] = useState<number | null>(null);
+  const [wiseSyncDialogOpen, setWiseSyncDialogOpen] = useState(false);
+  const [currency, setCurrency] = useState("USD");
   const [startDate, setStartDate] = useState(format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const utils = trpc.useUtils();
 
-  // Get connected accounts
-  const { data: accounts = [], isLoading, error } = trpc.plaid.getConnectedAccounts.useQuery();
-  
-  // Check if Plaid is not configured
-  const isPlaidUnavailable = error?.data?.code === "PRECONDITION_FAILED";
+  // Get Wise balances
+  const { data: balances = [], error: wiseError } = trpc.wise.getBalances.useQuery();
+  const isWiseNotConfigured = wiseError?.data?.code === "PRECONDITION_FAILED";
 
-  // Disconnect mutation
-  const disconnect = trpc.plaid.disconnectAccount.useMutation({
-    onSuccess: () => {
-      toast.success("Bank account disconnected");
-      utils.plaid.getConnectedAccounts.invalidate();
-    },
-    onError: () => {
-      toast.error("Failed to disconnect account");
-    },
-  });
-
-  // Sync mutation
-  const syncTransactions = trpc.plaid.syncTransactions.useMutation({
+  // Wise sync mutation
+  const wiseSyncMutation = trpc.wise.syncTransactions.useMutation({
     onSuccess: (data) => {
-      toast.success(`Successfully imported ${data.importedCount} transactions`);
-      setSyncDialogOpen(false);
+      toast.success(`Successfully imported ${data.importedCount} of ${data.totalTransactions} Wise transactions`);
+      setWiseSyncDialogOpen(false);
       utils.transactions.getAll.invalidate();
       utils.goals.getActive.invalidate();
     },
-    onError: () => {
-      toast.error("Failed to sync transactions");
+    onError: (error) => {
+      toast.error(error.message || "Failed to sync Wise transactions");
     },
   });
 
-  const handleSync = (bankId: number) => {
-    setSelectedBankId(bankId);
-    setSyncDialogOpen(true);
+  // CSV import mutation
+  const csvImportMutation = trpc.csv.importNubankCSV.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Imported ${data.importedCount} transactions (${data.skippedCount} duplicates skipped)`);
+      utils.transactions.getAll.invalidate();
+      utils.goals.getActive.invalidate();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to import CSV");
+    },
+  });
+
+  const handleWiseSync = () => {
+    setWiseSyncDialogOpen(true);
   };
 
-  const handleSyncConfirm = () => {
-    if (!selectedBankId) return;
-    syncTransactions.mutate({
-      bankAccountId: selectedBankId,
+  const handleWiseSyncConfirm = () => {
+    wiseSyncMutation.mutate({
       goalId,
+      currency,
       startDate,
       endDate,
     });
+  };
+
+  const handleCsvUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      csvImportMutation.mutate({
+        goalId,
+        csvContent: content,
+      });
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -92,11 +107,9 @@ export function BankSync({ goalId }: BankSyncProps) {
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{t('bankSynchronization', preferences.language)}</CardTitle>
+                    <CardTitle className="text-lg">Bank Synchronization</CardTitle>
                     <CardDescription className="text-sm">
-                      {accounts.length > 0 
-                        ? `${accounts.length} ${t(accounts.length === 1 ? 'account' : 'accounts', preferences.language)} ${t('connected', preferences.language)}` 
-                        : t('connectBankAccounts', preferences.language)}
+                      Sync Wise or import Nubank CSV
                     </CardDescription>
                   </div>
                 </div>
@@ -111,112 +124,124 @@ export function BankSync({ goalId }: BankSyncProps) {
           
           <CollapsibleContent>
             <CardContent className="space-y-4 pt-0">
-          {isPlaidUnavailable ? (
-            <div className="text-center py-6 px-4">
-              <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-4 mb-4">
-                <p className="text-sm text-yellow-600 dark:text-yellow-500 font-medium mb-2">
-                  ⚠️ Bank Sync Unavailable
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Bank synchronization is currently not configured. Contact the administrator to enable this feature.
-                </p>
-              </div>
-            </div>
-          ) : accounts.length === 0 ? (
-            <div className="text-center py-6">
-              <p className="text-sm text-muted-foreground mb-4">{t('noBankAccounts', preferences.language)}</p>
-              <PlaidLinkButton onSuccess={() => utils.plaid.getConnectedAccounts.invalidate()} />
-            </div>
-          ) : (
-            <>
-              <div className="space-y-3">
-                {accounts.map((account) => (
-                  <div
-                    key={account.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{account.institutionName}</h4>
-                        <Badge variant="secondary" className="text-xs">
-                          Active
-                        </Badge>
-                      </div>
-                      {account.lastSyncDate && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Last synced: {format(new Date(account.lastSyncDate), "MMM d, yyyy")}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSync(account.id)}
-                        disabled={syncTransactions.isPending}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        {t('sync', preferences.language)}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => disconnect.mutate({ bankAccountId: account.id })}
-                        disabled={disconnect.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+              {/* Wise Integration */}
+              <div className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">Wise</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {isWiseNotConfigured 
+                        ? "Token not configured. Go to Settings." 
+                        : `${balances.length} currency balances available`}
+                    </p>
                   </div>
-                ))}
+                  <Button
+                    onClick={handleWiseSync}
+                    disabled={isWiseNotConfigured}
+                    size="sm"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Sync Wise
+                  </Button>
+                </div>
+                {!isWiseNotConfigured && balances.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {balances.map((balance) => (
+                      <div key={balance.currency} className="text-sm p-2 bg-secondary/50 rounded">
+                        <div className="font-medium">{balance.currency}</div>
+                        <div className="text-muted-foreground">{balance.amount.toFixed(2)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="pt-4 border-t">
-                <PlaidLinkButton onSuccess={() => utils.plaid.getConnectedAccounts.invalidate()} />
+
+              {/* CSV Import */}
+              <div className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">Nubank CSV</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Import transactions from CSV file
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload CSV
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    className="hidden"
+                    onChange={handleCsvUpload}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Expected format: date, description, amount (e.g., "2025-01-15,Compra iFood,-45.50")
+                </p>
               </div>
-            </>
-          )}
             </CardContent>
           </CollapsibleContent>
         </Card>
       </Collapsible>
 
-      <Dialog open={syncDialogOpen} onOpenChange={setSyncDialogOpen}>
+      {/* Wise Sync Dialog */}
+      <Dialog open={wiseSyncDialogOpen} onOpenChange={setWiseSyncDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('syncTransactions', preferences.language)}</DialogTitle>
+            <DialogTitle>Sync Wise Transactions</DialogTitle>
             <DialogDescription>
-              {t('selectDateRange', preferences.language)}
+              Select currency and date range to import transactions from Wise
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">{t('startDate', preferences.language)}</Label>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="currency">Currency</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {balances.map((balance) => (
+                    <SelectItem key={balance.currency} value={balance.currency}>
+                      {balance.currency} ({balance.amount.toFixed(2)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="startDate">Start Date</Label>
               <Input
                 id="startDate"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                max={endDate}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endDate">{t('endDate', preferences.language)}</Label>
+
+            <div>
+              <Label htmlFor="endDate">End Date</Label>
               <Input
                 id="endDate"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                max={format(new Date(), "yyyy-MM-dd")}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSyncDialogOpen(false)}>
-              {t('cancel', preferences.language)}
+            <Button variant="outline" onClick={() => setWiseSyncDialogOpen(false)}>
+              Cancel
             </Button>
-            <Button onClick={handleSyncConfirm} disabled={syncTransactions.isPending}>
-              {syncTransactions.isPending ? t('syncing', preferences.language) : t('syncTransactions', preferences.language)}
+            <Button onClick={handleWiseSyncConfirm} disabled={wiseSyncMutation.isPending}>
+              {wiseSyncMutation.isPending ? "Syncing..." : "Sync"}
             </Button>
           </DialogFooter>
         </DialogContent>
