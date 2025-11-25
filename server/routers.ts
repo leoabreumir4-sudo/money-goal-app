@@ -214,6 +214,7 @@ export const appRouter = router({
         theme: z.enum(["dark", "light"]).optional(),
         monthlySavingTarget: z.number().optional(),
         hasUnreadArchived: z.boolean().optional(),
+        wiseApiToken: z.string().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         // Check if settings exist
