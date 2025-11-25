@@ -168,11 +168,19 @@ export async function getActiveGoal(userId: number) {
   const db = await getDb();
   if (!db) return null;
   
-  const result = await db.select().from(goals)
-    .where(and(eq(goals.userId, userId), eq(goals.status, "active")))
-    .limit(1);
+  console.log("[DB] getActiveGoal called with userId:", userId, "type:", typeof userId);
   
-  return result.length > 0 ? result[0] : null;
+  try {
+    const result = await db.select().from(goals)
+      .where(and(eq(goals.userId, userId), eq(goals.status, "active")))
+      .limit(1);
+    
+    console.log("[DB] getActiveGoal result:", result);
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("[DB] getActiveGoal error:", error);
+    throw error;
+  }
 }
 
 export async function getArchivedGoals(userId: number) {
