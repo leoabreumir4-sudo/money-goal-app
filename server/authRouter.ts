@@ -62,25 +62,21 @@ export const authRouter = router({
         });
       }
 
-      // Use sdk.auth.login to handle session creation and cookie setting
-      const authResult = await sdk.auth.login({
-        openId: newUser.openId,
-        name: newUser.name,
-        email: newUser.email,
-        type: "local",
+      // Create session token for the new user
+      const token = await sdk.createSessionToken(newUser.openId, {
+        name: newUser.name || "",
       });
-
-      if (!authResult.success) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to log in after registration",
-        });
-      }
 
       // Return the token for the client to store
       return {
-        token: authResult.token,
-        user: authResult.user,
+        token,
+        user: {
+          id: newUser.id,
+          openId: newUser.openId,
+          email: newUser.email,
+          name: newUser.name,
+          role: newUser.role,
+        },
       };
     }),
 
@@ -108,25 +104,21 @@ export const authRouter = router({
         });
       }
 
-      // Use sdk.auth.login to handle session creation and cookie setting
-      const authResult = await sdk.auth.login({
-        openId: user.openId,
-        name: user.name,
-        email: user.email,
-        type: "local",
+      // Create session token for the user
+      const token = await sdk.createSessionToken(user.openId, {
+        name: user.name || "",
       });
-
-      if (!authResult.success) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to log in",
-        });
-      }
 
       // Return the token for the client to store
       return {
-        token: authResult.token,
-        user: authResult.user,
+        token,
+        user: {
+          id: user.id,
+          openId: user.openId,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
       };
     }),
 });
