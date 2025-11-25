@@ -669,15 +669,18 @@ export default function AQWorlds() {
             
             <div className="space-y-6 py-2">
               {/* Event List */}
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="events">
-                  {(provided) => (
-                    <div 
-                      {...provided.droppableProps} 
-                      ref={provided.innerRef}
-                      className="space-y-2 max-h-[400px] overflow-y-auto pr-2"
-                    >
-                      {monthEvents.filter(event => event && event.id).map((event, index) => (
+              {!events || events.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">Loading events...</div>
+              ) : (
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="events">
+                    {(provided) => (
+                      <div 
+                        {...provided.droppableProps} 
+                        ref={provided.innerRef}
+                        className="space-y-2 max-h-[400px] overflow-y-auto pr-2"
+                      >
+                        {monthEvents.filter(event => event && event.id).map((event, index) => (
                         <Draggable key={event.id} draggableId={String(event.id)} index={index}>
                           {(provided) => (
                             <div
@@ -744,14 +747,15 @@ export default function AQWorlds() {
                           )}
                         </Draggable>
                       ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                )}
 
-              {/* Add Custom Event */}
-              <div className="border-t pt-4 space-y-3">
+                {/* Add Custom Event */}
+                <div className="border-t pt-4 space-y-3">
                 <Label htmlFor="newEvent" className="text-base font-semibold">Add Custom Event</Label>
                 <div className="flex gap-2">
                   <Input
