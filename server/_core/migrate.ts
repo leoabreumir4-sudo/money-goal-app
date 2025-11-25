@@ -16,8 +16,6 @@ async function main() {
 
   try {
     console.log("[Database] Running Drizzle migrations...");
-    // Use drizzle-kit push for production (applies schema directly)
-    // Or use migrate command if you have migration files
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const { migrate } = await import("drizzle-orm/node-postgres/migrator");
     const { Pool } = await import("pg");
@@ -32,6 +30,25 @@ async function main() {
     await migrate(db, { migrationsFolder: "./drizzle" });
     
     console.log("[Database] Drizzle migrations completed successfully.");
+    
+    // Ensure openId unique constraint exists
+    console.log("[Database] Checking openId unique constraint...");
+    await pool.query(`
+      DO $$ 
+      BEGIN
+          IF NOT EXISTS (
+              SELECT 1 FROM pg_constraint 
+              WHERE conname = 'users_openId_unique'
+          ) THEN
+              ALTER TABLE "users" ADD CONSTRAINT "users_openId_unique" UNIQUE("openId");
+              RAISE NOTICE 'Added unique constraint to openId';
+          ELSE
+              RAISE NOTICE 'Unique constraint already exists';
+          END IF;
+      END $$;
+    `);
+    
+    console.log("[Database] All migrations and constraints applied successfully.");
     await pool.end();
     process.exit(0);
   } catch (err: any) {
