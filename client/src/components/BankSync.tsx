@@ -37,7 +37,7 @@ export function BankSync({ goalId }: BankSyncProps) {
   const utils = trpc.useUtils();
 
   // Get user settings to check if Wise token exists
-  const { data: settings } = trpc.userSettings.get.useQuery();
+  const { data: settings } = trpc.settings.get.useQuery();
   const hasWiseToken = !!settings?.wiseApiToken;
 
   // Get Wise balances only if token exists
