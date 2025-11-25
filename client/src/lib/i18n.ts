@@ -390,19 +390,7 @@ export const translations = {
     error: "Error",
     success: "Éxito",
   },
-};  startDate: "Fecha Inicial",
-    endDate: "Fecha Final",
-    syncing: "Sincronizando...",
-    
-    // General
-    income: "Ingreso",
-    expense: "Gasto",
-    amount: "Cantidad",
-    reason: "Razón",
-    cancel: "Cancelar",
-    save: "Guardar",
-    delete: "Eliminar",
-    edit: "Editar",
+};
     close: "Cerrar",
     loading: "Cargando...",
     error: "Error",
