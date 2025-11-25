@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { ArrowDown, ArrowUp, Pencil, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Sparkles, Wallet } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { BankSync } from "@/components/BankSync";
@@ -411,11 +411,12 @@ export default function Dashboard() {
                         </span>
                       </div>
                       {wiseBalance > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-purple-400 flex items-center gap-1">
-                            <span className="text-xs">💳</span> Wise Balance
+                        <div className="flex justify-between text-xs pl-4 py-1">
+                          <span className="text-muted-foreground/80 flex items-center gap-1.5">
+                            <Wallet className="h-3 w-3 text-purple-400" />
+                            Includes Wise balance
                           </span>
-                          <span className="font-semibold text-purple-400">
+                          <span className="text-muted-foreground/80">
                             {formatCurrency(wiseBalance, preferences.currency)}
                           </span>
                         </div>
