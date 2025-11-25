@@ -197,7 +197,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                     <p className="text-sm text-muted-foreground">
                       {isWiseNotConfigured 
                         ? t('tokenNotConfigured', preferences.language)
-                        : `${balances.length} ${t('wiseBalances', preferences.language)}`}
+                        : `${balances.filter((b: any) => b.amount > 0).length} ${t('wiseBalances', preferences.language)}`}
                     </p>
                   </div>
                   {isWiseNotConfigured ? (
