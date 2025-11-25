@@ -30,39 +30,8 @@ async function main() {
     console.log("[Database] Migrations folder: ./drizzle/migrations");
     await migrate(db, { migrationsFolder: "./drizzle/migrations" });
     
-    console.log("[Database] Drizzle migrations completed successfully.");
+    console.log("[Database] Migrations completed successfully.");
     
-    // Verify tables were created
-    const checkTables = await pool.query(`
-      SELECT tablename FROM pg_tables WHERE schemaname = 'public'
-    `);
-    console.log("[Database] Tables in database:", checkTables.rows.map(r => r.tablename).join(", "));
-    
-    // Ensure openId unique constraint exists
-    console.log("[Database] Checking openId unique constraint...");
-    await pool.query(`
-      DO $$ 
-      BEGIN
-          IF NOT EXISTS (
-              SELECT 1 FROM pg_constraint 
-              WHERE conname = 'users_openId_unique'
-          ) THEN
-              ALTER TABLE "users" ADD CONSTRAINT "users_openId_unique" UNIQUE("openId");
-              RAISE NOTICE 'Added unique constraint to openId';
-          ELSE
-              RAISE NOTICE 'Unique constraint already exists';
-          END IF;
-      END $$;
-    `);
-    
-    // Make email column nullable
-    console.log("[Database] Making email column nullable...");
-    await pool.query(`
-      ALTER TABLE "users" ALTER COLUMN "email" DROP NOT NULL;
-    `);
-    console.log("[Database] Email column is now nullable.");
-    
-    console.log("[Database] All migrations and constraints applied successfully.");
     await pool.end();
     process.exit(0);
   } catch (err: any) {
