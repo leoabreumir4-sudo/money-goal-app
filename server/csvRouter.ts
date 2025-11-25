@@ -51,7 +51,207 @@ function parseNubankCSV(csvContent: string): Array<{
   return transactions;
 }
 
+/**
+ * Parse Wise CSV format
+ * Format: ID,Status,Direction,"Created on","Finished on","Source name","Source amount (after fees)","Source currency","Target name","Target amount (after fees)","Target currency",...
+ */
+function parseWiseCSV(csvContent: string, preferredCurrency: string): Array<{
+  date: string;
+  description: string;
+  amount: number;
+  currency: string;
+  reference: string;
+}> {
+  const lines = csvContent.trim().split("\n");
+  const transactions: Array<{ date: string; description: string; amount: number; currency: string; reference: string }> = [];
+
+  if (lines.length < 2) return transactions;
+
+  // Parse header to find column indices
+  const header = lines[0].split(",").map(h => h.replace(/"/g, "").trim());
+  const finishedOnIdx = header.findIndex(h => h.toLowerCase() === "finished on");
+  const sourceNameIdx = header.findIndex(h => h.toLowerCase() === "source name");
+  const targetNameIdx = header.findIndex(h => h.toLowerCase() === "target name");
+  const sourceAmountIdx = header.findIndex(h => h.toLowerCase() === "source amount (after fees)");
+  const targetAmountIdx = header.findIndex(h => h.toLowerCase() === "target amount (after fees)");
+  const sourceCurrencyIdx = header.findIndex(h => h.toLowerCase() === "source currency");
+  const targetCurrencyIdx = header.findIndex(h => h.toLowerCase() === "target currency");
+  const referenceIdx = header.findIndex(h => h.toLowerCase() === "reference");
+  const categoryIdx = header.findIndex(h => h.toLowerCase() === "category");
+  const directionIdx = header.findIndex(h => h.toLowerCase() === "direction");
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Parse CSV line properly (handle quoted fields with commas)
+    const parts: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === "," && !inQuotes) {
+        parts.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    parts.push(current.trim());
+
+    if (parts.length < header.length - 5) continue; // Allow some missing columns
+
+    const date = parts[finishedOnIdx]?.replace(/"/g, "");
+    const sourceName = parts[sourceNameIdx]?.replace(/"/g, "");
+    const targetName = parts[targetNameIdx]?.replace(/"/g, "");
+    const sourceAmount = parseFloat(parts[sourceAmountIdx] || "0");
+    const targetAmount = parseFloat(parts[targetAmountIdx] || "0");
+    const sourceCurrency = parts[sourceCurrencyIdx]?.replace(/"/g, "");
+    const targetCurrency = parts[targetCurrencyIdx]?.replace(/"/g, "");
+    const reference = parts[referenceIdx]?.replace(/"/g, "") || "";
+    const category = parts[categoryIdx]?.replace(/"/g, "") || "";
+    const direction = parts[directionIdx]?.replace(/"/g, "");
+
+    if (!date || isNaN(sourceAmount) || isNaN(targetAmount)) continue;
+
+    // Determine which amount/currency to use based on preferred currency
+    let amount: number;
+    let currency: string;
+    let description: string;
+
+    // Handle currency conversion transactions
+    if (direction === "NEUTRAL") {
+      // Conversion transaction - use target if it matches preferred currency, otherwise source
+      if (targetCurrency === preferredCurrency) {
+        amount = targetAmount;
+        currency = targetCurrency;
+        description = `Convert ${sourceAmount} ${sourceCurrency} to ${targetCurrency}`;
+      } else if (sourceCurrency === preferredCurrency) {
+        amount = -sourceAmount; // Negative because money left this currency
+        currency = sourceCurrency;
+        description = `Convert ${sourceCurrency} to ${targetAmount} ${targetCurrency}`;
+      } else {
+        // Neither matches preferred, skip or use target
+        amount = targetAmount;
+        currency = targetCurrency;
+        description = `${sourceName} to ${targetName}`;
+      }
+    } else if (direction === "IN") {
+      // Money coming in
+      amount = targetAmount;
+      currency = targetCurrency;
+      description = `${sourceName} - ${reference || category}`;
+    } else if (direction === "OUT") {
+      // Money going out
+      amount = -sourceAmount;
+      currency = sourceCurrency;
+      description = `${targetName} - ${category || reference}`;
+    } else {
+      continue;
+    }
+
+    transactions.push({
+      date,
+      description: description.trim() || "Wise transaction",
+      amount,
+      currency,
+      reference: reference || `${date}-${amount}`,
+    });
+  }
+
+  return transactions;
+}
+
 export const csvRouter = router({
+  /**
+   * Import Wise CSV transactions
+   */
+  importWiseCSV: protectedProcedure
+    .input(z.object({
+      goalId: z.number(),
+      csvContent: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const settings = await db.getUserSettings(ctx.user.id);
+        const preferredCurrency = settings?.currency || "USD";
+        
+        const transactions = parseWiseCSV(input.csvContent, preferredCurrency);
+
+        if (transactions.length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "No valid transactions found in Wise CSV file.",
+          });
+        }
+
+        let importedCount = 0;
+        let skippedCount = 0;
+
+        for (const transaction of transactions) {
+          // Check if transaction already exists (by reference)
+          const existing = await db.getTransactionsByGoalId(input.goalId, ctx.user.id);
+          const alreadyExists = existing.some(t => 
+            t.reason.includes(transaction.reference)
+          );
+
+          if (alreadyExists) {
+            skippedCount++;
+            continue;
+          }
+
+          // Convert amount to preferred currency if needed
+          let amount = Math.abs(Math.round(transaction.amount * 100)); // Convert to cents
+          const type = transaction.amount > 0 ? "income" : "expense";
+
+          // If transaction is in different currency, convert it
+          if (transaction.currency !== preferredCurrency) {
+            const { convertAmount } = await import("./_core/currencyConversion");
+            amount = await convertAmount(amount, transaction.currency, preferredCurrency);
+          }
+
+          let reason = transaction.description;
+          if (transaction.currency !== preferredCurrency) {
+            const originalAmount = Math.abs(transaction.amount);
+            reason += ` (${originalAmount.toFixed(2)} ${transaction.currency} → ${preferredCurrency})`;
+          }
+          reason += ` (Ref: ${transaction.reference})`;
+
+          await db.createTransaction({
+            userId: ctx.user.id,
+            goalId: input.goalId,
+            type,
+            amount,
+            reason,
+            source: 'wise',
+          });
+
+          importedCount++;
+        }
+
+        return {
+          success: true,
+          importedCount,
+          skippedCount,
+          totalTransactions: transactions.length,
+        };
+      } catch (error) {
+        console.error("Error importing Wise CSV:", error);
+        
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to parse Wise CSV file. Please check the format.",
+        });
+      }
+    }),
+
   /**
    * Import Nubank CSV transactions
    */

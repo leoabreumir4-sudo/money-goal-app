@@ -84,8 +84,23 @@ export function BankSync({ goalId }: BankSyncProps) {
     },
   });
 
-  // CSV import mutation
-  const csvImportMutation = trpc.csv.importNubankCSV.useMutation({
+  // CSV import mutations
+  const wiseCSVImportMutation = trpc.csv.importWiseCSV.useMutation({
+    onSuccess: (data) => {
+      toast.success(t('csvImportSuccess', preferences.language).replace('{0}', data.importedCount.toString()).replace('{1}', data.skippedCount.toString()));
+      utils.transactions.getAll.invalidate();
+      utils.goals.getActive.invalidate();
+      utils.wise.getTotalBalanceConverted.invalidate();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || t('csvImportFailed', preferences.language));
+    },
+  });
+
+  const nubankCSVImportMutation = trpc.csv.importNubankCSV.useMutation({
     onSuccess: (data) => {
       toast.success(t('csvImportSuccess', preferences.language).replace('{0}', data.importedCount.toString()).replace('{1}', data.skippedCount.toString()));
       utils.transactions.getAll.invalidate();
@@ -104,6 +119,12 @@ export function BankSync({ goalId }: BankSyncProps) {
   };
 
   const handleWiseSyncConfirm = () => {
+    // Check if selected currency has balance
+    const selectedBalance = balances.find((b: any) => b.currency === currency);
+    if (selectedBalance && selectedBalance.amount === 0) {
+      toast.warning(`Warning: ${currency} balance is 0. Synchronization may fail if there are no transactions in this period.`);
+    }
+    
     wiseSyncMutation.mutate({
       goalId,
       currency,
@@ -119,10 +140,22 @@ export function BankSync({ goalId }: BankSyncProps) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;
-      csvImportMutation.mutate({
-        goalId,
-        csvContent: content,
-      });
+      
+      // Detect if it's Wise CSV (has specific header columns)
+      const isWiseCSV = content.toLowerCase().includes('source amount (after fees)') && 
+                        content.toLowerCase().includes('target amount (after fees)');
+      
+      if (isWiseCSV) {
+        wiseCSVImportMutation.mutate({
+          goalId,
+          csvContent: content,
+        });
+      } else {
+        nubankCSVImportMutation.mutate({
+          goalId,
+          csvContent: content,
+        });
+      }
     };
     reader.readAsText(file);
   };
