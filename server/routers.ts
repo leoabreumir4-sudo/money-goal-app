@@ -10,6 +10,17 @@ export const appRouter = router({
   system: systemRouter,
   auth: authRouter, // Usando o novo authRouter
 
+  // TEMPORARY: Delete all users (REMOVE AFTER USE!)
+  _dangerDeleteAllUsers: publicProcedure.mutation(async () => {
+    const dbInstance = await db.getDb();
+    if (!dbInstance) throw new Error("Database not available");
+    
+    const { users } = await import("../drizzle/schema");
+    await dbInstance.delete(users);
+    
+    return { success: true, message: "All users deleted" };
+  }),
+
   // Manter a rota de logout aqui por enquanto
   logout: publicProcedure.mutation(() => {
     // REMOVED: Cookie clearing logic. Client is now responsible for clearing localStorage.

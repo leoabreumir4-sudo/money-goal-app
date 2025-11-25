@@ -26,10 +26,17 @@ async function main() {
     
     const db = drizzle(pool);
     
-    // Run migrations from the drizzle folder
-    await migrate(db, { migrationsFolder: "./drizzle" });
+    // Run migrations from the drizzle/migrations folder
+    console.log("[Database] Migrations folder: ./drizzle/migrations");
+    await migrate(db, { migrationsFolder: "./drizzle/migrations" });
     
     console.log("[Database] Drizzle migrations completed successfully.");
+    
+    // Verify tables were created
+    const checkTables = await pool.query(`
+      SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+    `);
+    console.log("[Database] Tables in database:", checkTables.rows.map(r => r.tablename).join(", "));
     
     // Ensure openId unique constraint exists
     console.log("[Database] Checking openId unique constraint...");
