@@ -147,72 +147,47 @@ export async function getBalanceStatement(
   
   let lastError: any;
   
-  // First, get borderless accounts to find the right balance ID
+  // First, get borderless accounts to find the account ID
   let borderlessAccounts;
+  let accountId;
+  
   try {
     borderlessAccounts = await getBorderlessAccounts(apiToken, profileId);
     console.log(`[Wise] Found ${borderlessAccounts.length} borderless accounts`);
+    
+    if (borderlessAccounts.length === 0) {
+      throw new Error("No Wise accounts found. Make sure you have a Wise multi-currency account.");
+    }
+    
+    accountId = borderlessAccounts[0].id;
+    console.log(`[Wise] Using account ID: ${accountId}`);
   } catch (error: any) {
     console.log(`[Wise] Failed to get borderless accounts:`, error.response?.status, error.response?.data || error.message);
-    throw new Error(`Failed to access Wise account. Make sure your API token has the required permissions.`);
+    // If we can't get borderless accounts, we'll try endpoints without accountId
+    console.log(`[Wise] Continuing without borderless account validation...`);
   }
   
-  if (borderlessAccounts.length === 0) {
-    throw new Error("No Wise accounts found. Make sure you have a Wise multi-currency account.");
-  }
-
-  const accountId = borderlessAccounts[0].id;
-  console.log(`[Wise] Using account ID: ${accountId}`);
-
-  // Find the balance for the requested currency
-  const balances = borderlessAccounts[0].balances || [];
-  const currencyBalance = balances.find((b: any) => b.currency === currency);
-  
-  if (!currencyBalance) {
-    throw new Error(`No ${currency} balance found in your Wise account. Please add ${currency} first.`);
-  }
-
-  const balanceId = currencyBalance.id;
-  console.log(`[Wise] Found ${currency} balance with ID: ${balanceId}`);
-  
-  // Try v3 endpoint first (more common)
-  try {
-    console.log(`[Wise] Attempting v3 endpoint for balance ${balanceId}`);
-    
-    const response = await client.get(
-      `/v3/profiles/${profileId}/borderless-accounts/${accountId}/statement.json`,
-      {
-        params: {
-          currency,
-          intervalStart,
-          intervalEnd,
-        },
-      }
-    );
-    console.log(`[Wise] v3 endpoint succeeded`);
-    return response.data;
-  } catch (error: any) {
-    console.log(`[Wise] v3 endpoint failed:`, error.response?.status, error.response?.data || error.message);
-    lastError = error;
-  }
-
-  // Try v1 balance-specific endpoint
-  try {
-    console.log(`[Wise] Attempting v1 balance-specific endpoint for balance ${balanceId}`);
-    const response = await client.get(
-      `/v1/profiles/${profileId}/balance-statements/${balanceId}/statement.json`,
-      {
-        params: {
-          intervalStart,
-          intervalEnd,
-        },
-      }
-    );
-    console.log(`[Wise] v1 balance-specific endpoint succeeded`);
-    return response.data;
-  } catch (error: any) {
-    console.log(`[Wise] v1 balance-specific endpoint failed:`, error.response?.status, error.response?.data || error.message);
-    lastError = error;
+  // Try v3 endpoint first (if we have accountId)
+  if (accountId) {
+    try {
+      console.log(`[Wise] Attempting v3 endpoint for account ${accountId}`);
+      
+      const response = await client.get(
+        `/v3/profiles/${profileId}/borderless-accounts/${accountId}/statement.json`,
+        {
+          params: {
+            currency,
+            intervalStart,
+            intervalEnd,
+          },
+        }
+      );
+      console.log(`[Wise] v3 endpoint succeeded`);
+      return response.data;
+    } catch (error: any) {
+      console.log(`[Wise] v3 endpoint failed:`, error.response?.status, error.response?.data || error.message);
+      lastError = error;
+    }
   }
 
   // Try v1 currency endpoint as last resort
