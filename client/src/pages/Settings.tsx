@@ -7,11 +7,12 @@ import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
 
 export default function Settings() {
   const utils = trpc.useUtils();
   const { data: settings } = trpc.settings.get.useQuery();
-  const { updatePreferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences();
   
   const [language, setLanguage] = useState("en");
   const [currency, setCurrency] = useState("USD");
@@ -35,7 +36,7 @@ export default function Settings() {
         currency,
         theme: theme as "dark" | "light",
       });
-      toast.success("Settings saved successfully!");
+      toast.success(t('saveChanges', preferences.language) + '!');
     },
   });
 
@@ -52,60 +53,60 @@ export default function Settings() {
       <div className="p-8 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Customize your MoneyGoal experience</p>
+          <h1 className="text-3xl font-bold text-foreground">{t('settings', preferences.language)}</h1>
+          <p className="text-muted-foreground">{t('customizeExperience', preferences.language)}</p>
         </div>
 
         {/* Settings Card */}
         <Card className="bg-card border-border max-w-2xl">
           <CardHeader>
-            <CardTitle className="text-foreground">Preferences</CardTitle>
+            <CardTitle className="text-foreground">{t('preferences', preferences.language)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Language */}
             <div className="space-y-2">
-              <Label htmlFor="language">Language</Label>
-              <p className="text-sm text-muted-foreground">Choose your preferred language</p>
+              <Label htmlFor="language">{t('language', preferences.language)}</Label>
+              <p className="text-sm text-muted-foreground">{t('chooseLanguage', preferences.language)}</p>
               <Select value={language} onValueChange={setLanguage}>
                 <SelectTrigger id="language">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="en">🇺🇸 us English</SelectItem>
-                  <SelectItem value="pt">🇧🇷 pt Português</SelectItem>
-                  <SelectItem value="es">🇪🇸 es Español</SelectItem>
+                  <SelectItem value="en">🇺🇸 {t('usEnglish', preferences.language)}</SelectItem>
+                  <SelectItem value="pt">🇧🇷 {t('ptPortuguese', preferences.language)}</SelectItem>
+                  <SelectItem value="es">🇪🇸 {t('esSpanish', preferences.language)}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Currency */}
             <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <p className="text-sm text-muted-foreground">Select your preferred currency</p>
+              <Label htmlFor="currency">{t('currency', preferences.language)}</Label>
+              <p className="text-sm text-muted-foreground">{t('selectCurrency', preferences.language)}</p>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger id="currency">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="USD">💵 USD - US Dollar</SelectItem>
-                  <SelectItem value="BRL">💰 BRL - Brazilian Real</SelectItem>
-                  <SelectItem value="EUR">💶 EUR - Euro</SelectItem>
-                  <SelectItem value="GBP">💷 GBP - British Pound</SelectItem>
+                  <SelectItem value="USD">💵 USD - {t('usDollar', preferences.language)}</SelectItem>
+                  <SelectItem value="BRL">💰 BRL - {t('brazilianReal', preferences.language)}</SelectItem>
+                  <SelectItem value="EUR">💶 EUR - {t('euro', preferences.language)}</SelectItem>
+                  <SelectItem value="GBP">💷 GBP - {t('britishPound', preferences.language)}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Theme */}
             <div className="space-y-2">
-              <Label htmlFor="theme">Theme</Label>
-              <p className="text-sm text-muted-foreground">Choose your color theme</p>
+              <Label htmlFor="theme">{t('theme', preferences.language)}</Label>
+              <p className="text-sm text-muted-foreground">{t('chooseTheme', preferences.language)}</p>
               <Select value={theme} onValueChange={(v: any) => setTheme(v)}>
                 <SelectTrigger id="theme">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="dark">🌙 Dark Mode</SelectItem>
-                  <SelectItem value="light">☀️ Light Mode</SelectItem>
+                  <SelectItem value="dark">🌙 {t('darkMode', preferences.language)}</SelectItem>
+                  <SelectItem value="light">☀️ {t('lightMode', preferences.language)}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -116,7 +117,7 @@ export default function Settings() {
               disabled={updateSettingsMutation.isPending}
               className="w-full"
             >
-              Save Changes
+              {t('saveChanges', preferences.language)}
             </Button>
           </CardContent>
         </Card>
@@ -124,11 +125,11 @@ export default function Settings() {
         {/* About Settings */}
         <Card className="bg-card border-border max-w-2xl">
           <CardHeader>
-            <CardTitle className="text-foreground">About Settings</CardTitle>
+            <CardTitle className="text-foreground">{t('aboutSettings', preferences.language)}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              Your settings are saved automatically and will apply across all your devices. Changes to currency will affect how amounts are displayed throughout the app.
+              {t('settingsDescription', preferences.language)}
             </p>
           </CardContent>
         </Card>

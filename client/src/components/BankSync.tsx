@@ -82,7 +82,7 @@ export function BankSync({ goalId }: BankSyncProps) {
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <Card>
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+            <CardHeader className="cursor-pointer transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -92,7 +92,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                     <CardTitle className="text-lg">{t('bankSynchronization', preferences.language)}</CardTitle>
                     <CardDescription className="text-sm">
                       {accounts.length > 0 
-                        ? `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} connected` 
+                        ? `${accounts.length} ${t(accounts.length === 1 ? 'account' : 'accounts', preferences.language)} ${t('connected', preferences.language)}` 
                         : t('connectBankAccounts', preferences.language)}
                     </CardDescription>
                   </div>
