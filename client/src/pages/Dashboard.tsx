@@ -320,7 +320,7 @@ export default function Dashboard() {
                 {recentTransactions.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language)}</p>
                 ) : (
-                  <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-2">
+                  <div className="space-y-3 max-h-[calc(100vh-28rem)] lg:max-h-[65vh] overflow-y-auto pr-2">
                     {(() => {
                       const groupedTransactions: Record<string, typeof recentTransactions> = {};
                       const today = new Date();
@@ -374,7 +374,11 @@ export default function Dashboard() {
                                     <div className="flex items-center gap-2">
                                       <p className="font-medium text-foreground">{transaction.reason}</p>
                                       {transaction.source && (
-                                        <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 font-medium">
+                                        <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                                          transaction.source === 'wise' 
+                                            ? 'bg-[#9fe870]/20 text-[#9fe870]' 
+                                            : 'bg-purple-500/20 text-purple-400'
+                                        }`}>
                                           {transaction.source === 'wise' ? 'Wise' : 'CSV'}
                                         </span>
                                       )}
