@@ -188,7 +188,7 @@ export default function Dashboard() {
     if (!activeGoal) return [];
     return transactions
       .filter(t => t.goalId === activeGoal.id)
-      .slice(0, 5);
+      .slice(0, 20);
   }, [transactions, activeGoal]);
 
   const progressPercentage = activeGoal 
