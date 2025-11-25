@@ -4,17 +4,10 @@
   "type": "module",
   "license": "MIT",
  "scripts": {
-    "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "cd client && pnpm install && pnpm run build",
-    "start": "NODE_ENV=production tsx server/_core/index.ts",
-    "check": "tsc --noEmit",
-    "format": "prettier --write .",
-    "test": "vitest run",
-
     "migrate": "tsx server/_core/migrate.ts",
-    "studio": "drizzle-kit studio",
-
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "start": "sh -lc 'if [ \"$MIGRATE\" = \"1\" ]; then pnpm run migrate; fi && NODE_ENV=production tsx server/_core/index.ts'",
+    "start:no-migrate": "NODE_ENV=production tsx server/_core/index.ts",
+    "dev": "tsx-dev server/_core/index.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
