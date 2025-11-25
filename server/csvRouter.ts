@@ -56,10 +56,11 @@ function parseNubankCSV(csvContent: string): Array<{
  * Format: ID,Status,Direction,"Created on","Finished on","Source name","Source amount (after fees)","Source currency","Target name","Target amount (after fees)","Target currency",...
  * 
  * Rules:
- * - Only imports IN and OUT transactions (real transfers)
- * - Skips NEUTRAL transactions (currency conversions)
+ * - Imports IN, OUT, and NEUTRAL transactions
+ * - NEUTRAL (conversions): "Converted to BRL" or "Converted to USD"
+ * - OUT to self: "Transferred to another bank"
  * - Uses original transaction amounts (no conversion)
- * - Simplified descriptions (source for IN, target for OUT)
+ * - Simplified descriptions without amount values
  */
 function parseWiseCSV(csvContent: string): Array<{
   date: string;
@@ -121,25 +122,32 @@ function parseWiseCSV(csvContent: string): Array<{
 
     if (!date || isNaN(sourceAmount) || isNaN(targetAmount)) continue;
 
-    // Skip NEUTRAL transactions (currency conversions)
-    if (direction === "NEUTRAL") {
-      continue;
-    }
-
     let amount: number;
     let currency: string;
     let description: string;
 
-    if (direction === "IN") {
+    if (direction === "NEUTRAL") {
+      // Currency conversion within Wise account
+      amount = -sourceAmount; // Use source (money leaving original currency)
+      currency = sourceCurrency;
+      description = `Converted to ${targetCurrency}`;
+    } else if (direction === "IN") {
       // Money coming in - use target amount and show source
       amount = targetAmount;
       currency = targetCurrency;
       description = sourceName || "Income";
     } else if (direction === "OUT") {
-      // Money going out - use source amount (negative) and show target
+      // Money going out - check if it's to self or external
       amount = -sourceAmount;
       currency = sourceCurrency;
-      description = targetName || "Expense";
+      
+      if (targetName && targetName.toLowerCase().includes("leonardo")) {
+        // Transfer to another bank account of yours
+        description = "Transferred to another bank";
+      } else {
+        // External payment
+        description = targetName || "Expense";
+      }
     } else {
       continue;
     }
@@ -207,8 +215,8 @@ export const csvRouter = router({
           const amount = Math.abs(Math.round(transaction.amount * 100)); // Convert to cents
           const type = transaction.amount > 0 ? "income" : "expense";
 
-          // Simple description with amount and currency
-          const reason = `${transaction.description} (${Math.abs(transaction.amount).toFixed(2)} ${transaction.currency})`;
+          // Simple description without amount
+          const reason = transaction.description;
 
           await db.createTransaction({
             userId: ctx.user.id,
