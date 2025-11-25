@@ -218,7 +218,16 @@ export const csvRouter = router({
             const originalAmount = Math.abs(transaction.amount);
             reason += ` (${originalAmount.toFixed(2)} ${transaction.currency} → ${preferredCurrency})`;
           }
-          reason += ` (Ref: ${transaction.reference})`;
+          
+          // Only add reference if it's not already in description
+          if (!reason.includes(transaction.reference)) {
+            reason += ` (Ref: ${transaction.reference})`;
+          }
+          
+          // Truncate to 255 characters (database limit)
+          if (reason.length > 255) {
+            reason = reason.substring(0, 252) + '...';
+          }
 
           await db.createTransaction({
             userId: ctx.user.id,
