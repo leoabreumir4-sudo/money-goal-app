@@ -1,5 +1,5 @@
 import { router, protectedProcedure } from "./_core/trpc";
-import { plaidClient } from "./_core/plaid";
+import { plaidClient, isPlaidConfigured } from "./_core/plaid";
 import { z } from "zod";
 import * as db from "./db";
 import {
@@ -16,6 +16,13 @@ export const plaidRouter = router({
    * Create a link token for Plaid Link initialization
    */
   createLinkToken: protectedProcedure.query(async ({ ctx }) => {
+    if (!isPlaidConfigured) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: "Plaid integration is not configured. Please add PLAID_CLIENT_ID and PLAID_SECRET environment variables.",
+      });
+    }
+
     try {
       const request: LinkTokenCreateRequest = {
         user: {

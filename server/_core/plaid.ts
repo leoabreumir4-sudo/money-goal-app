@@ -15,6 +15,11 @@ const getPlaidEnvironment = (env: string) => {
   }
 };
 
+// Validate Plaid credentials are present
+if (!ENV.plaidClientId || !ENV.plaidSecret) {
+  console.warn("⚠️  Plaid credentials not configured. Bank sync features will be disabled.");
+}
+
 const configuration = new Configuration({
   basePath: getPlaidEnvironment(ENV.plaidEnv),
   baseOptions: {
@@ -26,3 +31,4 @@ const configuration = new Configuration({
 });
 
 export const plaidClient = new PlaidApi(configuration);
+export const isPlaidConfigured = !!(ENV.plaidClientId && ENV.plaidSecret);

@@ -36,7 +36,10 @@ export function BankSync({ goalId }: BankSyncProps) {
   const utils = trpc.useUtils();
 
   // Get connected accounts
-  const { data: accounts = [], isLoading } = trpc.plaid.getConnectedAccounts.useQuery();
+  const { data: accounts = [], isLoading, error } = trpc.plaid.getConnectedAccounts.useQuery();
+  
+  // Check if Plaid is not configured
+  const isPlaidUnavailable = error?.data?.code === "PRECONDITION_FAILED";
 
   // Disconnect mutation
   const disconnect = trpc.plaid.disconnectAccount.useMutation({
@@ -108,7 +111,18 @@ export function BankSync({ goalId }: BankSyncProps) {
           
           <CollapsibleContent>
             <CardContent className="space-y-4 pt-0">
-          {accounts.length === 0 ? (
+          {isPlaidUnavailable ? (
+            <div className="text-center py-6 px-4">
+              <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-4 mb-4">
+                <p className="text-sm text-yellow-600 dark:text-yellow-500 font-medium mb-2">
+                  ⚠️ Bank Sync Unavailable
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Bank synchronization is currently not configured. Contact the administrator to enable this feature.
+                </p>
+              </div>
+            </div>
+          ) : accounts.length === 0 ? (
             <div className="text-center py-6">
               <p className="text-sm text-muted-foreground mb-4">{t('noBankAccounts', preferences.language)}</p>
               <PlaidLinkButton onSuccess={() => utils.plaid.getConnectedAccounts.invalidate()} />
