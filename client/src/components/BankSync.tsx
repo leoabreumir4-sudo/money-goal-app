@@ -36,9 +36,15 @@ export function BankSync({ goalId }: BankSyncProps) {
 
   const utils = trpc.useUtils();
 
-  // Get Wise balances
-  const { data: balances = [], error: wiseError } = trpc.wise.getBalances.useQuery();
-  const isWiseNotConfigured = wiseError?.data?.code === "PRECONDITION_FAILED";
+  // Get user settings to check if Wise token exists
+  const { data: settings } = trpc.userSettings.get.useQuery();
+  const hasWiseToken = !!settings?.wiseApiToken;
+
+  // Get Wise balances only if token exists
+  const { data: balances = [], error: wiseError } = trpc.wise.getBalances.useQuery(undefined, {
+    enabled: hasWiseToken, // Only run query if token exists
+  });
+  const isWiseNotConfigured = !hasWiseToken || wiseError?.data?.code === "PRECONDITION_FAILED";
 
   // Wise sync mutation
   const wiseSyncMutation = trpc.wise.syncTransactions.useMutation({
