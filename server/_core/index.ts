@@ -87,29 +87,37 @@ async function startServer() {
 
   // Wise webhook endpoint (raw body needed for signature validation)
   // URL format: /api/webhooks/wise/:userId
-  app.post("/api/webhooks/wise/:userId", express.raw({ type: "application/json" }), async (req, res) => {
+  // This endpoint bypasses CORS since it's server-to-server from Wise
+  app.post("/api/webhooks/wise/:userId", express.json(), async (req, res) => {
     try {
+      // Allow Wise webhooks (no CORS restriction for server-to-server)
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Methods", "POST");
+      
       const signature = req.headers["x-signature-256"] as string;
       const userId = req.params.userId;
       
       if (!signature) {
+        console.error("Webhook missing signature");
         return res.status(401).json({ error: "Missing signature" });
       }
 
       if (!userId) {
+        console.error("Webhook missing userId");
         return res.status(400).json({ error: "Missing userId" });
       }
 
       // Import webhook handler
       const { handleWiseWebhook } = await import("./wiseWebhook");
       
-      // Process webhook
-      await handleWiseWebhook(req.body.toString(), signature, userId);
+      // Process webhook (pass stringified body for signature validation)
+      await handleWiseWebhook(JSON.stringify(req.body), signature, userId);
       
+      console.log(`Wise webhook processed successfully for user ${userId}`);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error("Wise webhook error:", error);
-      res.status(500).json({ error: "Webhook processing failed" });
+      res.status(500).json({ error: "Webhook processing failed", message: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
