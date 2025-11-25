@@ -4,6 +4,8 @@ import express from "express";
 import cors from "cors";
 import { createServer } from "http";
 import net from "net";
+import fs from "fs";
+import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
@@ -73,11 +75,25 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
+
+  // development mode uses Vite, production mode uses static files (if present)
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    // Serve static client only if build exists to avoid ENOENT errors
+    const clientDistPath = path.resolve(process.cwd(), "client", "dist");
+    if (fs.existsSync(clientDistPath)) {
+      console.log("[Server] Serving static client from", clientDistPath);
+      // If your serveStatic helper already handles existence checks, you can still call it.
+      // We call serveStatic here to keep existing behavior (history fallback, etc.)
+      serveStatic(app);
+    } else {
+      console.log("[Server] client/dist not found — static client will not be served.");
+      // Provide a safe root route so the service responds without errors
+      app.get("/", (req, res) => {
+        res.json({ ok: true, note: "Backend running — client not served from this host." });
+      });
+    }
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
