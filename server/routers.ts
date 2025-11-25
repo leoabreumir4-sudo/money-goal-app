@@ -68,7 +68,323 @@ export const appRouter = router({
       }),
   }),
 
-  // ... (o resto do arquivo continua aqui)
+  // Categories
+  categories: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getCategoriesByUserId(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        emoji: z.string(),
+        color: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createCategory({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // Transactions
+  transactions: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getAllTransactionsByUserId(ctx.user.id);
+    }),
+
+    getByGoalId: protectedProcedure
+      .input(z.object({ goalId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return await db.getTransactionsByGoalId(input.goalId, ctx.user.id);
+      }),
+
+    create: protectedProcedure
+      .input(z.object({
+        goalId: z.number(),
+        categoryId: z.number().optional(),
+        type: z.enum(["income", "expense"]),
+        amount: z.number(),
+        reason: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createTransaction({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        categoryId: z.number().optional(),
+        type: z.enum(["income", "expense"]).optional(),
+        amount: z.number().optional(),
+        reason: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        await db.updateTransaction(id, ctx.user.id, data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteTransaction(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // User Settings
+  settings: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getUserSettings(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        language: z.string().optional(),
+        currency: z.string().optional(),
+        theme: z.enum(["dark", "light"]).optional(),
+        monthlySavingTarget: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createUserSettings({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        language: z.string().optional(),
+        currency: z.string().optional(),
+        theme: z.enum(["dark", "light"]).optional(),
+        monthlySavingTarget: z.number().optional(),
+        hasUnreadArchived: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateUserSettings(ctx.user.id, input);
+        return { success: true };
+      }),
+  }),
+
+  // Recurring Expenses
+  recurringExpenses: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getRecurringExpensesByUserId(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        categoryId: z.number(),
+        name: z.string(),
+        amount: z.number(),
+        frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createRecurringExpense({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        categoryId: z.number().optional(),
+        name: z.string().optional(),
+        amount: z.number().optional(),
+        frequency: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        await db.updateRecurringExpense(id, ctx.user.id, data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteRecurringExpense(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // Projects (AQWorlds)
+  projects: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getProjectsByUserId(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        category: z.string().optional(),
+        amount: z.number(),
+        month: z.number(),
+        year: z.number(),
+        isPaid: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createProject({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        category: z.string().optional(),
+        amount: z.number().optional(),
+        month: z.number().optional(),
+        year: z.number().optional(),
+        isPaid: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        await db.updateProject(id, ctx.user.id, data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteProject(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // Events (AQWorlds Calendar)
+  events: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getEventsByUserId(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        month: z.number(),
+        isSelected: z.number().optional(),
+        isDefault: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createEvent({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        month: z.number().optional(),
+        isSelected: z.number().optional(),
+        isDefault: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        await db.updateEvent(id, ctx.user.id, data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteEvent(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // Chat Messages
+  chat: router({
+    getHistory: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getChatMessagesByUserId(ctx.user.id);
+    }),
+
+    sendMessage: protectedProcedure
+      .input(z.object({
+        message: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Save user message
+        await db.createChatMessage({
+          userId: ctx.user.id,
+          role: "user",
+          content: input.message,
+        });
+
+        // Get AI response
+        const response = await invokeLLM([
+          { role: "user", content: input.message },
+        ]);
+
+        // Save AI response
+        await db.createChatMessage({
+          userId: ctx.user.id,
+          role: "assistant",
+          content: response,
+        });
+
+        return { response };
+      }),
+  }),
+
+  // Monthly Payments
+  monthlyPayments: router({
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getMonthlyPaymentsByUserId(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        month: z.number(),
+        year: z.number(),
+        totalAmount: z.number(),
+        transactionId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createMonthlyPayment({
+          userId: ctx.user.id,
+          ...input,
+        });
+        return { success: true };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        month: z.number().optional(),
+        year: z.number().optional(),
+        totalAmount: z.number().optional(),
+        transactionId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        await db.updateMonthlyPayment(id, ctx.user.id, data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteMonthlyPayment(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
