@@ -21,10 +21,12 @@ const months = [
 
 // Component for Mark Paid button
 function MonthlyStatusButtonComponent({ month, year, totalAmount }: { month: number; year: number; totalAmount: number }) {
+  const { user } = useAuth();
   const utils = trpc.useUtils();
   const { data: payment, isLoading, error } = trpc.monthlyPayments.getPayment.useQuery(
     { month, year },
     { 
+      enabled: !!user,
       retry: false,
       refetchOnWindowFocus: false,
     }
