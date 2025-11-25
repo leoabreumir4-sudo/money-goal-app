@@ -29,7 +29,7 @@ export function BankSync({ goalId }: BankSyncProps) {
   const { preferences } = usePreferences();
   const [isOpen, setIsOpen] = useState(false);
   const [wiseSyncDialogOpen, setWiseSyncDialogOpen] = useState(false);
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("");
   const [startDate, setStartDate] = useState(format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +51,25 @@ export function BankSync({ goalId }: BankSyncProps) {
   });
   
   const isWiseNotConfigured = !hasWiseToken || wiseError?.data?.code === "PRECONDITION_FAILED";
+
+  // Auto-select first available currency with balance when balances load
+  useEffect(() => {
+    if (balances.length > 0 && !currency) {
+      // Try to find user's preferred currency first
+      const preferredCurrency = settings?.currency || "USD";
+      const hasPreferredCurrency = balances.find((b: any) => b.currency === preferredCurrency);
+      
+      if (hasPreferredCurrency) {
+        setCurrency(preferredCurrency);
+      } else {
+        // Otherwise select first currency with positive balance
+        const firstBalance = balances.find((b: any) => b.amount > 0);
+        if (firstBalance) {
+          setCurrency(firstBalance.currency);
+        }
+      }
+    }
+  }, [balances, currency, settings?.currency]);
 
   // Wise sync mutation
   const wiseSyncMutation = trpc.wise.syncTransactions.useMutation({
