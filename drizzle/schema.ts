@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp, varchar, integer, boolean, serial } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, timestamp, varchar, integer, boolean, serial, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Enums
@@ -13,7 +13,7 @@ export const chatRoleEnum = pgEnum("chat_role", ["user", "assistant", "system"])
  * Core user table backing auth flow.
  */
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   passwordHash: text("passwordHash"), // Campo para hash da senha
   name: text("name"),
@@ -32,7 +32,7 @@ export type InsertUser = typeof users.$inferInsert;
  */
 export const goals = pgTable("goals", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
+  userId: uuid("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   targetAmount: integer("targetAmount").notNull(), // Store as cents to avoid decimal issues
   currentAmount: integer("currentAmount").notNull().default(0),
@@ -50,7 +50,7 @@ export type InsertGoal = typeof goals.$inferInsert;
  */
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
+  userId: uuid("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   emoji: varchar("emoji", { length: 10 }).notNull(),
   color: varchar("color", { length: 7 }).notNull(), // Hex color
@@ -64,7 +64,7 @@ export type InsertCategory = typeof categories.$inferInsert;
  */
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
+  userId: uuid("userId").notNull(),
   goalId: integer("goalId").notNull(),
   categoryId: integer("categoryId"),
   type: transactionTypeEnum("type").notNull(),
@@ -81,7 +81,7 @@ export type InsertTransaction = typeof transactions.$inferInsert;
  */
 export const userSettings = pgTable("userSettings", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull().unique(),
+  userId: uuid("userId").notNull().unique(),
   language: varchar("language", { length: 10 }).notNull().default("en"),
   currency: varchar("currency", { length: 3 }).notNull().default("USD"),
   theme: themeEnum("theme").default("dark").notNull(),
@@ -97,7 +97,7 @@ export type InsertUserSettings = typeof userSettings.$inferInsert;
  */
 export const recurringExpenses = pgTable("recurringExpenses", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
+  userId: uuid("userId").notNull(),
   categoryId: integer("categoryId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   amount: integer("amount").notNull(), // Store as cents
@@ -114,7 +114,7 @@ export type InsertRecurringExpense = typeof recurringExpenses.$inferInsert;
  */
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
+  userId: uuid("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   category: varchar("category", { length: 255 }),
   amount: integer("amount").notNull(), // Store as cents
@@ -132,7 +132,7 @@ export type InsertProject = typeof projects.$inferInsert;
  */
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
+  userId: uuid("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   month: integer("month").notNull(), // 1-12
   isSelected: integer("isSelected").default(0).notNull(), // 0 = not selected, 1 = selected (green)
@@ -148,7 +148,7 @@ export type InsertEvent = typeof events.$inferInsert;
  */
 export const chatMessages = pgTable("chatMessages", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
+  userId: uuid("userId").notNull(),
   role: chatRoleEnum("role").notNull(),
   content: text("content").notNull(),
   createdDate: timestamp("createdDate").defaultNow().notNull(),
@@ -162,7 +162,7 @@ export type InsertChatMessage = typeof chatMessages.$inferInsert;
  */
 export const monthlyPayments = pgTable("monthlyPayments", {
   id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
+  userId: uuid("userId").notNull(),
   month: integer("month").notNull(), // 1-12
   year: integer("year").notNull(),
   totalAmount: integer("totalAmount").notNull(), // Store as cents
