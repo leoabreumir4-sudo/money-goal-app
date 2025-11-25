@@ -428,13 +428,14 @@ export default function AQWorlds() {
   }, [calcAvgValue, calcNumProjects]);
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
-            <p className="text-muted-foreground">{user?.name || 'Artist'} - Artist Projects</p>
-          </div>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
+              <p className="text-muted-foreground">{user?.name || 'Artist'} - Artist Projects</p>
+            </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsCalculatorModalOpen(true)}>
               <Calculator className="mr-2 h-4 w-4" />
@@ -746,15 +747,14 @@ export default function AQWorlds() {
               ) : monthEvents.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">No events for this month</div>
               ) : (
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <Droppable droppableId="events">
-                    {(provided) => (
-                      <div 
-                        {...provided.droppableProps} 
-                        ref={provided.innerRef}
-                        className="space-y-2 max-h-[400px] overflow-y-auto pr-2"
-                      >
-                        {monthEvents.filter(event => event && event.id).map((event, index) => (
+                <Droppable droppableId="events">
+                  {(provided) => (
+                    <div 
+                      {...provided.droppableProps} 
+                      ref={provided.innerRef}
+                      className="space-y-2 max-h-[400px] overflow-y-auto pr-2"
+                    >
+                      {monthEvents.filter(event => event && event.id).map((event, index) => (
                         <Draggable key={event.id} draggableId={String(event.id)} index={index}>
                           {(provided) => (
                             <div
@@ -821,11 +821,10 @@ export default function AQWorlds() {
                           )}
                         </Draggable>
                       ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
                 )}
 
                 {/* Add Custom Event */}
@@ -986,5 +985,6 @@ export default function AQWorlds() {
         </Dialog>
       </div>
     </DashboardLayout>
+    </DragDropContext>
   );
 }
