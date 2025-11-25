@@ -6,8 +6,11 @@ import { trpc } from "@/lib/trpc";
 import { Loader2, Send, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Streamdown } from "streamdown";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
 
 export default function Chat() {
+  const { preferences } = usePreferences();
   const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -60,10 +63,10 @@ export default function Chat() {
   };
 
   const suggestedQuestions = [
-    "Quero viajar para Orlando em 2026, é possível?",
-    "Como posso otimizar meus gastos?",
-    "Quantos projetos preciso fazer para atingir minha meta?",
-    "Analise meus gastos do último mês",
+    t("travelQuestion", preferences.language),
+    t("optimizeSpending", preferences.language),
+    t("projectsForGoal", preferences.language),
+    t("analyzeLastMonth", preferences.language),
   ];
 
   return (
@@ -77,7 +80,7 @@ export default function Chat() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">FinanAI</h1>
-              <p className="text-sm text-muted-foreground">Seu consultor financeiro pessoal</p>
+              <p className="text-sm text-muted-foreground">{t("aiAssistant", preferences.language)}</p>
             </div>
           </div>
         </div>
@@ -91,13 +94,13 @@ export default function Chat() {
                   <Sparkles className="h-10 w-10 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-2">Olá! Eu sou a FinanAI</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-2">{t("helloFinanAI", preferences.language)}</h2>
                   <p className="text-muted-foreground max-w-md">
-                    Estou aqui para ajudá-lo com suas finanças. Posso analisar seus gastos, ajudá-lo a planejar viagens, otimizar suas metas e muito mais!
+                    {t("finanAIDescription", preferences.language)}
                   </p>
                 </div>
                 <div className="space-y-2 w-full max-w-2xl">
-                  <p className="text-sm text-muted-foreground font-medium">Exemplos do que posso fazer:</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("examplesTitle", preferences.language)}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {suggestedQuestions.map((question, index) => (
                       <Button
@@ -141,7 +144,7 @@ export default function Chat() {
                     <div className="max-w-[80%] rounded-lg p-4 bg-secondary text-secondary-foreground">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Pensando...</span>
+                        <span className="text-sm">{t("thinking", preferences.language)}</span>
                       </div>
                     </div>
                   </div>
@@ -155,7 +158,7 @@ export default function Chat() {
           <div className="p-4 border-t border-border">
             <div className="flex gap-2">
               <Input
-                placeholder="Digite sua pergunta..."
+                placeholder={t("typeMessage", preferences.language)}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}

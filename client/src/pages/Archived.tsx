@@ -4,20 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Trash } from "lucide-react";
 import { toast } from "sonner";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/currency";
 
 export default function Archived() {
+  const { preferences } = usePreferences();
   const utils = trpc.useUtils();
   const { data: archivedGoals = [] } = trpc.goals.getArchived.useQuery();
 
   const deleteGoalMutation = trpc.goals.delete.useMutation({
     onSuccess: () => {
       utils.goals.getArchived.invalidate();
-      toast.success("Goal deleted permanently!");
+      toast.success(t("goalDeletedPermanently", preferences.language));
     },
   });
 
   const handleDeleteGoal = (id: number) => {
-    if (confirm("Are you sure you want to permanently delete this goal?")) {
+    if (confirm(t("deleteGoalConfirm", preferences.language))) {
       deleteGoalMutation.mutate({ id });
     }
   };
@@ -27,8 +31,8 @@ export default function Archived() {
       <div className="p-8 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Archived Goals</h1>
-          <p className="text-muted-foreground">View your completed financial goals</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("archivedGoals", preferences.language)}</h1>
+          <p className="text-muted-foreground">{t("viewCompletedGoals", preferences.language)}</p>
         </div>
 
         {/* Archived Goals List */}
@@ -39,9 +43,9 @@ export default function Archived() {
                 <div className="h-16 w-16 rounded-full bg-secondary mx-auto mb-4 flex items-center justify-center">
                   <span className="text-3xl">🎯</span>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">No Archived Goals</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-2">{t("noArchivedGoalsTitle", preferences.language)}</h3>
                 <p className="text-muted-foreground">
-                  Complete your goals on the Dashboard to see them here!
+                  {t("completeGoalsToSee", preferences.language)}
                 </p>
               </div>
             </CardContent>
@@ -64,21 +68,21 @@ export default function Archived() {
                         <div>
                           <CardTitle className="text-foreground">{goal.name}</CardTitle>
                           <p className="text-sm text-muted-foreground">
-                            Completed {new Date(goal.completedDate || goal.createdDate).toLocaleDateString()}
+                            {t("completedOn", preferences.language)} {new Date(goal.completedDate || goal.createdDate).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <p className="text-sm text-muted-foreground">Target</p>
+                          <p className="text-sm text-muted-foreground">{t("target", preferences.language)}</p>
                           <p className="text-lg font-semibold text-foreground">
-                            ${(goal.targetAmount / 100).toLocaleString()}
+                            {formatCurrency(goal.targetAmount / 100, preferences.currency)}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm text-muted-foreground">Final Amount</p>
+                          <p className="text-sm text-muted-foreground">{t("finalAmount", preferences.language)}</p>
                           <p className="text-lg font-semibold text-primary">
-                            ${(goal.currentAmount / 100).toLocaleString()}
+                            {formatCurrency(goal.currentAmount / 100, preferences.currency)}
                           </p>
                         </div>
                         <Button
@@ -94,8 +98,8 @@ export default function Archived() {
                   <CardContent>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium text-foreground">{progress}% Completed</span>
+                        <span className="text-muted-foreground">{t("progress", preferences.language)}</span>
+                        <span className="font-medium text-foreground">{progress}% {t("completed", preferences.language)}</span>
                       </div>
                       <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
                         <div

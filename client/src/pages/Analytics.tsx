@@ -7,8 +7,12 @@ import { trpc } from "@/lib/trpc";
 import { ArrowDown, ArrowUp, TrendingUp } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/currency";
 
 export default function Analytics() {
+  const { preferences } = usePreferences();
   const [savingTarget, setSavingTarget] = useState("");
   
   const utils = trpc.useUtils();
@@ -18,7 +22,7 @@ export default function Analytics() {
   const updateSettingsMutation = trpc.settings.update.useMutation({
     onSuccess: () => {
       utils.settings.get.invalidate();
-      toast.success("Saving target updated!");
+      toast.success(t("savingTargetUpdated", preferences.language));
     },
   });
 
@@ -89,8 +93,8 @@ export default function Analytics() {
     <DashboardLayout>
       <div className="p-8 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
-          <p className="text-muted-foreground">Track your financial performance</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("analytics", preferences.language)}</h1>
+          <p className="text-muted-foreground">{t("trackFinancialPerformance", preferences.language)}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -98,12 +102,12 @@ export default function Analytics() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ArrowUp className="h-5 w-5 text-primary" />
-                <CardTitle className="text-sm text-muted-foreground">INCOME</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">{t("income", preferences.language).toUpperCase()}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">${(totalIncome / 100).toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground">Last 6 months</p>
+              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalIncome / 100, preferences.currency)}</p>
+              <p className="text-sm text-muted-foreground">{t("last6Months", preferences.language)}</p>
             </CardContent>
           </Card>
 
@@ -111,12 +115,12 @@ export default function Analytics() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ArrowDown className="h-5 w-5 text-destructive" />
-                <CardTitle className="text-sm text-muted-foreground">EXPENSES</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">{t("expense", preferences.language).toUpperCase()}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">${(totalExpenses / 100).toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground">Last 6 months</p>
+              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalExpenses / 100, preferences.currency)}</p>
+              <p className="text-sm text-muted-foreground">{t("last6Months", preferences.language)}</p>
             </CardContent>
           </Card>
 
@@ -124,21 +128,21 @@ export default function Analytics() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-accent" />
-                <CardTitle className="text-sm text-muted-foreground">NET</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">{t("netSavings", preferences.language).toUpperCase()}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <p className={`text-3xl font-bold ${netFlow >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                ${(netFlow / 100).toLocaleString()}
+                {formatCurrency(netFlow / 100, preferences.currency)}
               </p>
-              <p className="text-sm text-muted-foreground">Positive flow</p>
+              <p className="text-sm text-muted-foreground">{t("positiveFlow", preferences.language)}</p>
             </CardContent>
           </Card>
         </div>
 
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Monthly Overview</CardTitle>
+            <CardTitle className="text-foreground">{t("monthlyOverview", preferences.language)}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -152,8 +156,8 @@ export default function Analytics() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium text-foreground">{data.name}</span>
                       <div className="flex gap-4">
-                        <span className="text-primary">${(data.income / 100).toFixed(0)}</span>
-                        <span className="text-destructive">${(data.expenses / 100).toFixed(0)}</span>
+                        <span className="text-primary">{formatCurrency(data.income / 100, preferences.currency)}</span>
+                        <span className="text-destructive">{formatCurrency(data.expenses / 100, preferences.currency)}</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -177,11 +181,11 @@ export default function Analytics() {
             <div className="flex justify-center gap-6 mt-6 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-primary" />
-                <span className="text-muted-foreground">Income</span>
+                <span className="text-muted-foreground">{t("income", preferences.language)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-destructive" />
-                <span className="text-muted-foreground">Expenses</span>
+                <span className="text-muted-foreground">{t("expense", preferences.language)}</span>
               </div>
             </div>
           </CardContent>
@@ -189,11 +193,11 @@ export default function Analytics() {
 
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Monthly Saving Target</CardTitle>
+            <CardTitle className="text-foreground">{t("monthlySavingTargetTitle", preferences.language)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="saving-target">Target Amount (USD)</Label>
+              <Label htmlFor="saving-target">{t("targetAmountUSD", preferences.language)}</Label>
               <div className="flex gap-2">
                 <Input
                   id="saving-target"
@@ -204,7 +208,7 @@ export default function Analytics() {
                   onChange={(e) => setSavingTarget(e.target.value)}
                 />
                 <Button onClick={handleSaveTarget} disabled={updateSettingsMutation.isPending}>
-                  Save
+                  {t("save", preferences.language)}
                 </Button>
               </div>
             </div>
@@ -212,21 +216,21 @@ export default function Analytics() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="bg-secondary/50 border-border">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-muted-foreground">Average Monthly Saving</CardTitle>
+                  <CardTitle className="text-sm text-muted-foreground">{t("averageMonthlySaving", preferences.language)}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-foreground">${(averageMonthlySaving / 100).toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">Based on last 6 months</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(averageMonthlySaving / 100, preferences.currency)}</p>
+                  <p className="text-sm text-muted-foreground">{t("basedOnLast6Months", preferences.language)}</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-secondary/50 border-border">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-muted-foreground">Your Target Saving</CardTitle>
+                  <CardTitle className="text-sm text-muted-foreground">{t("yourTargetSaving", preferences.language)}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-foreground">${(currentTarget / 100).toLocaleString()}</p>
-                  <p className="text-sm text-muted-foreground">Set your target above</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(currentTarget / 100, preferences.currency)}</p>
+                  <p className="text-sm text-muted-foreground">{t("setTargetAbove", preferences.language)}</p>
                 </CardContent>
               </Card>
             </div>

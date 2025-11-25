@@ -10,10 +10,14 @@ import { Plus, Trash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/currency";
 
 const COLORS = ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
 export default function Spending() {
+  const { preferences } = usePreferences();
   const [isAddRecurringModalOpen, setIsAddRecurringModalOpen] = useState(false);
   const [recurringName, setRecurringName] = useState("");
   const [recurringAmount, setRecurringAmount] = useState("");
@@ -33,14 +37,14 @@ export default function Spending() {
       setRecurringName("");
       setRecurringAmount("");
       setRecurringFrequency("monthly");
-      toast.success("Recurring expense added successfully!");
+      toast.success(t("recurringExpenseAdded", preferences.language));
     },
   });
 
   const deleteRecurringMutation = trpc.recurringExpenses.delete.useMutation({
     onSuccess: () => {
       utils.recurringExpenses.getAll.invalidate();
-      toast.success("Recurring expense deleted!");
+      toast.success(t("recurringExpenseDeleted", preferences.language));
     },
   });
 
@@ -100,12 +104,12 @@ export default function Spending() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Spending Analysis</h1>
-            <p className="text-muted-foreground">See where your money goes</p>
+            <h1 className="text-3xl font-bold">{t("spendingAnalysis", preferences.language)}</h1>
+            <p className="text-muted-foreground">{t("seeWhereMoney", preferences.language)}</p>
           </div>
           <Button onClick={() => setIsAddRecurringModalOpen(true)} className="bg-purple-600 hover:bg-purple-700">
             <Plus className="mr-2 h-4 w-4" />
-            Recurring Expense
+            {t("recurringExpense", preferences.language)}
           </Button>
         </div>
 
@@ -116,19 +120,19 @@ export default function Spending() {
               variant={filterType === "All" ? "default" : "outline"}
               onClick={() => setFilterType("All")}
             >
-              All
+              {t("all", preferences.language)}
             </Button>
             <Button
               variant={filterType === "By Category" ? "default" : "outline"}
               onClick={() => setFilterType("By Category")}
             >
-              By Category
+              {t("byCategory", preferences.language)}
             </Button>
             <Button
               variant={filterType === "Fixed vs Variable" ? "default" : "outline"}
               onClick={() => setFilterType("Fixed vs Variable")}
             >
-              Fixed vs Variable
+              {t("fixedVsVariable", preferences.language)}
             </Button>
           </div>
 
@@ -137,10 +141,10 @@ export default function Spending() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="This Month">This Month</SelectItem>
-              <SelectItem value="Last Month">Last Month</SelectItem>
-              <SelectItem value="Last 3 Months">Last 3 Months</SelectItem>
-              <SelectItem value="This Year">This Year</SelectItem>
+              <SelectItem value="This Month">{t("thisMonth", preferences.language)}</SelectItem>
+              <SelectItem value="Last Month">{t("lastMonth", preferences.language)}</SelectItem>
+              <SelectItem value="Last 3 Months">{t("last3Months", preferences.language)}</SelectItem>
+              <SelectItem value="This Year">{t("thisYear", preferences.language)}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -148,7 +152,7 @@ export default function Spending() {
             variant={showOnlyRecurring ? "default" : "outline"}
             onClick={() => setShowOnlyRecurring(!showOnlyRecurring)}
           >
-            Show Only Recurring
+            {t("showOnlyRecurring", preferences.language)}
           </Button>
         </div>
 
@@ -157,12 +161,12 @@ export default function Spending() {
           {/* Spending Distribution (Pie Chart) */}
           <Card>
             <CardHeader>
-              <CardTitle>Spending Distribution</CardTitle>
+              <CardTitle>{t("spendingDistribution", preferences.language)}</CardTitle>
             </CardHeader>
             <CardContent>
               {pieChartData.length === 0 ? (
                 <div className="h-80 flex items-center justify-center text-muted-foreground">
-                  No spending data available
+                  {t("noSpendingData", preferences.language)}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -186,8 +190,8 @@ export default function Spending() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="text-center">
-                    <div className="text-sm text-muted-foreground">Total Spending</div>
-                    <div className="text-3xl font-bold">${(totalSpending / 100).toFixed(2)}</div>
+                    <div className="text-sm text-muted-foreground">{t("totalSpending", preferences.language)}</div>
+                    <div className="text-3xl font-bold">{formatCurrency(totalSpending / 100, preferences.currency)}</div>
                   </div>
                 </div>
               )}
@@ -197,13 +201,13 @@ export default function Spending() {
           {/* By Category */}
           <Card>
             <CardHeader>
-              <CardTitle>By Category</CardTitle>
+              <CardTitle>{t("byCategory", preferences.language)}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {expensesByCategory.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
-                    No expenses yet
+                    {t("noExpensesYet", preferences.language)}
                   </div>
                 ) : (
                   expensesByCategory.map((item, index) => {
@@ -221,8 +225,8 @@ export default function Spending() {
                             <span className="font-medium">{item.name}</span>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold">${(item.value / 100).toFixed(2)} • {percentage.toFixed(1)}%</div>
-                            <div className="text-xs text-green-500">↑ 0.0% vs previous</div>
+                            <div className="font-bold">{formatCurrency(item.value / 100, preferences.currency)} • {percentage.toFixed(1)}%</div>
+                            <div className="text-xs text-green-500">↑ 0.0% {t("vsPrevious", preferences.language)}</div>
                           </div>
                         </div>
                         <div className="w-full bg-secondary rounded-full h-2">
@@ -246,12 +250,12 @@ export default function Spending() {
         {/* Recurring Expenses */}
         <Card>
           <CardHeader>
-            <CardTitle>Recurring Expenses</CardTitle>
+            <CardTitle>{t("recurringExpenses", preferences.language)}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {recurringExpenses.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No recurring expenses yet</p>
+                <p className="text-center text-muted-foreground py-8">{t("noRecurringExpenses", preferences.language)}</p>
               ) : (
                 recurringExpenses.map(expense => (
                   <div key={expense.id} className="flex justify-between items-center p-4 rounded-lg border">
@@ -261,13 +265,13 @@ export default function Spending() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-lg font-bold text-red-500">
-                        ${(expense.amount / 100).toFixed(2)}
+                        {formatCurrency(expense.amount / 100, preferences.currency)}
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          if (confirm("Are you sure you want to delete this recurring expense?")) {
+                          if (confirm(t("deleteRecurringConfirm", preferences.language))) {
                             deleteRecurringMutation.mutate({ id: expense.id });
                           }
                         }}
@@ -285,22 +289,22 @@ export default function Spending() {
         {/* Insights */}
         <Card>
           <CardHeader>
-            <CardTitle>Insights & Recommendations</CardTitle>
+            <CardTitle>{t("insightsRecommendations", preferences.language)}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <div className="font-semibold text-blue-500">💡 Spending Tip</div>
+                <div className="font-semibold text-blue-500">{t("spendingTip", preferences.language)}</div>
                 <p className="text-sm mt-1">
-                  Your largest expense category is {expensesByCategory[0]?.name || "N/A"}. 
-                  Consider reviewing these expenses for potential savings.
+                  {t("largestExpenseCategory", preferences.language)} {expensesByCategory[0]?.name || "N/A"}. 
+                  {t("reviewExpenses", preferences.language)}
                 </p>
               </div>
               
               <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                <div className="font-semibold text-green-500">✓ Good Job!</div>
+                <div className="font-semibold text-green-500">{t("goodJob", preferences.language)}</div>
                 <p className="text-sm mt-1">
-                  You're tracking your expenses consistently. Keep it up!
+                  {t("trackingConsistently", preferences.language)}
                 </p>
               </div>
             </div>
@@ -311,14 +315,14 @@ export default function Spending() {
         <Dialog open={isAddRecurringModalOpen} onOpenChange={setIsAddRecurringModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Recurring Expense</DialogTitle>
+              <DialogTitle>{t("addRecurringExpenseTitle", preferences.language)}</DialogTitle>
               <DialogDescription>
-                Add an expense that repeats regularly
+                {t("addRecurringExpenseDesc", preferences.language)}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="recurringName">Name</Label>
+                <Label htmlFor="recurringName">{t("name", preferences.language)}</Label>
                 <Input
                   id="recurringName"
                   value={recurringName}
@@ -328,7 +332,7 @@ export default function Spending() {
               </div>
 
               <div>
-                <Label htmlFor="recurringAmount">Amount ($)</Label>
+                <Label htmlFor="recurringAmount">{t("amount", preferences.language)}</Label>
                 <Input
                   id="recurringAmount"
                   type="number"
@@ -340,23 +344,23 @@ export default function Spending() {
               </div>
 
               <div>
-                <Label htmlFor="recurringFrequency">Frequency</Label>
+                <Label htmlFor="recurringFrequency">{t("frequency", preferences.language)}</Label>
                 <Select value={recurringFrequency} onValueChange={(v: any) => setRecurringFrequency(v)}>
                   <SelectTrigger id="recurringFrequency">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
+                    <SelectItem value="daily">{t("daily", preferences.language)}</SelectItem>
+                    <SelectItem value="weekly">{t("weekly", preferences.language)}</SelectItem>
+                    <SelectItem value="monthly">{t("monthly", preferences.language)}</SelectItem>
+                    <SelectItem value="yearly">{t("yearly", preferences.language)}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddRecurringModalOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddRecurring}>Add Expense</Button>
+              <Button variant="outline" onClick={() => setIsAddRecurringModalOpen(false)}>{t("cancel", preferences.language)}</Button>
+              <Button onClick={handleAddRecurring}>{t("addExpense", preferences.language)}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
