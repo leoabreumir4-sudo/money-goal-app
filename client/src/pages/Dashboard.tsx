@@ -321,49 +321,83 @@ export default function Dashboard() {
                   <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language)}</p>
                 ) : (
                   <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-2">
-                    {recentTransactions.map((transaction) => (
-                      <div
-                        key={transaction.id}
-                        className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-full ${
-                              transaction.type === "income"
-                                ? "bg-primary/20 text-primary"
-                                : "bg-accent/20 text-accent"
-                            }`}
-                          >
-                            {transaction.type === "income" ? (
-                              <ArrowUp className="h-4 w-4" />
-                            ) : (
-                              <ArrowDown className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-foreground">{transaction.reason}</p>
-                              {transaction.source && (
-                                <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 font-medium">
-                                  {transaction.source === 'wise' ? 'Wise' : 'CSV'}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(transaction.createdDate).toLocaleDateString()}
-                            </p>
+                    {(() => {
+                      const groupedTransactions: Record<string, typeof recentTransactions> = {};
+                      const today = new Date();
+                      const yesterday = new Date(today);
+                      yesterday.setDate(yesterday.getDate() - 1);
+
+                      recentTransactions.forEach(transaction => {
+                        const transactionDate = new Date(transaction.createdDate);
+                        let dateLabel: string;
+
+                        if (transactionDate.toDateString() === today.toDateString()) {
+                          dateLabel = 'Today';
+                        } else if (transactionDate.toDateString() === yesterday.toDateString()) {
+                          dateLabel = 'Yesterday';
+                        } else {
+                          dateLabel = transactionDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                        }
+
+                        if (!groupedTransactions[dateLabel]) {
+                          groupedTransactions[dateLabel] = [];
+                        }
+                        groupedTransactions[dateLabel].push(transaction);
+                      });
+
+                      return Object.entries(groupedTransactions).map(([dateLabel, transactions]) => (
+                        <div key={dateLabel}>
+                          <h3 className="text-sm font-semibold text-muted-foreground mb-2 mt-4 first:mt-0">
+                            {dateLabel}
+                          </h3>
+                          <div className="space-y-2">
+                            {transactions.map((transaction) => (
+                              <div
+                                key={transaction.id}
+                                className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`p-2 rounded-full ${
+                                      transaction.type === "income"
+                                        ? "bg-primary/20 text-primary"
+                                        : "bg-accent/20 text-accent"
+                                    }`}
+                                  >
+                                    {transaction.type === "income" ? (
+                                      <ArrowUp className="h-4 w-4" />
+                                    ) : (
+                                      <ArrowDown className="h-4 w-4" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-medium text-foreground">{transaction.reason}</p>
+                                      {transaction.source && (
+                                        <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 font-medium">
+                                          {transaction.source === 'wise' ? 'Wise' : 'CSV'}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                      {new Date(transaction.createdDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <p
+                                  className={`font-semibold ${
+                                    transaction.type === "income" ? "text-primary" : "text-accent"
+                                  }`}
+                                >
+                                  {transaction.type === "income" ? "+" : "-"}
+                                  {formatCurrency(transaction.amount, preferences.currency)}
+                                </p>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        <p
-                          className={`font-semibold ${
-                            transaction.type === "income" ? "text-primary" : "text-accent"
-                          }`}
-                        >
-                          {transaction.type === "income" ? "+" : "-"}
-                          {formatCurrency(transaction.amount, preferences.currency)}
-                        </p>
-                      </div>
-                    ))}
+                      ));
+                    })()}
                   </div>
                 )}
               </CardContent>
