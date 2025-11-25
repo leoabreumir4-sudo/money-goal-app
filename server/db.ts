@@ -164,26 +164,27 @@ export async function getGoalsByUserId(userId: number) {
   return await db.select().from(goals).where(eq(goals.userId, userId));
 }
 
-export async function getActiveGoal(userId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  
-  console.log("[DB] getActiveGoal called with userId:", userId, "type:", typeof userId);
-  
-  try {
-    const result = await db.select().from(goals)
-      .where(and(eq(goals.userId, userId), eq(goals.status, "active")))
-      .limit(1);
-    
-    console.log("[DB] getActiveGoal result:", result);
-    return result.length > 0 ? result[0] : null;
-  } catch (error) {
-    console.error("[DB] getActiveGoal error:", error);
-    throw error;
-  }
+export async function getActiveGoal(userId: string) {
+  const db = getDb();
+  const result = await db
+    .select()
+    .from(goals)
+    .where(and(eq(goals.userId, userId), eq(goals.status, "active")))
+    .limit(1);
+  return result[0] ?? null;
 }
 
-export async function getArchivedGoals(userId: number) {
+export async function getGoalById(id: number, userId: string) {
+  const db = getDb();
+  const result = await db
+    .select()
+    .from(goals)
+    .where(and(eq(goals.id, id), eq(goals.userId, userId)))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getArchivedGoals(userId: string) {
   const db = await getDb();
   if (!db) return [];
   

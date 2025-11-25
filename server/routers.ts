@@ -124,10 +124,24 @@ export const appRouter = router({
         reason: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Create the transaction
         await db.createTransaction({
           userId: ctx.user.id,
           ...input,
         });
+        
+        // Update goal's currentAmount
+        const goal = await db.getGoalById(input.goalId, ctx.user.id);
+        if (goal) {
+          const newAmount = input.type === "income" 
+            ? goal.currentAmount + input.amount
+            : goal.currentAmount - input.amount;
+          
+          await db.updateGoal(input.goalId, ctx.user.id, {
+            currentAmount: Math.max(0, newAmount), // Prevent negative amounts
+          });
+        }
+        
         return { success: true };
       }),
 
