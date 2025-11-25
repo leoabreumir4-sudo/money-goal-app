@@ -159,7 +159,14 @@ export default function Settings() {
             <div className="flex gap-2">
               <Button
                 onClick={() => {
-                  updateSettingsMutation.mutate({ wiseApiToken: wiseToken });
+                  updateSettingsMutation.mutate(
+                    { wiseApiToken: wiseToken },
+                    {
+                      onSuccess: () => {
+                        toast.success(t('tokenSaved', preferences.language));
+                      },
+                    }
+                  );
                 }}
                 disabled={updateSettingsMutation.isPending || !wiseToken}
               >
@@ -170,7 +177,14 @@ export default function Settings() {
                   variant="outline"
                   onClick={() => {
                     setWiseToken("");
-                    updateSettingsMutation.mutate({ wiseApiToken: null });
+                    updateSettingsMutation.mutate(
+                      { wiseApiToken: null },
+                      {
+                        onSuccess: () => {
+                          toast.success(t('tokenRemoved', preferences.language));
+                        },
+                      }
+                    );
                   }}
                   disabled={updateSettingsMutation.isPending}
                 >
