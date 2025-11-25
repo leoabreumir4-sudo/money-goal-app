@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { trpc } from "@/lib/trpc";
 import { Button } from "../components/ui/button";
@@ -17,16 +18,17 @@ type RegisterForm = { name: string; email: string; password: string };
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
 
   const loginMutation = trpc.auth.login.useMutation({
-  onSuccess: (data) => {
+  onSuccess: async (data) => {
     if (data.token) {
       localStorage.setItem('sessionToken', data.token); // <--- ARMAZENA O TOKEN
     }
+    // Invalidate auth queries to refetch with new token
+    await queryClient.invalidateQueries();
     toast.success("Login bem-sucedido!");
     navigate("/");
-    // Evita forced reload, o useAuth deve lidar com a mudança de estado
-    // window.location.reload();
   },
   onError: (error) => {
     console.error('loginMutation error object:', error);
@@ -35,15 +37,14 @@ const AuthPage = () => {
 });
 
   const registerMutation = trpc.auth.register.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.token) {
         localStorage.setItem('sessionToken', data.token); // <--- ARMAZENA O TOKEN
       }
+      // Invalidate auth queries to refetch with new token
+      await queryClient.invalidateQueries();
       toast.success("Registro bem-sucedido! Você será logado automaticamente.");
-      // Após o registro, faz o login automático e redireciona para a raiz
       navigate("/");
-      // Evita forced reload, o useAuth deve lidar com a mudança de estado
-      // window.location.reload();
     },
     onError: (error) => {
       // Apenas exibe o erro e não faz mais nada
