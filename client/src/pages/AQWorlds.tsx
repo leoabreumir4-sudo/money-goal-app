@@ -305,14 +305,23 @@ export default function AQWorlds() {
 
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
+    if (!monthEvents || monthEvents.length === 0) return;
     
-    const items = Array.from(monthEvents);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    
-    // Update sortOrder for all items
     try {
+      const items = Array.from(monthEvents);
+      const [reorderedItem] = items.splice(result.source.index, 1);
+      
+      if (!reorderedItem || !reorderedItem.id) {
+        console.error('Invalid item being dragged');
+        return;
+      }
+      
+      items.splice(result.destination.index, 0, reorderedItem);
+      
+      // Update sortOrder for all items
       for (let i = 0; i < items.length; i++) {
+        if (!items[i] || !items[i].id) continue;
+        
         const currentOrder = typeof items[i].sortOrder === 'number' ? items[i].sortOrder : -1;
         if (currentOrder !== i) {
           await updateEventMutation.mutateAsync({ id: items[i].id, sortOrder: i });
@@ -664,8 +673,8 @@ export default function AQWorlds() {
                       ref={provided.innerRef}
                       className="space-y-2 max-h-[400px] overflow-y-auto pr-2"
                     >
-                      {monthEvents.map((event, index) => (
-                        <Draggable key={event.id} draggableId={event.id.toString()} index={index}>
+                      {monthEvents.filter(event => event && event.id).map((event, index) => (
+                        <Draggable key={event.id} draggableId={String(event.id)} index={index}>
                           {(provided) => (
                             <div
                               ref={provided.innerRef}
