@@ -18,9 +18,11 @@ async function runMigration() {
   console.log(`[Database] Migration started in ${env} mode...`);
   console.log("[Database] Running safe, idempotent migration (no destructive operations)...");
 
+  // SSL configuration: In production, enable SSL for secure connections
+  // Most cloud database providers (Neon, Supabase, etc.) require SSL
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+    ssl: isProduction ? true : undefined,
   });
 
   const db = drizzle(pool);
