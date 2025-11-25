@@ -12,6 +12,13 @@
     {
       "idx": 1,
       "version": "7",
+      "when": 1732530800000,
+      "tag": "0001_add_openid_unique_constraint",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
       "when": 1732530900000,
       "tag": "0002_make_email_nullable",
       "breakpoints": true
