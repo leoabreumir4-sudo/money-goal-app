@@ -9,8 +9,24 @@ export const formatCurrency = (amount: number, currency: string = "USD"): string
     GBP: "£",
   };
   
+  // Locale mapping for proper number formatting
+  const localeMap: Record<string, string> = {
+    USD: "en-US",
+    BRL: "pt-BR",
+    EUR: "de-DE",
+    GBP: "en-GB",
+  };
+  
   const symbol = currencySymbols[currency] || "$";
-  return `${symbol}${value.toFixed(2)}`;
+  const locale = localeMap[currency] || "en-US";
+  
+  // Format with proper thousands separator and decimal separator
+  const formatted = value.toLocaleString(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  
+  return `${symbol}${formatted}`;
 };
 
 // Get user's currency from settings

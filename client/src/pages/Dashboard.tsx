@@ -341,7 +341,14 @@ export default function Dashboard() {
                             )}
                           </div>
                           <div>
-                            <p className="font-medium text-foreground">{transaction.reason}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-foreground">{transaction.reason}</p>
+                              {transaction.source && (
+                                <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 font-medium">
+                                  {transaction.source === 'wise' ? 'Wise' : 'CSV'}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               {new Date(transaction.createdDate).toLocaleDateString()}
                             </p>

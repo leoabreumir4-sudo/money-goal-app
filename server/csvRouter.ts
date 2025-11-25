@@ -95,7 +95,8 @@ export const csvRouter = router({
             goalId: input.goalId,
             type,
             amount,
-            reason: `${transaction.description} (Nubank)`,
+            reason: transaction.description,
+            source: 'csv',
           });
 
           importedCount++;

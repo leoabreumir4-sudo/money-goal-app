@@ -150,6 +150,7 @@ export const wiseRouter = router({
             type,
             amount,
             reason,
+            source: 'wise',
           });
 
           importedCount++;

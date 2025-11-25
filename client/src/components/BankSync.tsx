@@ -161,7 +161,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                 </div>
                 {!isWiseNotConfigured && balances.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {balances.map((balance) => (
+                    {balances.filter(b => b.amount > 0).map((balance) => (
                       <div key={balance.currency} className="text-sm p-2 bg-secondary/50 rounded">
                         <div className="font-medium">{balance.currency}</div>
                         <div className="text-muted-foreground">{balance.amount.toFixed(2)}</div>

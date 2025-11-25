@@ -70,6 +70,7 @@ export const transactions = pgTable("transactions", {
   type: transactionTypeEnum("type").notNull(),
   amount: integer("amount").notNull(), // Store as cents
   reason: varchar("reason", { length: 255 }).notNull(),
+  source: varchar("source", { length: 50 }), // "wise", "csv", or null for manual
   createdDate: timestamp("createdDate").defaultNow().notNull(),
 });
 
