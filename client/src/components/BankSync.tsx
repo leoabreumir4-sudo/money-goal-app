@@ -42,20 +42,20 @@ export function BankSync({ goalId }: BankSyncProps) {
   // Wise sync mutation
   const wiseSyncMutation = trpc.wise.syncTransactions.useMutation({
     onSuccess: (data) => {
-      toast.success(`Successfully imported ${data.importedCount} of ${data.totalTransactions} Wise transactions`);
+      toast.success(t('wiseImportSuccess', preferences.language, data.importedCount.toString(), data.totalTransactions.toString()));
       setWiseSyncDialogOpen(false);
       utils.transactions.getAll.invalidate();
       utils.goals.getActive.invalidate();
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to sync Wise transactions");
+      toast.error(error.message || t('wiseSyncFailed', preferences.language));
     },
   });
 
   // CSV import mutation
   const csvImportMutation = trpc.csv.importNubankCSV.useMutation({
     onSuccess: (data) => {
-      toast.success(`Imported ${data.importedCount} transactions (${data.skippedCount} duplicates skipped)`);
+      toast.success(t('csvImportSuccess', preferences.language, data.importedCount.toString(), data.skippedCount.toString()));
       utils.transactions.getAll.invalidate();
       utils.goals.getActive.invalidate();
       if (fileInputRef.current) {
@@ -63,7 +63,7 @@ export function BankSync({ goalId }: BankSyncProps) {
       }
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to import CSV");
+      toast.error(error.message || t('csvImportFailed', preferences.language));
     },
   });
 
@@ -107,9 +107,9 @@ export function BankSync({ goalId }: BankSyncProps) {
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Bank Synchronization</CardTitle>
+                    <CardTitle className="text-lg">{t('bankSynchronization', preferences.language)}</CardTitle>
                     <CardDescription className="text-sm">
-                      Sync Wise or import Nubank CSV
+                      {t('syncWiseOrImportCSV', preferences.language)}
                     </CardDescription>
                   </div>
                 </div>
@@ -131,8 +131,8 @@ export function BankSync({ goalId }: BankSyncProps) {
                     <h3 className="font-semibold">Wise</h3>
                     <p className="text-sm text-muted-foreground">
                       {isWiseNotConfigured 
-                        ? "Token not configured. Go to Settings." 
-                        : `${balances.length} currency balances available`}
+                        ? t('tokenNotConfigured', preferences.language)
+                        : `${balances.length} ${t('wiseBalances', preferences.language)}`}
                     </p>
                   </div>
                   <Button
@@ -141,7 +141,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                     size="sm"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Sync Wise
+                    {t('syncWise', preferences.language)}
                   </Button>
                 </div>
                 {!isWiseNotConfigured && balances.length > 0 && (
@@ -162,7 +162,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                   <div>
                     <h3 className="font-semibold">Nubank CSV</h3>
                     <p className="text-sm text-muted-foreground">
-                      Import transactions from CSV file
+                      {t('importFromCSV', preferences.language)}
                     </p>
                   </div>
                   <Button
@@ -171,7 +171,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                     variant="outline"
                   >
                     <Upload className="h-4 w-4 mr-2" />
-                    Upload CSV
+                    {t('uploadCSV', preferences.language)}
                   </Button>
                   <input
                     ref={fileInputRef}
@@ -182,7 +182,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Expected format: date, description, amount (e.g., "2025-01-15,Compra iFood,-45.50")
+                  {t('csvExpectedFormat', preferences.language)}
                 </p>
               </div>
             </CardContent>
@@ -194,14 +194,14 @@ export function BankSync({ goalId }: BankSyncProps) {
       <Dialog open={wiseSyncDialogOpen} onOpenChange={setWiseSyncDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sync Wise Transactions</DialogTitle>
+            <DialogTitle>{t('syncTransactions', preferences.language)}</DialogTitle>
             <DialogDescription>
-              Select currency and date range to import transactions from Wise
+              {t('selectDateRange', preferences.language)}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="currency">Currency</Label>
+              <Label htmlFor="currency">{t('currency', preferences.language)}</Label>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger id="currency">
                   <SelectValue />
@@ -217,7 +217,7 @@ export function BankSync({ goalId }: BankSyncProps) {
             </div>
 
             <div>
-              <Label htmlFor="startDate">Start Date</Label>
+              <Label htmlFor="startDate">{t('startDate', preferences.language)}</Label>
               <Input
                 id="startDate"
                 type="date"
@@ -227,7 +227,7 @@ export function BankSync({ goalId }: BankSyncProps) {
             </div>
 
             <div>
-              <Label htmlFor="endDate">End Date</Label>
+              <Label htmlFor="endDate">{t('endDate', preferences.language)}</Label>
               <Input
                 id="endDate"
                 type="date"
@@ -238,10 +238,10 @@ export function BankSync({ goalId }: BankSyncProps) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setWiseSyncDialogOpen(false)}>
-              Cancel
+              {t('cancel', preferences.language)}
             </Button>
             <Button onClick={handleWiseSyncConfirm} disabled={wiseSyncMutation.isPending}>
-              {wiseSyncMutation.isPending ? "Syncing..." : "Sync"}
+              {wiseSyncMutation.isPending ? t('syncing', preferences.language) : t('sync', preferences.language)}
             </Button>
           </DialogFooter>
         </DialogContent>

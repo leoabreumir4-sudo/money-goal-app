@@ -153,6 +153,8 @@ export const translations = {
     
     // Bank Sync
     bankSynchronization: "Bank Synchronization",
+    syncWiseOrImportCSV: "Sync Wise or import Nubank CSV",
+    importFromCSV: "Import transactions from CSV file",
     wiseApiToken: "Wise API Token",
     wiseTokenPlaceholder: "Enter your Wise API token",
     wiseTokenDescription: "Get your token from Wise settings",
@@ -172,6 +174,10 @@ export const translations = {
     importing: "Importing...",
     sync: "Sync",
     cancel: "Cancel",
+    wiseImportSuccess: "Successfully imported {0} of {1} Wise transactions",
+    wiseSyncFailed: "Failed to sync Wise transactions",
+    csvImportSuccess: "Imported {0} transactions ({1} duplicates skipped)",
+    csvImportFailed: "Failed to import CSV",
     
     // Settings descriptions
     customizeExperience: "Customize your MoneyGoal experience",
@@ -358,6 +364,8 @@ export const translations = {
     
     // Bank Sync
     bankSynchronization: "Sincronização Bancária",
+    syncWiseOrImportCSV: "Sincronizar Wise ou importar CSV Nubank",
+    importFromCSV: "Importar transações de arquivo CSV",
     wiseApiToken: "Token da API Wise",
     wiseTokenPlaceholder: "Digite seu token da API Wise",
     wiseTokenDescription: "Obtenha seu token nas configurações do Wise",
@@ -377,6 +385,10 @@ export const translations = {
     importing: "Importando...",
     sync: "Sincronizar",
     cancel: "Cancelar",
+    wiseImportSuccess: "Importadas {0} de {1} transações Wise com sucesso",
+    wiseSyncFailed: "Falha ao sincronizar transações Wise",
+    csvImportSuccess: "Importadas {0} transações ({1} duplicadas ignoradas)",
+    csvImportFailed: "Falha ao importar CSV",
     
     // Settings descriptions
     customizeExperience: "Personalize sua experiência MoneyGoal",
@@ -563,6 +575,8 @@ export const translations = {
     
     // Bank Sync
     bankSynchronization: "Sincronización Bancaria",
+    syncWiseOrImportCSV: "Sincronizar Wise o importar CSV Nubank",
+    importFromCSV: "Importar transacciones desde archivo CSV",
     wiseApiToken: "Token API de Wise",
     wiseTokenPlaceholder: "Ingresa tu token API de Wise",
     wiseTokenDescription: "Obtén tu token en la configuración de Wise",
@@ -582,6 +596,10 @@ export const translations = {
     importing: "Importando...",
     sync: "Sincronizar",
     cancel: "Cancelar",
+    wiseImportSuccess: "Importadas {0} de {1} transacciones Wise exitosamente",
+    wiseSyncFailed: "Fallo al sincronizar transacciones Wise",
+    csvImportSuccess: "Importadas {0} transacciones ({1} duplicadas omitidas)",
+    csvImportFailed: "Fallo al importar CSV",
     
     // Settings descriptions
     customizeExperience: "Personaliza tu experiencia MoneyGoal",
