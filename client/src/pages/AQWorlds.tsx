@@ -98,8 +98,12 @@ export default function AQWorlds() {
 
   const { user } = useAuth();
   const utils = trpc.useUtils();
-  const { data: projects = [] } = trpc.projects.getAll.useQuery();
-  const { data: events = [] } = trpc.events.getAll.useQuery();
+  const { data: projects = [] } = trpc.projects.getAll.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const { data: events = [] } = trpc.events.getAll.useQuery(undefined, {
+    enabled: !!user,
+  });
 
   const createProjectMutation = trpc.projects.create.useMutation({
     onSuccess: () => {
