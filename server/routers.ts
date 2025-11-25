@@ -191,7 +191,7 @@ export const appRouter = router({
   // User Settings
   settings: router({
     get: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserSettings(ctx.user.id);
+      return await db.getUserSettings(ctx.user.openId);
     }),
 
     create: protectedProcedure
@@ -203,7 +203,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         await db.createUserSettings({
-          userId: ctx.user.id,
+          userId: ctx.user.openId,
           ...input,
         });
         return { success: true };
@@ -221,14 +221,14 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         // Check if settings exist
-        const existing = await db.getUserSettings(ctx.user.id);
+        const existing = await db.getUserSettings(ctx.user.openId);
         if (existing) {
           // Update existing settings
-          await db.updateUserSettings(ctx.user.id, input);
+          await db.updateUserSettings(ctx.user.openId, input);
         } else {
           // Create new settings
           await db.createUserSettings({
-            userId: ctx.user.id,
+            userId: ctx.user.openId,
             language: input.language || "en",
             currency: input.currency || "USD",
             theme: input.theme || "dark",
