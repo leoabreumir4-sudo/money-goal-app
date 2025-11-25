@@ -6,10 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
 export default function Settings() {
   const utils = trpc.useUtils();
   const { data: settings } = trpc.settings.get.useQuery();
+  const { updatePreferences } = usePreferences();
   
   const [language, setLanguage] = useState("en");
   const [currency, setCurrency] = useState("USD");
@@ -27,6 +29,12 @@ export default function Settings() {
   const updateSettingsMutation = trpc.settings.update.useMutation({
     onSuccess: () => {
       utils.settings.get.invalidate();
+      // Update context immediately
+      updatePreferences({
+        language: language as any,
+        currency,
+        theme: theme as "dark" | "light",
+      });
       toast.success("Settings saved successfully!");
     },
   });

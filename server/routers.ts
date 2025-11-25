@@ -5,10 +5,12 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { authRouter } from "./authRouter";
+import { plaidRouter } from "./plaidRouter";
 
 export const appRouter = router({
   system: systemRouter,
   auth: authRouter, // Usando o novo authRouter
+  plaid: plaidRouter, // Bank synchronization via Plaid
 
   // TEMPORARY: Delete all users (REMOVE AFTER USE!)
   _dangerDeleteAllUsers: publicProcedure.mutation(async () => {
@@ -326,7 +328,41 @@ export const appRouter = router({
   // Events (AQWorlds Calendar)
   events: router({
     getAll: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getEventsByUserId(ctx.user.id);
+      const events = await db.getEventsByUserId(ctx.user.id);
+      
+      // If user has no events, initialize with default events
+      if (events.length === 0) {
+        const defaultEvents = [
+          { month: 1, names: ["Australia Day", "Akiba New Year", "Nulgath's Birthday", "Dominik's Birthday"] },
+          { month: 2, names: ["Carnaval", "Groundhorc's Day", "Heroes Heart Day", "Pancake Day", "Super Bowl"] },
+          { month: 3, names: ["Dage's Birthday", "Good Luck Day", "Grenwog"] },
+          { month: 4, names: ["April Fools' Day", "Earth Day", "Solar New Year"] },
+          { month: 5, names: ["Cinco de Mayo", "May the 4th", "Summer Break"] },
+          { month: 6, names: ["Alvaro's Birthday", "AQWorld Cup", "Father's Day"] },
+          { month: 7, names: ["Freedom Day", "Frostval in July"] },
+          { month: 8, names: ["Back to School", "Indonesian Day"] },
+          { month: 9, names: ["Obrigado Brasil", "Talk Like a Pirate Day", "Yoshino's Birthday"] },
+          { month: 10, names: ["AQWorlds' Birthday", "Canadian Thanksgiving", "Taco Day", "Alina's Birthday"] },
+          { month: 11, names: ["Black Friday", "Cyber Monday", "Harvest Day"] },
+          { month: 12, names: ["Frostval", "New Year"] },
+        ];
+
+        for (const monthData of defaultEvents) {
+          for (const name of monthData.names) {
+            await db.createEvent({
+              userId: ctx.user.id,
+              name,
+              month: monthData.month,
+              isSelected: 0,
+              isDefault: 1,
+            });
+          }
+        }
+
+        return await db.getEventsByUserId(ctx.user.id);
+      }
+
+      return events;
     }),
 
     create: protectedProcedure
@@ -341,6 +377,18 @@ export const appRouter = router({
           userId: ctx.user.id,
           ...input,
         });
+        return { success: true };
+      }),
+
+    toggleSelection: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const event = await db.getEventById(input.id, ctx.user.id);
+        if (event) {
+          await db.updateEvent(input.id, ctx.user.id, {
+            isSelected: event.isSelected === 1 ? 0 : 1,
+          });
+        }
         return { success: true };
       }),
 

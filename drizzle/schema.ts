@@ -173,6 +173,25 @@ export const monthlyPayments = pgTable("monthlyPayments", {
 export type MonthlyPayment = typeof monthlyPayments.$inferSelect;
 export type InsertMonthlyPayment = typeof monthlyPayments.$inferInsert;
 
+/**
+ * Connected bank accounts (Plaid integration)
+ */
+export const bankAccounts = pgTable("bankAccounts", {
+  id: serial("id").primaryKey(),
+  userId: uuid("userId").notNull(),
+  plaidItemId: varchar("plaidItemId", { length: 255 }).notNull(),
+  plaidAccessToken: text("plaidAccessToken").notNull(),
+  institutionName: varchar("institutionName", { length: 255 }),
+  institutionId: varchar("institutionId", { length: 255 }),
+  accountIds: text("accountIds").notNull(), // JSON array of account IDs
+  isActive: boolean("isActive").notNull().default(true),
+  lastSyncDate: timestamp("lastSyncDate"),
+  createdDate: timestamp("createdDate").defaultNow().notNull(),
+});
+
+export type BankAccount = typeof bankAccounts.$inferSelect;
+export type InsertBankAccount = typeof bankAccounts.$inferInsert;
+
 // Relations (optional, but good practice)
 export const usersRelations = relations(users, ({ many }) => ({
   goals: many(goals),
@@ -184,6 +203,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   events: many(events),
   chatMessages: many(chatMessages),
   monthlyPayments: many(monthlyPayments),
+  bankAccounts: many(bankAccounts),
 }));
 
 export const goalsRelations = relations(goals, ({ one, many }) => ({
@@ -265,5 +285,12 @@ export const monthlyPaymentsRelations = relations(monthlyPayments, ({ one }) => 
   transaction: one(transactions, {
     fields: [monthlyPayments.transactionId],
     references: [transactions.id],
+  }),
+}));
+
+export const bankAccountsRelations = relations(bankAccounts, ({ one }) => ({
+  user: one(users, {
+    fields: [bankAccounts.userId],
+    references: [users.id],
   }),
 }));

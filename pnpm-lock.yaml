@@ -172,6 +172,9 @@ importers:
       pg:
         specifier: ^8.16.3
         version: 8.16.3
+      plaid:
+        specifier: ^39.1.0
+        version: 39.1.0
       react:
         specifier: ^19.1.1
         version: 19.2.0
@@ -184,6 +187,9 @@ importers:
       react-hook-form:
         specifier: ^7.64.0
         version: 7.64.0(react@19.2.0)
+      react-plaid-link:
+        specifier: ^4.1.1
+        version: 4.1.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-resizable-panels:
         specifier: ^3.0.6
         version: 3.0.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -3775,6 +3781,10 @@ packages:
   pkg-types@2.3.0:
     resolution: {integrity: sha512-SIqCzDRg0s9npO5XQ3tNZioRY1uK06lA41ynBC1YmFTmnY6FjUjVt6s4LoADmwoig1qqD0oK8h1p/8mlMx8Oig==}
 
+  plaid@39.1.0:
+    resolution: {integrity: sha512-i1D3DMXReWwjBC+phMgdW8k9c0OCYw0IH2ZOdnqGM6ZCAFHDeFxgvcLdM9uwNFZdFeu7VEd9MJRj9QTKEQjKBQ==}
+    engines: {node: '>=10.0.0'}
+
   pnpm@10.18.0:
     resolution: {integrity: sha512-6AT4ifHOzEDVctsITuw+SIFzn43sacD/ENLRvv+aTjCTg7ontbdQBZ1/TBSVNbbNDSyx7Trrc5I5pChKaPQM+g==}
     engines: {node: '>=18.12'}
@@ -3877,6 +3887,12 @@ packages:
     peerDependencies:
       '@types/react': '>=18'
       react: '>=18'
+
+  react-plaid-link@4.1.1:
+    resolution: {integrity: sha512-xzAYWQIT/gk+u6lwFAMEZ20f9+AUsCwVyfm64/iudMsyuWANta4wm3Jb7N+APSwuKIR9VUlTkYDhPjLamIGcPA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
+      react-dom: ^16.8.0 || ^17 || ^18 || ^19
 
   react-refresh@0.17.0:
     resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
@@ -8538,6 +8554,12 @@ snapshots:
       exsolve: 1.0.7
       pathe: 2.0.3
 
+  plaid@39.1.0:
+    dependencies:
+      axios: 1.12.2
+    transitivePeerDependencies:
+      - debug
+
   pnpm@10.18.0: {}
 
   points-on-curve@0.2.0: {}
@@ -8641,6 +8663,12 @@ snapshots:
       vfile: 6.0.3
     transitivePeerDependencies:
       - supports-color
+
+  react-plaid-link@4.1.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      prop-types: 15.8.1
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
 
   react-refresh@0.17.0: {}
 

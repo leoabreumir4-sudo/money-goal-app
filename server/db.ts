@@ -22,7 +22,9 @@ import {
   chatMessages,
   InsertChatMessage,
   monthlyPayments,
-  InsertMonthlyPayment
+  InsertMonthlyPayment,
+  bankAccounts,
+  InsertBankAccount
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -367,6 +369,16 @@ export async function getEventsByUserId(userId: string) {
   return await db.select().from(events).where(eq(events.userId, userId));
 }
 
+export async function getEventById(id: number, userId: string) {
+  const db = getDb();
+  const result = await db
+    .select()
+    .from(events)
+    .where(and(eq(events.id, id), eq(events.userId, userId)))
+    .limit(1);
+  return result[0] ?? null;
+}
+
 export async function updateEvent(id: number, userId: string, data: Partial<InsertEvent>) {
   const db = getDb();
   if (!db) throw new Error("Database not available");
@@ -425,4 +437,42 @@ export async function deleteMonthlyPayment(id: number, userId: string) {
   if (!db) throw new Error("Database not available");
   
   await db.delete(monthlyPayments).where(and(eq(monthlyPayments.id, id), eq(monthlyPayments.userId, userId)));
+}
+
+// Bank Accounts (Plaid)
+export async function createBankAccount(account: InsertBankAccount) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(bankAccounts).values(account).returning();
+  return result[0];
+}
+
+export async function getBankAccountsByUserId(userId: string) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db.select().from(bankAccounts).where(and(eq(bankAccounts.userId, userId), eq(bankAccounts.isActive, true)));
+}
+
+export async function getBankAccountById(id: number) {
+  const db = getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(bankAccounts).where(eq(bankAccounts.id, id));
+  return result[0] || null;
+}
+
+export async function updateBankAccountLastSync(id: number) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(bankAccounts).set({ lastSyncDate: new Date() }).where(eq(bankAccounts.id, id));
+}
+
+export async function deactivateBankAccount(id: number) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(bankAccounts).set({ isActive: false }).where(eq(bankAccounts.id, id));
 }
