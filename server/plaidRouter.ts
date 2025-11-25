@@ -30,7 +30,7 @@ export const plaidRouter = router({
         },
         client_name: "MoneyGoal",
         products: [Products.Transactions],
-        country_codes: [CountryCode.Us, CountryCode.Gb, CountryCode.Es, CountryCode.Br],
+        country_codes: ["US", "GB", "ES", "BR"],
         language: "en",
       };
 
