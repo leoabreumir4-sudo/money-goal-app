@@ -11,9 +11,9 @@ export default function Settings() {
   const utils = trpc.useUtils();
   const { data: settings } = trpc.settings.get.useQuery();
   
-  const [language, setLanguage] = useState(\"en\");
-  const [currency, setCurrency] = useState(\"USD\");
-  const [theme, setTheme] = useState(\"dark\");
+  const [language, setLanguage] = useState("en");
+  const [currency, setCurrency] = useState("USD");
+  const [theme, setTheme] = useState("dark");
 
   // Update state when settings are loaded
   useEffect(() => {
