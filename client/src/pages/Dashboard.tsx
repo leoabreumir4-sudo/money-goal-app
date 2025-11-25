@@ -9,8 +9,12 @@ import { ArrowDown, ArrowUp, Pencil, Sparkles } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { BankSync } from "@/components/BankSync";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/currency";
 
 export default function Dashboard() {
+  const { preferences } = usePreferences();
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
   const [isNewGoalModalOpen, setIsNewGoalModalOpen] = useState(false);
@@ -205,13 +209,13 @@ export default function Dashboard() {
       <div className="p-8 space-y-6">
         {/* Header with Action Buttons */}
         <div className="flex justify-between items-center gap-4">
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('dashboard', preferences.language)}</h1>
           <div className="flex gap-3">
             <Dialog open={isIncomeModalOpen} onOpenChange={setIsIncomeModalOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-primary hover:bg-primary/90">
                   <ArrowUp className="mr-2 h-4 w-4" />
-                  Add Income
+                  {t('addIncome', preferences.language)}
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -256,7 +260,7 @@ export default function Dashboard() {
               <DialogTrigger asChild>
                 <Button className="bg-accent hover:bg-accent/90">
                   <ArrowDown className="mr-2 h-4 w-4" />
-                  Add Expense
+                  {t('addExpense', preferences.language)}
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -310,11 +314,11 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-foreground">Recent Transactions</CardTitle>
+                <CardTitle className="text-foreground">{t('recentTransactions', preferences.language)}</CardTitle>
               </CardHeader>
               <CardContent>
                 {recentTransactions.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No transactions yet</p>
+                  <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language)}</p>
                 ) : (
                   <div className="space-y-3">
                     {recentTransactions.map((transaction) => (
@@ -348,8 +352,8 @@ export default function Dashboard() {
                             transaction.type === "income" ? "text-primary" : "text-accent"
                           }`}
                         >
-                          {transaction.type === "income" ? "+" : "-"}$
-                          {(transaction.amount / 100).toFixed(2)}
+                          {transaction.type === "income" ? "+" : "-"}
+                          {formatCurrency(transaction.amount, preferences.currency)}
                         </p>
                       </div>
                     ))}
@@ -370,7 +374,7 @@ export default function Dashboard() {
                         <Sparkles className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">COMPLETED</p>
+                        <p className="text-sm text-muted-foreground">{t('completed', preferences.language)}</p>
                         <p className="text-2xl font-bold text-foreground">{progressPercentage}%</p>
                       </div>
                     </div>
@@ -393,15 +397,15 @@ export default function Dashboard() {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Current Amount</span>
+                        <span className="text-muted-foreground">{t('currentAmount', preferences.language)}</span>
                         <span className="font-semibold text-foreground">
-                          ${(activeGoal.currentAmount / 100).toFixed(2)}
+                          {formatCurrency(activeGoal.currentAmount, preferences.currency)}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Target Amount</span>
+                        <span className="text-muted-foreground">{t('targetAmount', preferences.language)}</span>
                         <span className="font-semibold text-foreground">
-                          ${(activeGoal.targetAmount / 100).toFixed(2)}
+                          {formatCurrency(activeGoal.targetAmount, preferences.currency)}
                         </span>
                       </div>
                     </div>
