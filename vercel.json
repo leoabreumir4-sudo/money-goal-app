@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd client && pnpm install && pnpm run build",
+  "outputDirectory": "client/dist",
+  "installCommand": "pnpm install",
+  "routes": [
+    {
+      "src": "/[^/.]+\/?",
+      "dest": "/index.html"
+    }
+  ]
+}
