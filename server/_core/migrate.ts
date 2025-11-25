@@ -1,69 +1,48 @@
 // server/_core/migrate.ts
+// Safe, idempotent migration runner for Drizzle ORM
+// This script applies pending migrations without dropping tables or types
+import "dotenv/config";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { sql } from "drizzle-orm";
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 
 async function runMigration() {
+  const isProduction = process.env.NODE_ENV === "production";
+  const env = isProduction ? "production" : "development";
+
   if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is not set");
+    console.error("[Database] DATABASE_URL is not set");
+    process.exit(1);
   }
 
-  console.log("[Database] Migration started...");
+  console.log(`[Database] Migration started in ${env} mode...`);
+  console.log("[Database] Running safe, idempotent migration (no destructive operations)...");
 
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: true, // Adicionar SSL para Neon
+    ssl: isProduction ? { rejectUnauthorized: false } : undefined,
   });
 
   const db = drizzle(pool);
 
-  // Workaround for "type already exists" error on subsequent deploys
-  // This is a temporary fix, a proper migration strategy should be used
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."chat_role" CASCADE;`);
-  console.log("[Database] Dropped chat_role type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."frequency" CASCADE;`);
-  console.log("[Database] Dropped frequency type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."goal_status" CASCADE;`);
-  console.log("[Database] Dropped goal_status type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."theme" CASCADE;`);
-  console.log("[Database] Dropped theme type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."transaction_type" CASCADE;`);
-  console.log("[Database] Dropped transaction_type type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."user_role" CASCADE;`);
-  console.log("[Database] Dropped user_role type (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "categories" CASCADE;`);
-  console.log("[Database] Dropped categories table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "chatMessages" CASCADE;`);
-  console.log("[Database] Dropped chatMessages table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "users" CASCADE;`);
-  console.log("[Database] Dropped users table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "sessions" CASCADE;`);
-  console.log("[Database] Dropped sessions table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "goals" CASCADE;`);
-  console.log("[Database] Dropped goals table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "transactions" CASCADE;`);
-  console.log("[Database] Dropped transactions table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "events" CASCADE;`);
-  console.log("[Database] Dropped events table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "recurringExpenses" CASCADE;`);
-  console.log("[Database] Dropped recurringExpenses table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "userSettings" CASCADE;`);
-  console.log("[Database] Dropped userSettings table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "projects" CASCADE;`);
-  console.log("[Database] Dropped projects table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "monthlyPayments" CASCADE;`);
-  console.log("[Database] Dropped monthlyPayments table (if existed).");
+  try {
+    // Drizzle's migrate() is idempotent: it tracks applied migrations in a journal
+    // and only applies new migrations that haven't been run yet.
+    // It does NOT drop tables, types, or reset the database.
+    await migrate(db, { migrationsFolder: "drizzle" });
 
-  // O caminho para a pasta de migrações gerada pelo Drizzle-kit
-  await migrate(db, { migrationsFolder: "drizzle" });
-
-  console.log("[Database] Migration finished.");
+    console.log("[Database] Migration completed successfully.");
+  } catch (err) {
+    console.error("[Database] Migration failed:", err);
+    await pool.end();
+    process.exit(1);
+  }
 
   await pool.end();
+  console.log("[Database] Database connection closed.");
 }
 
 runMigration().catch((err) => {
-  console.error("[Database] Migration failed:", err);
+  console.error("[Database] Unexpected migration error:", err);
   process.exit(1);
 });
