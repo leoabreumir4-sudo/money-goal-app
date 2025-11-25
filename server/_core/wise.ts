@@ -121,7 +121,20 @@ export async function getBalances(
 }
 
 /**
+ * Get borderless accounts for a profile
+ */
+export async function getBorderlessAccounts(
+  apiToken: string,
+  profileId: number
+): Promise<any[]> {
+  const client = createWiseClient(apiToken);
+  const response = await client.get(`/v1/borderless-accounts?profileId=${profileId}`);
+  return response.data;
+}
+
+/**
  * Get balance statement (transactions) for a period
+ * Try multiple endpoints as Wise API has different versions
  */
 export async function getBalanceStatement(
   apiToken: string,
@@ -131,14 +144,41 @@ export async function getBalanceStatement(
   intervalEnd: string // ISO date string
 ): Promise<WiseBalanceStatement> {
   const client = createWiseClient(apiToken);
-  const response = await client.get(
-    `/v1/profiles/${profileId}/balance-statements/${currency}/statement.json`,
-    {
-      params: {
-        intervalStart,
-        intervalEnd,
-      },
+  
+  // Try v3 endpoint first (more common)
+  try {
+    // First get borderless account
+    const borderlessAccounts = await getBorderlessAccounts(apiToken, profileId);
+    if (borderlessAccounts.length === 0) {
+      throw new Error("No borderless accounts found");
     }
-  );
-  return response.data;
+    
+    const accountId = borderlessAccounts[0].id;
+    
+    const response = await client.get(
+      `/v3/profiles/${profileId}/borderless-accounts/${accountId}/statement.json`,
+      {
+        params: {
+          currency,
+          intervalStart,
+          intervalEnd,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.log("v3 endpoint failed, trying v1...");
+    
+    // Fallback to v1 endpoint
+    const response = await client.get(
+      `/v1/profiles/${profileId}/balance-statements/${currency}/statement.json`,
+      {
+        params: {
+          intervalStart,
+          intervalEnd,
+        },
+      }
+    );
+    return response.data;
+  }
 }
