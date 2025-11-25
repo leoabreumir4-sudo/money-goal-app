@@ -85,6 +85,34 @@ async function startServer() {
   // Register OAuth routes
   registerOAuthRoutes(app);
 
+  // Wise webhook endpoint (raw body needed for signature validation)
+  // URL format: /api/webhooks/wise/:userId
+  app.post("/api/webhooks/wise/:userId", express.raw({ type: "application/json" }), async (req, res) => {
+    try {
+      const signature = req.headers["x-signature-256"] as string;
+      const userId = req.params.userId;
+      
+      if (!signature) {
+        return res.status(401).json({ error: "Missing signature" });
+      }
+
+      if (!userId) {
+        return res.status(400).json({ error: "Missing userId" });
+      }
+
+      // Import webhook handler
+      const { handleWiseWebhook } = await import("./wiseWebhook");
+      
+      // Process webhook
+      await handleWiseWebhook(req.body.toString(), signature, userId);
+      
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Wise webhook error:", error);
+      res.status(500).json({ error: "Webhook processing failed" });
+    }
+  });
+
   // tRPC API with JWT Bearer token authentication
   app.use(
     "/api/trpc",

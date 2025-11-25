@@ -175,10 +175,10 @@ export default function Settings() {
               />
               <div className="mt-2 p-3 bg-secondary/50 rounded-lg">
                 <p className="text-xs font-mono break-all">
-                  {window.location.origin}/api/trpc/webhooks.wise
+                  {window.location.origin}/api/webhooks/wise/{settings?.userId}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Configure este URL na sua conta Wise em Settings → Webhooks
+                  Cole esta URL na Wise (Settings → Webhooks). Selecione "Account deposit events".
                 </p>
               </div>
             </div>
