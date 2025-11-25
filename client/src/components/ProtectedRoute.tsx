@@ -7,7 +7,17 @@ interface ProtectedRouteProps extends RouteProps {
 }
 
 export default function ProtectedRoute({ component: Component, ...rest }: ProtectedRouteProps) {
-  const { data: user, isLoading } = trpc.auth.me.useQuery();
+  // Check if token exists before making the query
+  const hasToken = !!localStorage.getItem('sessionToken');
+  
+  const { data: user, isLoading } = trpc.auth.me.useQuery(undefined, {
+    enabled: hasToken, // Only run query if token exists
+  });
+
+  // If no token, redirect immediately
+  if (!hasToken) {
+    return <Redirect to="/auth" />;
+  }
 
   if (isLoading) {
     return <FullPageLoader />;
