@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "sortOrder" integer DEFAULT 0 NOT NULL;

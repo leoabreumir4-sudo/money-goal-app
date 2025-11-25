@@ -141,6 +141,7 @@ export const events = pgTable("events", {
   month: integer("month").notNull(), // 1-12
   isSelected: integer("isSelected").default(0).notNull(), // 0 = not selected, 1 = selected (green)
   isDefault: integer("isDefault").default(0).notNull(), // 0 = custom, 1 = default event
+  sortOrder: integer("sortOrder").default(0).notNull(), // For custom ordering via drag & drop
   createdDate: timestamp("createdDate").defaultNow().notNull(),
 });
 

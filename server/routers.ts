@@ -450,10 +450,21 @@ export const appRouter = router({
         month: z.number().optional(),
         isSelected: z.number().optional(),
         isDefault: z.number().optional(),
+        sortOrder: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
         await db.updateEvent(id, ctx.user.id, data);
+        return { success: true };
+      }),
+
+    reorder: protectedProcedure
+      .input(z.object({
+        eventId: z.number(),
+        newSortOrder: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateEvent(input.eventId, ctx.user.id, { sortOrder: input.newSortOrder });
         return { success: true };
       }),
 

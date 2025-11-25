@@ -36,6 +36,13 @@
       "when": 1764103649165,
       "tag": "0004_little_franklin_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1764107307359,
+      "tag": "0005_classy_exodus",
+      "breakpoints": true
     }
   ]
 }

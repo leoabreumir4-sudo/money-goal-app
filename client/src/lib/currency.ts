@@ -1,4 +1,4 @@
-// Currency formatting helper
+// Currency formatting helper with European formatting (. for thousands, , for decimals)
 export const formatCurrency = (amount: number, currency: string = "USD"): string => {
   const value = amount / 100; // Convert cents to dollars
   
@@ -9,24 +9,23 @@ export const formatCurrency = (amount: number, currency: string = "USD"): string
     GBP: "£",
   };
   
-  // Locale mapping for proper number formatting
-  const localeMap: Record<string, string> = {
-    USD: "en-US",
-    BRL: "pt-BR",
-    EUR: "de-DE",
-    GBP: "en-GB",
-  };
-  
   const symbol = currencySymbols[currency] || "$";
-  const locale = localeMap[currency] || "en-US";
   
-  // Format with proper thousands separator and decimal separator
-  const formatted = value.toLocaleString(locale, {
+  // Format with European style: . for thousands, , for decimals
+  const formatted = value.toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
   
   return `${symbol}${formatted}`;
+};
+
+// Format number without currency symbol (for display purposes)
+export const formatNumber = (value: number, decimals: number = 2): string => {
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 };
 
 // Get user's currency from settings
