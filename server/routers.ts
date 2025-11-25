@@ -191,7 +191,14 @@ export const appRouter = router({
   // User Settings
   settings: router({
     get: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserSettings(ctx.user.openId);
+      try {
+        const settings = await db.getUserSettings(ctx.user.openId);
+        return settings;
+      } catch (error) {
+        console.error('[Settings] Error fetching user settings:', error);
+        // Return null instead of throwing - frontend will handle missing settings
+        return null;
+      }
     }),
 
     create: protectedProcedure
