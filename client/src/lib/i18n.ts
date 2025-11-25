@@ -391,12 +391,6 @@ export const translations = {
     success: "Éxito",
   },
 };
-    close: "Cerrar",
-    loading: "Cargando...",
-    error: "Error",
-    success: "Éxito",
-  },
-};
 
 export type Language = keyof typeof translations;
 export type TranslationKey = keyof typeof translations.en;
