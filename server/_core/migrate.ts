@@ -1,69 +1,37 @@
-// server/_core/migrate.ts
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { sql } from "drizzle-orm";
-import { Pool } from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { execSync } from "child_process";
 
-async function runMigration() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is not set");
-  }
+const isProduction = process.env.NODE_ENV === "production";
+const shouldSkip = process.env.SKIP_MIGRATE === "1" || process.env.SKIP_MIGRATIONS === "1";
 
-  console.log("[Database] Migration started...");
-
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: true, // Adicionar SSL para Neon
-  });
-
-  const db = drizzle(pool);
-
-  // Workaround for "type already exists" error on subsequent deploys
-  // This is a temporary fix, a proper migration strategy should be used
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."chat_role" CASCADE;`);
-  console.log("[Database] Dropped chat_role type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."frequency" CASCADE;`);
-  console.log("[Database] Dropped frequency type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."goal_status" CASCADE;`);
-  console.log("[Database] Dropped goal_status type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."theme" CASCADE;`);
-  console.log("[Database] Dropped theme type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."transaction_type" CASCADE;`);
-  console.log("[Database] Dropped transaction_type type (if existed).");
-  await db.execute(sql`DROP TYPE IF EXISTS "public"."user_role" CASCADE;`);
-  console.log("[Database] Dropped user_role type (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "categories" CASCADE;`);
-  console.log("[Database] Dropped categories table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "chatMessages" CASCADE;`);
-  console.log("[Database] Dropped chatMessages table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "users" CASCADE;`);
-  console.log("[Database] Dropped users table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "sessions" CASCADE;`);
-  console.log("[Database] Dropped sessions table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "goals" CASCADE;`);
-  console.log("[Database] Dropped goals table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "transactions" CASCADE;`);
-  console.log("[Database] Dropped transactions table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "events" CASCADE;`);
-  console.log("[Database] Dropped events table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "recurringExpenses" CASCADE;`);
-  console.log("[Database] Dropped recurringExpenses table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "userSettings" CASCADE;`);
-  console.log("[Database] Dropped userSettings table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "projects" CASCADE;`);
-  console.log("[Database] Dropped projects table (if existed).");
-  await db.execute(sql`DROP TABLE IF EXISTS "monthlyPayments" CASCADE;`);
-  console.log("[Database] Dropped monthlyPayments table (if existed).");
-
-  // O caminho para a pasta de migrações gerada pelo Drizzle-kit
-  await migrate(db, { migrationsFolder: "drizzle" });
-
-  console.log("[Database] Migration finished.");
-
-  await pool.end();
+function run(cmd: string) {
+  console.log(`[Database] running: ${cmd}`);
+  execSync(cmd, { stdio: "inherit" });
 }
 
-runMigration().catch((err) => {
-  console.error("[Database] Migration failed:", err);
-  process.exit(1);
-});
+async function main() {
+  if (shouldSkip) {
+    console.log("[Database] SKIP_MIGRATE enabled — skipping migrations.");
+    process.exit(0);
+  }
+
+  try {
+    if (isProduction) {
+      console.log("[Database] Production detected — running `prisma migrate deploy`");
+      // Apply already-created migrations without destructive reset
+      run("npx prisma migrate deploy");
+    } else {
+      console.log("[Database] Development detected — running `prisma migrate dev`");
+      // In development, allow iterative work. `--skip-generate` can be removed if you want generate to run.
+      run("npx prisma migrate dev --skip-generate");
+    }
+
+    console.log("[Database] Migration finished.");
+    process.exit(0);
+  } catch (err: any) {
+    console.error("[Database] Migration failed:", err?.message ?? err);
+    // Fail fast so deploys fail when migrations cannot be applied
+    process.exit(1);
+  }
+}
+
+main();
