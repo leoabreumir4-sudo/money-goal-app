@@ -125,6 +125,58 @@ export default function Settings() {
           </CardContent>
         </Card>
 
+        {/* Wise API Integration */}
+        <Card className="bg-card border-border max-w-2xl">
+          <CardHeader>
+            <CardTitle className="text-foreground">{t('wiseApiToken', preferences.language)}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="wiseToken">{t('wiseApiToken', preferences.language)}</Label>
+              <p className="text-sm text-muted-foreground">
+                {t('wiseTokenDescription', preferences.language)}{" "}
+                <a
+                  href="https://wise.com/help/articles/2958229"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Wise
+                </a>
+              </p>
+              <Input
+                id="wiseToken"
+                type="password"
+                placeholder={t('wiseTokenPlaceholder', preferences.language)}
+                value={wiseToken}
+                onChange={(e) => setWiseToken(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  updateSettingsMutation.mutate({ wiseApiToken: wiseToken });
+                }}
+                disabled={updateSettingsMutation.isPending || !wiseToken}
+              >
+                {t('saveToken', preferences.language)}
+              </Button>
+              {settings?.wiseApiToken && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setWiseToken("");
+                    updateSettingsMutation.mutate({ wiseApiToken: null });
+                  }}
+                  disabled={updateSettingsMutation.isPending}
+                >
+                  {t('removeToken', preferences.language)}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* About Settings */}
         <Card className="bg-card border-border max-w-2xl">
           <CardHeader>

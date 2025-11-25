@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Building2, ChevronDown, ChevronUp, Upload, RefreshCw } from "lucide-react";
+import { Building2, ChevronDown, ChevronUp, Upload, RefreshCw, Settings } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
@@ -109,7 +110,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                   <div>
                     <CardTitle className="text-lg">{t('bankSynchronization', preferences.language)}</CardTitle>
                     <CardDescription className="text-sm">
-                      {t('syncWiseOrImportCSV', preferences.language)}
+                      {t('syncWiseOrImportBankCSV', preferences.language)}
                     </CardDescription>
                   </div>
                 </div>
@@ -135,14 +136,22 @@ export function BankSync({ goalId }: BankSyncProps) {
                         : `${balances.length} ${t('wiseBalances', preferences.language)}`}
                     </p>
                   </div>
-                  <Button
-                    onClick={handleWiseSync}
-                    disabled={isWiseNotConfigured}
-                    size="sm"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    {t('syncWise', preferences.language)}
-                  </Button>
+                  {isWiseNotConfigured ? (
+                    <Link href="/settings">
+                      <Button size="sm" variant="outline">
+                        <Settings className="h-4 w-4 mr-2" />
+                        {t('goToSettings', preferences.language)}
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button
+                      onClick={handleWiseSync}
+                      size="sm"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      {t('syncWise', preferences.language)}
+                    </Button>
+                  )}
                 </div>
                 {!isWiseNotConfigured && balances.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -160,7 +169,7 @@ export function BankSync({ goalId }: BankSyncProps) {
               <div className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold">Nubank CSV</h3>
+                    <h3 className="font-semibold">{t('bankCSV', preferences.language)}</h3>
                     <p className="text-sm text-muted-foreground">
                       {t('importFromCSV', preferences.language)}
                     </p>

@@ -153,8 +153,10 @@ export const translations = {
     
     // Bank Sync
     bankSynchronization: "Bank Synchronization",
-    syncWiseOrImportCSV: "Sync Wise or import Nubank CSV",
+    syncWiseOrImportBankCSV: "Sync Wise or import bank CSV",
     importFromCSV: "Import transactions from CSV file",
+    bankCSV: "Bank CSV",
+    goToSettings: "Go to Settings",
     wiseApiToken: "Wise API Token",
     wiseTokenPlaceholder: "Enter your Wise API token",
     wiseTokenDescription: "Get your token from Wise settings",
@@ -364,8 +366,10 @@ export const translations = {
     
     // Bank Sync
     bankSynchronization: "Sincronização Bancária",
-    syncWiseOrImportCSV: "Sincronizar Wise ou importar CSV Nubank",
+    syncWiseOrImportBankCSV: "Sincronizar Wise ou importar CSV bancário",
     importFromCSV: "Importar transações de arquivo CSV",
+    bankCSV: "CSV Bancário",
+    goToSettings: "Ir para Configurações",
     wiseApiToken: "Token da API Wise",
     wiseTokenPlaceholder: "Digite seu token da API Wise",
     wiseTokenDescription: "Obtenha seu token nas configurações do Wise",
@@ -575,8 +579,10 @@ export const translations = {
     
     // Bank Sync
     bankSynchronization: "Sincronización Bancaria",
-    syncWiseOrImportCSV: "Sincronizar Wise o importar CSV Nubank",
+    syncWiseOrImportBankCSV: "Sincronizar Wise o importar CSV bancario",
     importFromCSV: "Importar transacciones desde archivo CSV",
+    bankCSV: "CSV Bancario",
+    goToSettings: "Ir a Configuración",
     wiseApiToken: "Token API de Wise",
     wiseTokenPlaceholder: "Ingresa tu token API de Wise",
     wiseTokenDescription: "Obtén tu token en la configuración de Wise",
