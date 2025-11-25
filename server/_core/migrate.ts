@@ -48,6 +48,13 @@ async function main() {
       END $$;
     `);
     
+    // Make email column nullable
+    console.log("[Database] Making email column nullable...");
+    await pool.query(`
+      ALTER TABLE "users" ALTER COLUMN "email" DROP NOT NULL;
+    `);
+    console.log("[Database] Email column is now nullable.");
+    
     console.log("[Database] All migrations and constraints applied successfully.");
     await pool.end();
     process.exit(0);
