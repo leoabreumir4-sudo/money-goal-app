@@ -56,8 +56,8 @@ function parseNubankCSV(csvContent: string): Array<{
  * Format: ID,Status,Direction,"Created on","Finished on","Source name","Source amount (after fees)","Source currency","Target name","Target amount (after fees)","Target currency",...
  * 
  * Rules:
- * - Imports IN, OUT, and NEUTRAL transactions
- * - NEUTRAL (conversions): "Converted to BRL" or "Converted to USD"
+ * - Only imports IN and OUT transactions (skips NEUTRAL conversions)
+ * - Detects internal transfers when source name = target name
  * - OUT to self: "Transferred to another bank"
  * - Uses original transaction amounts (no conversion)
  * - Simplified descriptions without amount values
@@ -122,16 +122,16 @@ function parseWiseCSV(csvContent: string): Array<{
 
     if (!date || isNaN(sourceAmount) || isNaN(targetAmount)) continue;
 
+    // Skip NEUTRAL transactions (currency conversions)
+    if (direction === "NEUTRAL") {
+      continue;
+    }
+
     let amount: number;
     let currency: string;
     let description: string;
 
-    if (direction === "NEUTRAL") {
-      // Currency conversion within Wise account
-      amount = -sourceAmount; // Use source (money leaving original currency)
-      currency = sourceCurrency;
-      description = `Converted to ${targetCurrency}`;
-    } else if (direction === "IN") {
+    if (direction === "IN") {
       // Money coming in - use target amount and show source
       amount = targetAmount;
       currency = targetCurrency;
@@ -141,7 +141,8 @@ function parseWiseCSV(csvContent: string): Array<{
       amount = -sourceAmount;
       currency = sourceCurrency;
       
-      if (targetName && targetName.toLowerCase().includes("leonardo")) {
+      // Check if source and target names are the same (internal transfer)
+      if (sourceName && targetName && sourceName.trim() === targetName.trim()) {
         // Transfer to another bank account of yours
         description = "Transferred to another bank";
       } else {
