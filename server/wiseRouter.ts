@@ -209,6 +209,9 @@ export const wiseRouter = router({
         // Get transactions for the period
         let statement;
         try {
+          console.log(`[Wise Sync] Fetching statement for ${input.currency} from ${input.startDate} to ${input.endDate}`);
+          console.log(`[Wise Sync] Profile ID: ${profiles[0].id}`);
+          
           statement = await getBalanceStatement(
             settings.wiseApiToken,
             profiles[0].id,
@@ -216,14 +219,30 @@ export const wiseRouter = router({
             input.startDate,
             input.endDate
           );
+          
+          console.log(`[Wise Sync] Statement fetched successfully. ${statement.transactions.length} transactions found.`);
         } catch (error: any) {
-          console.error("Error fetching Wise statement:", error);
+          console.error("[Wise Sync] Error fetching Wise statement:", error);
+          console.error("[Wise Sync] Error details:", {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            message: error.message,
+          });
           
           // Check if it's a 404 - might mean no transactions for this currency
           if (error.response?.status === 404) {
             throw new TRPCError({
               code: "NOT_FOUND",
               message: `No transactions found for ${input.currency} in the specified period. Make sure you have a ${input.currency} balance with transaction history.`,
+            });
+          }
+          
+          // Check for authentication errors
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Wise API token is invalid or has insufficient permissions. Please check your token in Settings.",
             });
           }
           
