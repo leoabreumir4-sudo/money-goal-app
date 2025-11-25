@@ -1,0 +1,1 @@
+ALTER TABLE "transactions" ADD COLUMN "currency" varchar(3);

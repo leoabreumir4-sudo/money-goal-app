@@ -71,6 +71,7 @@ export const transactions = pgTable("transactions", {
   amount: integer("amount").notNull(), // Store as cents
   reason: varchar("reason", { length: 255 }).notNull(),
   source: varchar("source", { length: 50 }), // "wise", "csv", or null for manual
+  currency: varchar("currency", { length: 3 }), // ISO currency code (USD, BRL, EUR, etc.)
   createdDate: timestamp("createdDate").defaultNow().notNull(),
 });
 

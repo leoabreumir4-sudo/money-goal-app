@@ -229,6 +229,7 @@ export const csvRouter = router({
             amount,
             reason,
             source: 'wise',
+            currency: transaction.currency,
             createdDate: transactionDate,
           });
 

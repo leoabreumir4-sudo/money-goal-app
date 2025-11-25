@@ -390,7 +390,7 @@ export default function Dashboard() {
                                   }`}
                                 >
                                   {transaction.type === "income" ? "+" : "-"}
-                                  {formatCurrency(transaction.amount, preferences.currency)}
+                                  {formatCurrency(transaction.amount, transaction.currency || preferences.currency)}
                                 </p>
                               </div>
                             ))}
