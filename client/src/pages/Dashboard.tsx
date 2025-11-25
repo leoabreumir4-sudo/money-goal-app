@@ -187,8 +187,7 @@ export default function Dashboard() {
   const recentTransactions = useMemo(() => {
     if (!activeGoal) return [];
     return transactions
-      .filter(t => t.goalId === activeGoal.id)
-      .slice(0, 20);
+      .filter(t => t.goalId === activeGoal.id);
   }, [transactions, activeGoal]);
 
   const progressPercentage = activeGoal 
@@ -321,7 +320,7 @@ export default function Dashboard() {
                 {recentTransactions.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language)}</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3 max-h-[800px] overflow-y-auto pr-2">
                     {recentTransactions.map((transaction) => (
                       <div
                         key={transaction.id}
