@@ -89,7 +89,7 @@ export default function Settings() {
             {/* Currency */}
             <div className="space-y-2">
               <Label htmlFor="currency">{t('currency', preferences.language)}</Label>
-              <p className="text-sm text-muted-foreground">{t('selectCurrency', preferences.language)}</p>
+              <p className="text-sm text-muted-foreground">{t('preferredCurrency', preferences.language)}</p>
               <Select value={currency} onValueChange={setCurrency}>
                 <SelectTrigger id="currency">
                   <SelectValue />
