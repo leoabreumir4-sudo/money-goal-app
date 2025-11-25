@@ -320,7 +320,7 @@ export default function Dashboard() {
                 {recentTransactions.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language)}</p>
                 ) : (
-                  <div className="space-y-3 max-h-[60vh] md:max-h-[70vh] overflow-y-auto pr-2">
+                  <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-2">
                     {recentTransactions.map((transaction) => (
                       <div
                         key={transaction.id}
