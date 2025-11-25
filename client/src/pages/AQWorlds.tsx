@@ -741,8 +741,10 @@ export default function AQWorlds() {
             
             <div className="space-y-6 py-2">
               {/* Event List */}
-              {!events || events.length === 0 ? (
+              {!events || events.length === 0 || !user ? (
                 <div className="text-center py-8 text-muted-foreground">Loading events...</div>
+              ) : monthEvents.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">No events for this month</div>
               ) : (
                 <DragDropContext onDragEnd={handleDragEnd}>
                   <Droppable droppableId="events">
