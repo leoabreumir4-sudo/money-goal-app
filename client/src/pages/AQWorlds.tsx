@@ -31,8 +31,20 @@ function MonthlyStatusButtonComponent({ month, year, totalAmount }: { month: num
       enabled: !loading && !!user,
       retry: false,
       refetchOnWindowFocus: false,
+      onError: (err) => {
+        console.error('[MonthlyStatusButton] Query error:', err.message);
+      },
     }
   );
+  
+  // Don't render if not authenticated
+  if (loading || !user) {
+    return (
+      <Button size="sm" disabled className="bg-gray-600">
+        ...
+      </Button>
+    );
+  }
   
   const togglePaidMutation = trpc.monthlyPayments.togglePaid.useMutation({
     onSuccess: (data) => {
@@ -102,11 +114,29 @@ export default function AQWorlds() {
   const utils = trpc.useUtils();
   
   // Query data - but only enable when user is authenticated
-  const { data: projects = [] } = trpc.projects.getAll.useQuery(undefined, {
+  const { data: projects = [], isLoading: projectsLoading, error: projectsError } = trpc.projects.getAll.useQuery(undefined, {
     enabled: !!user && !loading,
+    retry: false,
+    onError: (err) => {
+      console.error('[AQWorlds] Projects query error:', err.message);
+      if (err.message.includes('UNAUTHORIZED')) {
+        // Token is invalid, clear it and redirect
+        localStorage.removeItem('sessionToken');
+        window.location.href = '/auth';
+      }
+    },
   });
-  const { data: events = [] } = trpc.events.getAll.useQuery(undefined, {
+  const { data: events = [], isLoading: eventsLoading, error: eventsError } = trpc.events.getAll.useQuery(undefined, {
     enabled: !!user && !loading,
+    retry: false,
+    onError: (err) => {
+      console.error('[AQWorlds] Events query error:', err.message);
+      if (err.message.includes('UNAUTHORIZED')) {
+        // Token is invalid, clear it and redirect
+        localStorage.removeItem('sessionToken');
+        window.location.href = '/auth';
+      }
+    },
   });
   
   // Don't render content until auth is loaded
@@ -121,10 +151,27 @@ export default function AQWorlds() {
   }
   
   if (!user) {
+    // Clear invalid token and redirect
+    localStorage.removeItem('sessionToken');
+    window.location.href = '/auth';
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-muted-foreground">Not authenticated. Redirecting...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+  
+  // Show error state if queries failed
+  if (projectsError || eventsError) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">Failed to load data</div>
+            <Button onClick={() => window.location.reload()}>Reload Page</Button>
+          </div>
         </div>
       </DashboardLayout>
     );

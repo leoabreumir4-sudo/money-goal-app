@@ -8,7 +8,10 @@ export async function createContext({ req, res }: CreateExpressContextOptions) {
   // Authenticate user from JWT Bearer token in Authorization header
   let user: User | undefined;
   try {
+    const authHeader = req.headers.authorization;
+    console.log('[Context] Auth header:', authHeader ? `Bearer ${authHeader.substring(7, 27)}...` : 'missing');
     user = await sdk.authenticateRequest(req);
+    console.log('[Context] Authentication successful for user:', user.openId);
   } catch (error) {
     // User not authenticated - will be undefined for public procedures
     console.log('[Context] Authentication failed:', error instanceof Error ? error.message : String(error));
