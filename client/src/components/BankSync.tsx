@@ -4,9 +4,12 @@ import { PlaidLinkButton } from "./PlaidLinkButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Calendar, RefreshCw, Trash2, Building2 } from "lucide-react";
+import { Calendar, RefreshCw, Trash2, Building2, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +26,8 @@ interface BankSyncProps {
 }
 
 export function BankSync({ goalId }: BankSyncProps) {
+  const { preferences } = usePreferences();
+  const [isOpen, setIsOpen] = useState(false);
   const [syncDialogOpen, setSyncDialogOpen] = useState(false);
   const [selectedBankId, setSelectedBankId] = useState<number | null>(null);
   const [startDate, setStartDate] = useState(format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd"));
@@ -72,33 +77,40 @@ export function BankSync({ goalId }: BankSyncProps) {
     });
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Bank Synchronization</CardTitle>
-          <CardDescription>Loading...</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Bank Synchronization
-          </CardTitle>
-          <CardDescription>
-            Connect your bank accounts to automatically import transactions
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">{t('bankSynchronization', preferences.language)}</CardTitle>
+                    <CardDescription className="text-sm">
+                      {accounts.length > 0 
+                        ? `${accounts.length} ${accounts.length === 1 ? 'account' : 'accounts'} connected` 
+                        : t('connectBankAccounts', preferences.language)}
+                    </CardDescription>
+                  </div>
+                </div>
+                {isOpen ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <CardContent className="space-y-4 pt-0">
           {accounts.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-sm text-muted-foreground mb-4">No bank accounts connected</p>
+              <p className="text-sm text-muted-foreground mb-4">{t('noBankAccounts', preferences.language)}</p>
               <PlaidLinkButton onSuccess={() => utils.plaid.getConnectedAccounts.invalidate()} />
             </div>
           ) : (
@@ -130,7 +142,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                         disabled={syncTransactions.isPending}
                       >
                         <RefreshCw className="h-4 w-4 mr-2" />
-                        Sync
+                        {t('sync', preferences.language)}
                       </Button>
                       <Button
                         size="sm"
@@ -149,20 +161,22 @@ export function BankSync({ goalId }: BankSyncProps) {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <Dialog open={syncDialogOpen} onOpenChange={setSyncDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sync Transactions</DialogTitle>
+            <DialogTitle>{t('syncTransactions', preferences.language)}</DialogTitle>
             <DialogDescription>
-              Select the date range for importing transactions from your bank
+              {t('selectDateRange', preferences.language)}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
+              <Label htmlFor="startDate">{t('startDate', preferences.language)}</Label>
               <Input
                 id="startDate"
                 type="date"
@@ -172,7 +186,7 @@ export function BankSync({ goalId }: BankSyncProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
+              <Label htmlFor="endDate">{t('endDate', preferences.language)}</Label>
               <Input
                 id="endDate"
                 type="date"
@@ -185,10 +199,10 @@ export function BankSync({ goalId }: BankSyncProps) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSyncDialogOpen(false)}>
-              Cancel
+              {t('cancel', preferences.language)}
             </Button>
             <Button onClick={handleSyncConfirm} disabled={syncTransactions.isPending}>
-              {syncTransactions.isPending ? "Syncing..." : "Sync Transactions"}
+              {syncTransactions.isPending ? t('syncing', preferences.language) : t('syncTransactions', preferences.language)}
             </Button>
           </DialogFooter>
         </DialogContent>

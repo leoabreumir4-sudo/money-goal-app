@@ -10,14 +10,17 @@ interface PlaidLinkButtonProps {
 
 export function PlaidLinkButton({ onSuccess }: PlaidLinkButtonProps) {
   const [linkToken, setLinkToken] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
 
   // Get link token from backend
   const { isLoading: isCreatingToken } = trpc.plaid.createLinkToken.useQuery(undefined, {
     onSuccess: (data) => {
       setLinkToken(data.linkToken);
+      setHasError(false);
     },
     onError: (error) => {
-      toast.error("Failed to initialize bank connection");
+      setHasError(true);
+      toast.error("Failed to initialize Plaid. Check if PLAID_CLIENT_ID and PLAID_SECRET are set on Render.");
       console.error("Link token error:", error);
     },
   });
@@ -66,10 +69,16 @@ export function PlaidLinkButton({ onSuccess }: PlaidLinkButtonProps) {
   return (
     <Button
       onClick={() => open()}
-      disabled={!ready || isCreatingToken || exchangeToken.isPending}
+      disabled={!ready || isCreatingToken || exchangeToken.isPending || hasError}
       variant="outline"
     >
-      {isCreatingToken ? "Initializing..." : exchangeToken.isPending ? "Connecting..." : "Connect Bank Account"}
+      {hasError 
+        ? "Plaid Not Configured" 
+        : isCreatingToken 
+        ? "Initializing..." 
+        : exchangeToken.isPending 
+        ? "Connecting..." 
+        : "Connect Bank Account"}
     </Button>
   );
 }

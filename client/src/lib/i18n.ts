@@ -13,6 +13,14 @@ export const translations = {
     noActiveGoal: "No active goal",
     createGoal: "Create Goal",
     editGoal: "Edit Goal",
+    goalName: "Goal Name",
+    goalCreatedSuccess: "Goal created successfully!",
+    goalUpdatedSuccess: "Goal updated successfully!",
+    incomeAddedSuccess: "Income added successfully!",
+    expenseAddedSuccess: "Expense added successfully!",
+    congratulations: "🎉 Congratulations!",
+    goalReached: "You've reached your goal! Your goal has been archived.",
+    createNewGoal: "Create New Goal",
     
     // Auth
     signIn: "Sign In",
@@ -32,6 +40,69 @@ export const translations = {
     saveChanges: "Save Changes",
     darkMode: "Dark Mode",
     lightMode: "Light Mode",
+    monthlySavingTarget: "Monthly Saving Target",
+    
+    // Spending
+    spending: "Spending",
+    spendingByCategory: "Spending by Category",
+    recurringExpenses: "Recurring Expenses",
+    addRecurringExpense: "Add Recurring Expense",
+    expenseName: "Expense Name",
+    frequency: "Frequency",
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    active: "Active",
+    inactive: "Inactive",
+    
+    // Analytics
+    analytics: "Analytics",
+    incomeVsExpense: "Income vs Expense",
+    savingsProjection: "Savings Projection",
+    totalIncome: "Total Income",
+    totalExpense: "Total Expense",
+    netSavings: "Net Savings",
+    
+    // Archived
+    archived: "Archived",
+    archivedGoals: "Archived Goals",
+    noArchivedGoals: "No archived goals",
+    completedOn: "Completed on",
+    archivedOn: "Archived on",
+    
+    // AQWorlds
+    aqworlds: "AQWorlds",
+    projects: "Projects",
+    monthlyStatus: "Monthly Status",
+    calendar: "Calendar",
+    addProject: "Add Project",
+    projectName: "Project Name",
+    category: "Category",
+    month: "Month",
+    year: "Year",
+    paid: "Paid",
+    unpaid: "Unpaid",
+    
+    // Chat
+    chat: "Chat",
+    typeMessage: "Type a message...",
+    sendMessage: "Send",
+    aiAssistant: "AI Assistant",
+    
+    // Bank Sync
+    bankSynchronization: "Bank Synchronization",
+    connectBankAccounts: "Connect your bank accounts to automatically import transactions",
+    noBankAccounts: "No bank accounts connected",
+    connectBankAccount: "Connect Bank Account",
+    lastSynced: "Last synced",
+    sync: "Sync",
+    disconnect: "Disconnect",
+    syncTransactions: "Sync Transactions",
+    selectDateRange: "Select the date range for importing transactions from your bank",
+    startDate: "Start Date",
+    endDate: "End Date",
+    syncing: "Syncing...",
     
     // General
     income: "Income",
@@ -42,6 +113,10 @@ export const translations = {
     save: "Save",
     delete: "Delete",
     edit: "Edit",
+    close: "Close",
+    loading: "Loading...",
+    error: "Error",
+    success: "Success",
   },
   pt: {
     // Dashboard
@@ -56,6 +131,14 @@ export const translations = {
     noActiveGoal: "Nenhuma meta ativa",
     createGoal: "Criar Meta",
     editGoal: "Editar Meta",
+    goalName: "Nome da Meta",
+    goalCreatedSuccess: "Meta criada com sucesso!",
+    goalUpdatedSuccess: "Meta atualizada com sucesso!",
+    incomeAddedSuccess: "Receita adicionada com sucesso!",
+    expenseAddedSuccess: "Despesa adicionada com sucesso!",
+    congratulations: "🎉 Parabéns!",
+    goalReached: "Você atingiu sua meta! Sua meta foi arquivada.",
+    createNewGoal: "Criar Nova Meta",
     
     // Auth
     signIn: "Entrar",
@@ -75,6 +158,69 @@ export const translations = {
     saveChanges: "Salvar Alterações",
     darkMode: "Modo Escuro",
     lightMode: "Modo Claro",
+    monthlySavingTarget: "Meta de Poupança Mensal",
+    
+    // Spending
+    spending: "Gastos",
+    spendingByCategory: "Gastos por Categoria",
+    recurringExpenses: "Despesas Recorrentes",
+    addRecurringExpense: "Adicionar Despesa Recorrente",
+    expenseName: "Nome da Despesa",
+    frequency: "Frequência",
+    daily: "Diário",
+    weekly: "Semanal",
+    monthly: "Mensal",
+    yearly: "Anual",
+    active: "Ativo",
+    inactive: "Inativo",
+    
+    // Analytics
+    analytics: "Análises",
+    incomeVsExpense: "Receita vs Despesa",
+    savingsProjection: "Projeção de Economia",
+    totalIncome: "Receita Total",
+    totalExpense: "Despesa Total",
+    netSavings: "Economia Líquida",
+    
+    // Archived
+    archived: "Arquivados",
+    archivedGoals: "Metas Arquivadas",
+    noArchivedGoals: "Nenhuma meta arquivada",
+    completedOn: "Concluída em",
+    archivedOn: "Arquivada em",
+    
+    // AQWorlds
+    aqworlds: "AQWorlds",
+    projects: "Projetos",
+    monthlyStatus: "Status Mensal",
+    calendar: "Calendário",
+    addProject: "Adicionar Projeto",
+    projectName: "Nome do Projeto",
+    category: "Categoria",
+    month: "Mês",
+    year: "Ano",
+    paid: "Pago",
+    unpaid: "Não Pago",
+    
+    // Chat
+    chat: "Chat",
+    typeMessage: "Digite uma mensagem...",
+    sendMessage: "Enviar",
+    aiAssistant: "Assistente IA",
+    
+    // Bank Sync
+    bankSynchronization: "Sincronização Bancária",
+    connectBankAccounts: "Conecte suas contas bancárias para importar transações automaticamente",
+    noBankAccounts: "Nenhuma conta bancária conectada",
+    connectBankAccount: "Conectar Conta Bancária",
+    lastSynced: "Última sincronização",
+    sync: "Sincronizar",
+    disconnect: "Desconectar",
+    syncTransactions: "Sincronizar Transações",
+    selectDateRange: "Selecione o período para importar transações do seu banco",
+    startDate: "Data Inicial",
+    endDate: "Data Final",
+    syncing: "Sincronizando...",
     
     // General
     income: "Receita",
@@ -85,6 +231,10 @@ export const translations = {
     save: "Salvar",
     delete: "Excluir",
     edit: "Editar",
+    close: "Fechar",
+    loading: "Carregando...",
+    error: "Erro",
+    success: "Sucesso",
   },
   es: {
     // Dashboard
@@ -99,6 +249,14 @@ export const translations = {
     noActiveGoal: "No hay meta activa",
     createGoal: "Crear Meta",
     editGoal: "Editar Meta",
+    goalName: "Nombre de la Meta",
+    goalCreatedSuccess: "¡Meta creada con éxito!",
+    goalUpdatedSuccess: "¡Meta actualizada con éxito!",
+    incomeAddedSuccess: "¡Ingreso agregado con éxito!",
+    expenseAddedSuccess: "¡Gasto agregado con éxito!",
+    congratulations: "🎉 ¡Felicitaciones!",
+    goalReached: "¡Has alcanzado tu meta! Tu meta ha sido archivada.",
+    createNewGoal: "Crear Nueva Meta",
     
     // Auth
     signIn: "Iniciar Sesión",
@@ -118,6 +276,69 @@ export const translations = {
     saveChanges: "Guardar Cambios",
     darkMode: "Modo Oscuro",
     lightMode: "Modo Claro",
+    monthlySavingTarget: "Meta de Ahorro Mensual",
+    
+    // Spending
+    spending: "Gastos",
+    spendingByCategory: "Gastos por Categoría",
+    recurringExpenses: "Gastos Recurrentes",
+    addRecurringExpense: "Agregar Gasto Recurrente",
+    expenseName: "Nombre del Gasto",
+    frequency: "Frecuencia",
+    daily: "Diario",
+    weekly: "Semanal",
+    monthly: "Mensual",
+    yearly: "Anual",
+    active: "Activo",
+    inactive: "Inactivo",
+    
+    // Analytics
+    analytics: "Análisis",
+    incomeVsExpense: "Ingreso vs Gasto",
+    savingsProjection: "Proyección de Ahorros",
+    totalIncome: "Ingreso Total",
+    totalExpense: "Gasto Total",
+    netSavings: "Ahorro Neto",
+    
+    // Archived
+    archived: "Archivados",
+    archivedGoals: "Metas Archivadas",
+    noArchivedGoals: "No hay metas archivadas",
+    completedOn: "Completada el",
+    archivedOn: "Archivada el",
+    
+    // AQWorlds
+    aqworlds: "AQWorlds",
+    projects: "Proyectos",
+    monthlyStatus: "Estado Mensual",
+    calendar: "Calendario",
+    addProject: "Agregar Proyecto",
+    projectName: "Nombre del Proyecto",
+    category: "Categoría",
+    month: "Mes",
+    year: "Año",
+    paid: "Pagado",
+    unpaid: "No Pagado",
+    
+    // Chat
+    chat: "Chat",
+    typeMessage: "Escribe un mensaje...",
+    sendMessage: "Enviar",
+    aiAssistant: "Asistente IA",
+    
+    // Bank Sync
+    bankSynchronization: "Sincronización Bancaria",
+    connectBankAccounts: "Conecta tus cuentas bancarias para importar transacciones automáticamente",
+    noBankAccounts: "No hay cuentas bancarias conectadas",
+    connectBankAccount: "Conectar Cuenta Bancaria",
+    lastSynced: "Última sincronización",
+    sync: "Sincronizar",
+    disconnect: "Desconectar",
+    syncTransactions: "Sincronizar Transacciones",
+    selectDateRange: "Selecciona el rango de fechas para importar transacciones de tu banco",
+    startDate: "Fecha Inicial",
+    endDate: "Fecha Final",
+    syncing: "Sincronizando...",
     
     // General
     income: "Ingreso",
@@ -128,6 +349,10 @@ export const translations = {
     save: "Guardar",
     delete: "Eliminar",
     edit: "Editar",
+    close: "Cerrar",
+    loading: "Cargando...",
+    error: "Error",
+    success: "Éxito",
   },
 };
 
