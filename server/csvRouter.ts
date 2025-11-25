@@ -141,7 +141,13 @@ function parseWiseCSV(csvContent: string): Array<{
       amount = -sourceAmount;
       currency = sourceCurrency;
       
-      // Check if source and target names are the same (internal transfer)
+      // Skip if source and target are the same AND same currency (duplicate of conversion)
+      if (sourceName && targetName && sourceName.trim() === targetName.trim() && 
+          sourceCurrency === targetCurrency) {
+        continue; // Skip internal BRL→BRL duplicates
+      }
+      
+      // Check if it's transfer to self in different currency
       if (sourceName && targetName && sourceName.trim() === targetName.trim()) {
         // Transfer to another bank account of yours
         description = "Transferred to another bank";
