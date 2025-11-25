@@ -41,6 +41,10 @@ export default function Settings() {
       });
       toast.success(t('saveChanges', preferences.language) + '!');
     },
+    onError: (error) => {
+      console.error('Settings update error:', error);
+      toast.error(error.message || 'Failed to save settings');
+    },
   });
 
   const handleSaveChanges = () => {
