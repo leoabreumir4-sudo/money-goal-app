@@ -23,11 +23,13 @@ const AuthPage = () => {
   const loginMutation = trpc.auth.login.useMutation({
   onSuccess: async (data) => {
     if (data.token) {
-      localStorage.setItem('sessionToken', data.token); // <--- ARMAZENA O TOKEN
+      localStorage.setItem('sessionToken', data.token);
     }
-    // Invalidate auth queries to refetch with new token
-    await queryClient.invalidateQueries();
     toast.success("Login bem-sucedido!");
+    // Small delay to ensure token is persisted
+    await new Promise(resolve => setTimeout(resolve, 100));
+    // Invalidate and refetch
+    await queryClient.invalidateQueries();
     navigate("/");
   },
   onError: (error) => {
@@ -39,11 +41,13 @@ const AuthPage = () => {
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: async (data) => {
       if (data.token) {
-        localStorage.setItem('sessionToken', data.token); // <--- ARMAZENA O TOKEN
+        localStorage.setItem('sessionToken', data.token);
       }
-      // Invalidate auth queries to refetch with new token
-      await queryClient.invalidateQueries();
       toast.success("Registro bem-sucedido! Você será logado automaticamente.");
+      // Small delay to ensure token is persisted
+      await new Promise(resolve => setTimeout(resolve, 100));
+      // Invalidate and refetch
+      await queryClient.invalidateQueries();
       navigate("/");
     },
     onError: (error) => {
