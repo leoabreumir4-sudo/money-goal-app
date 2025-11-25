@@ -23,19 +23,21 @@ import {
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, MessageSquare, PieChart, BarChart3, Archive, Settings as SettingsIcon } from "lucide-react";
+import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: LayoutDashboard, labelKey: "dashboard" as const, path: "/" },
   { icon: TrendingUp, label: "AQWorlds", path: "/aqworlds" },
   { icon: MessageSquare, label: "Chat", path: "/chat" },
-  { icon: PieChart, label: "Spending", path: "/spending" },
-  { icon: BarChart3, label: "Analytics", path: "/analytics" },
-  { icon: Archive, label: "Archived", path: "/archived" },
-  { icon: SettingsIcon, label: "Settings", path: "/settings" },
+  { icon: PieChart, labelKey: "spending" as const, path: "/spending" },
+  { icon: BarChart3, labelKey: "analytics" as const, path: "/analytics" },
+  { icon: Archive, labelKey: "archived" as const, path: "/archived" },
+  { icon: SettingsIcon, labelKey: "settings" as const, path: "/settings" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -98,6 +100,7 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const { preferences } = usePreferences();
 
   useEffect(() => {
     if (isCollapsed) {
@@ -186,18 +189,19 @@ function DashboardLayoutContent({
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
                 const isActive = location === item.path;
+                const label = 'labelKey' in item ? t(item.labelKey, preferences.language) : item.label;
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
+                      tooltip={label}
                       className={`h-10 transition-all font-normal`}
                     >
                       <item.icon
                         className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
                       />
-                      <span>{item.label}</span>
+                      <span>{label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

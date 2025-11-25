@@ -320,7 +320,7 @@ export default function Dashboard() {
                 {recentTransactions.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language)}</p>
                 ) : (
-                  <div className="space-y-3 max-h-[calc(100vh-28rem)] lg:max-h-[65vh] overflow-y-auto pr-2">
+                  <div className="space-y-3 max-h-[50vh] lg:max-h-[65vh] overflow-y-auto pr-2">
                     {(() => {
                       const groupedTransactions: Record<string, typeof recentTransactions> = {};
                       const today = new Date();
@@ -450,7 +450,7 @@ export default function Dashboard() {
                       {wiseBalance > 0 && (
                         <div className="flex justify-between text-xs pl-4 py-1">
                           <span className="text-muted-foreground/80 flex items-center gap-1.5">
-                            <Wallet className="h-3 w-3 text-purple-400" />
+                            <Wallet className="h-3 w-3 text-[#9fe870]" />
                             Includes Wise balance
                           </span>
                           <span className="text-muted-foreground/80">

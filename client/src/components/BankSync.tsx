@@ -264,7 +264,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                       variant="destructive"
                       disabled={clearWiseMutation.isPending}
                     >
-                      Limpar Wise
+                      {preferences.language === 'pt' ? 'Limpar Wise' : 'Clear Wise'}
                     </Button>
                     <Button
                       onClick={() => fileInputRef.current?.click()}
