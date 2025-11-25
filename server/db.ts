@@ -288,7 +288,25 @@ export async function updateUserSettings(userId: string, data: Partial<InsertUse
   const db = getDb();
   if (!db) throw new Error("Database not available");
   
-  await db.update(userSettings).set(data).where(eq(userSettings.userId, userId));
+  // Check if settings exist
+  const existing = await getUserSettings(userId);
+  
+  if (!existing) {
+    // Create new settings with defaults
+    const defaultSettings: InsertUserSettings = {
+      userId,
+      language: 'en',
+      currency: 'USD',
+      theme: 'dark',
+      monthlySavingTarget: 0,
+      hasUnreadArchived: false,
+      ...data, // Override with provided data
+    };
+    await db.insert(userSettings).values(defaultSettings);
+  } else {
+    // Update existing settings
+    await db.update(userSettings).set(data).where(eq(userSettings.userId, userId));
+  }
 }
 
 // Recurring Expenses
