@@ -11,6 +11,7 @@ export async function createContext({ req, res }: CreateExpressContextOptions) {
     user = await sdk.authenticateRequest(req);
   } catch (error) {
     // User not authenticated - will be undefined for public procedures
+    console.log('[Context] Authentication failed:', error instanceof Error ? error.message : String(error));
     user = undefined;
   }
 
