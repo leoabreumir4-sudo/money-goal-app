@@ -48,10 +48,25 @@ export const appRouter = router({
       }),
 
     getActive: protectedProcedure.query(async ({ ctx }) => {
-      console.log("[Goals] getActive called for user:", ctx.user.id, "type:", typeof ctx.user.id);
-      const result = await db.getActiveGoal(ctx.user.id);
-      console.log("[Goals] getActive result:", result);
-      return result;
+      const goal = await db.getActiveGoal(ctx.user.id);
+      
+      // Recalculate currentAmount from transactions if goal exists
+      if (goal) {
+        const transactions = await db.getTransactionsByGoalId(goal.id, ctx.user.id);
+        const calculatedAmount = transactions.reduce((sum, t) => {
+          return t.type === "income" ? sum + t.amount : sum - t.amount;
+        }, 0);
+        
+        // Update if different
+        if (calculatedAmount !== goal.currentAmount) {
+          await db.updateGoal(goal.id, ctx.user.id, {
+            currentAmount: Math.max(0, calculatedAmount),
+          });
+          goal.currentAmount = Math.max(0, calculatedAmount);
+        }
+      }
+      
+      return goal;
     }),
 
     getArchived: protectedProcedure.query(async ({ ctx }) => {
@@ -197,7 +212,21 @@ export const appRouter = router({
         hasUnreadArchived: z.boolean().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        await db.updateUserSettings(ctx.user.id, input);
+        // Check if settings exist
+        const existing = await db.getUserSettings(ctx.user.id);
+        if (existing) {
+          // Update existing settings
+          await db.updateUserSettings(ctx.user.id, input);
+        } else {
+          // Create new settings
+          await db.createUserSettings({
+            userId: ctx.user.id,
+            language: input.language || "en",
+            currency: input.currency || "USD",
+            theme: input.theme || "dark",
+            monthlySavingTarget: input.monthlySavingTarget || 0,
+          });
+        }
         return { success: true };
       }),
   }),
