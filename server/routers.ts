@@ -192,7 +192,7 @@ export const appRouter = router({
   settings: router({
     get: protectedProcedure.query(async ({ ctx }) => {
       try {
-        const settings = await db.getUserSettings(ctx.user.openId);
+        const settings = await db.getUserSettings(ctx.user.id);
         return settings;
       } catch (error) {
         console.error('[Settings] Error fetching user settings:', error);
@@ -210,7 +210,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         await db.createUserSettings({
-          userId: ctx.user.openId,
+          userId: ctx.user.id,
           ...input,
         });
         return { success: true };
@@ -228,14 +228,14 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         // Check if settings exist
-        const existing = await db.getUserSettings(ctx.user.openId);
+        const existing = await db.getUserSettings(ctx.user.id);
         if (existing) {
           // Update existing settings
-          await db.updateUserSettings(ctx.user.openId, input);
+          await db.updateUserSettings(ctx.user.id, input);
         } else {
           // Create new settings
           await db.createUserSettings({
-            userId: ctx.user.openId,
+            userId: ctx.user.id,
             language: input.language || "en",
             currency: input.currency || "USD",
             theme: input.theme || "dark",
