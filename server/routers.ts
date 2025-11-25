@@ -516,6 +516,57 @@ export const appRouter = router({
       return await db.getMonthlyPaymentsByUserId(ctx.user.id);
     }),
 
+    getPayment: protectedProcedure
+      .input(z.object({
+        month: z.number(),
+        year: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const payments = await db.getMonthlyPaymentsByUserId(ctx.user.id);
+        return payments.find(p => p.month === input.month && p.year === input.year);
+      }),
+
+    togglePaid: protectedProcedure
+      .input(z.object({
+        month: z.number(),
+        year: z.number(),
+        totalAmount: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const payments = await db.getMonthlyPaymentsByUserId(ctx.user.id);
+        const existingPayment = payments.find(p => p.month === input.month && p.year === input.year);
+
+        if (existingPayment) {
+          // Delete payment and transaction
+          if (existingPayment.transactionId) {
+            await db.deleteTransaction(existingPayment.transactionId, ctx.user.id);
+          }
+          await db.deleteMonthlyPayment(existingPayment.id, ctx.user.id);
+          return { isPaid: false };
+        } else {
+          // Create transaction first
+          const transaction = await db.createTransaction({
+            userId: ctx.user.id,
+            type: 'income',
+            amount: input.totalAmount,
+            reason: `AQWorlds Payment - ${input.month}/${input.year}`,
+            source: 'AQWorlds',
+            currency: 'USD',
+          });
+
+          // Create payment with transaction reference
+          await db.createMonthlyPayment({
+            userId: ctx.user.id,
+            month: input.month,
+            year: input.year,
+            totalAmount: input.totalAmount,
+            transactionId: transaction.id,
+          });
+
+          return { isPaid: true };
+        }
+      }),
+
     create: protectedProcedure
       .input(z.object({
         month: z.number(),

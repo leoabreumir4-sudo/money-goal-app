@@ -215,8 +215,8 @@ export async function createTransaction(transaction: InsertTransaction) {
   const db = getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.insert(transactions).values(transaction);
-  return result;
+  const result = await db.insert(transactions).values(transaction).returning();
+  return result[0];
 }
 
 export async function getTransactionsByGoalId(goalId: number, userId: string) {
