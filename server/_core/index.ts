@@ -97,14 +97,15 @@ async function startServer() {
       const signature = req.headers["x-signature-256"] as string;
       const userId = req.params.userId;
       
-      if (!signature) {
-        console.error("Webhook missing signature");
-        return res.status(401).json({ error: "Missing signature" });
-      }
-
       if (!userId) {
         console.error("Webhook missing userId");
         return res.status(400).json({ error: "Missing userId" });
+      }
+
+      // If no signature, this is a test request from Wise - just return 200 OK
+      if (!signature) {
+        console.log(`Wise webhook test request received for user ${userId}`);
+        return res.status(200).json({ success: true, message: "Webhook endpoint ready" });
       }
 
       // Import webhook handler
