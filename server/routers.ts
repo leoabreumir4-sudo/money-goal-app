@@ -523,7 +523,7 @@ export const appRouter = router({
       }))
       .query(async ({ ctx, input }) => {
         const payments = await db.getMonthlyPaymentsByUserId(ctx.user.id);
-        return payments.find(p => p.month === input.month && p.year === input.year);
+        return payments.find(p => p.month === input.month && p.year === input.year) || null;
       }),
 
     togglePaid: protectedProcedure

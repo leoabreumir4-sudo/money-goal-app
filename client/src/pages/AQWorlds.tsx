@@ -22,7 +22,13 @@ const months = [
 // Component for Mark Paid button
 function MonthlyStatusButtonComponent({ month, year, totalAmount }: { month: number; year: number; totalAmount: number }) {
   const utils = trpc.useUtils();
-  const { data: payment } = trpc.monthlyPayments.getPayment.useQuery({ month, year });
+  const { data: payment, isLoading, error } = trpc.monthlyPayments.getPayment.useQuery(
+    { month, year },
+    { 
+      retry: false,
+      refetchOnWindowFocus: false,
+    }
+  );
   
   const togglePaidMutation = trpc.monthlyPayments.togglePaid.useMutation({
     onSuccess: (data) => {
@@ -47,14 +53,18 @@ function MonthlyStatusButtonComponent({ month, year, totalAmount }: { month: num
     togglePaidMutation.mutate({ month, year, totalAmount });
   };
   
+  if (error) {
+    console.error('Error loading payment:', error);
+  }
+  
   return (
     <Button 
       size="sm" 
       className={isPaid ? "bg-gray-600 hover:bg-gray-700" : "bg-green-600 hover:bg-green-700"}
       onClick={handleClick}
-      disabled={togglePaidMutation.isPending}
+      disabled={togglePaidMutation.isPending || isLoading}
     >
-      {isPaid ? "Unmark" : "Mark Paid"}
+      {isLoading ? "..." : isPaid ? "Unmark" : "Mark Paid"}
     </Button>
   );
 }
