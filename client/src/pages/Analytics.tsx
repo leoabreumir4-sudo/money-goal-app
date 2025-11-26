@@ -4,17 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { ArrowDown, ArrowUp, TrendingUp } from "lucide-react";
+import { ArrowDown, ArrowUp, TrendingUp, Target } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
 
 export default function Analytics() {
   const { preferences } = usePreferences();
   const [savingTarget, setSavingTarget] = useState("");
+  const [projectionPeriod, setProjectionPeriod] = useState<'3M' | '6M' | '12M' | 'GOAL'>('GOAL');
   
   const utils = trpc.useUtils();
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
@@ -220,101 +221,290 @@ export default function Analytics() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="saving-target">{t("targetAmountUSD", preferences.language)}</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="saving-target"
-                  type="number"
-                  step="0.01"
-                  placeholder={(currentTarget).toFixed(2)}
-                  value={savingTarget}
-                  onChange={(e) => setSavingTarget(e.target.value)}
-                />
+              <Label htmlFor="saving-target">Monthly Saving Goal</Label>
+              <div className="flex gap-2 items-center">
+                <div className="relative max-w-xs">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    id="saving-target"
+                    type="text"
+                    placeholder="500"
+                    value={savingTarget}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9.]/g, '');
+                      setSavingTarget(value);
+                    }}
+                    className="pl-7"
+                  />
+                </div>
                 <Button onClick={handleSaveSavingTarget} disabled={updateSettingsMutation.isPending}>
                   {t("save", preferences.language)}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Based on your average: {formatCurrency(averageMonthlySaving, preferences.currency)}/month
+              </p>
             </div>
 
-            {activeGoal && (
-              <div className="mt-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={(() => {
-                    const months = [];
-                    const goalAmount = activeGoal.targetAmount - activeGoal.currentAmount;
-                    const avgSaving = averageMonthlySaving;
-                    const targetSaving = currentTarget;
-                    
-                    let avgAccumulated = activeGoal.currentAmount;
-                    let targetAccumulated = activeGoal.currentAmount;
-                    
-                    for (let i = 0; i <= 12; i++) {
-                      months.push({
-                        month: i === 0 ? 'Now' : `M${i}`,
-                        average: avgAccumulated,
-                        target: targetAccumulated
-                      });
-                      
-                      avgAccumulated = Math.min(avgAccumulated + avgSaving, activeGoal.targetAmount);
-                      targetAccumulated = Math.min(targetAccumulated + targetSaving, activeGoal.targetAmount);
-                    }
-                    
-                    return months;
-                  })()}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
-                    <XAxis 
-                      dataKey="month" 
-                      stroke="#9ca3af" 
-                      tick={{ fill: '#9ca3af' }}
-                      tickLine={false}
-                    />
-                    <YAxis 
-                      stroke="#9ca3af" 
-                      tick={{ fill: '#9ca3af' }}
-                      tickLine={false}
-                      tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px',
-                        padding: '12px'
-                      }}
-                      formatter={(value: number) => formatCurrency(value, preferences.currency)}
-                      labelStyle={{ color: '#f3f4f6', fontWeight: 'bold', marginBottom: '8px' }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="average" 
-                      stroke="#3b82f6" 
-                      strokeWidth={3}
-                      name={t("averageMonthlySaving", preferences.language)}
-                      dot={{ fill: '#3b82f6', r: 4 }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="target" 
-                      stroke="#8b5cf6" 
-                      strokeWidth={3}
-                      name={t("yourTargetSaving", preferences.language)}
-                      dot={{ fill: '#8b5cf6', r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+            {activeGoal && (() => {
+              const avgSaving = averageMonthlySaving;
+              const targetSaving = currentTarget;
+              const remaining = activeGoal.targetAmount - activeGoal.currentAmount;
+              
+              const monthsToGoalAvg = avgSaving > 0 ? Math.ceil(remaining / avgSaving) : null;
+              const monthsToGoalTarget = targetSaving > 0 ? Math.ceil(remaining / targetSaving) : null;
+              
+              const maxMonths = projectionPeriod === '3M' ? 3 : 
+                                projectionPeriod === '6M' ? 6 : 
+                                projectionPeriod === '12M' ? 12 : 
+                                Math.max(monthsToGoalAvg || 12, monthsToGoalTarget || 12);
+              
+              const projectionData = [];
+              let avgAccumulated = activeGoal.currentAmount;
+              let targetAccumulated = activeGoal.currentAmount;
+              const now = new Date();
+              
+              for (let i = 0; i <= maxMonths; i++) {
+                const futureDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+                const monthLabel = futureDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
                 
-                <div className="flex justify-center gap-6 mt-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-blue-500" />
-                    <span className="text-muted-foreground">{t("averageMonthlySaving", preferences.language)}</span>
+                const avgValue = avgAccumulated >= activeGoal.targetAmount ? null : avgAccumulated;
+                const targetValue = targetAccumulated >= activeGoal.targetAmount ? null : targetAccumulated;
+                
+                projectionData.push({
+                  month: monthLabel,
+                  monthIndex: i,
+                  average: avgValue,
+                  target: targetValue,
+                  avgReached: avgAccumulated >= activeGoal.targetAmount && i > 0,
+                  targetReached: targetAccumulated >= activeGoal.targetAmount && i > 0,
+                });
+                
+                avgAccumulated = Math.min(avgAccumulated + avgSaving, activeGoal.targetAmount);
+                targetAccumulated = Math.min(targetAccumulated + targetSaving, activeGoal.targetAmount);
+              }
+
+              const CustomTooltip = ({ active, payload, label }: any) => {
+                if (!active || !payload || !payload.length) return null;
+                
+                const data = payload[0].payload;
+                const avgVal = data.average !== null ? data.average : activeGoal.targetAmount;
+                const targetVal = data.target !== null ? data.target : activeGoal.targetAmount;
+                const monthIdx = data.monthIndex;
+                const remaining = activeGoal.targetAmount - Math.max(avgVal, targetVal);
+                const monthsRemaining = Math.max(
+                  monthsToGoalAvg ? monthsToGoalAvg - monthIdx : 0,
+                  monthsToGoalTarget ? monthsToGoalTarget - monthIdx : 0
+                );
+
+                if (data.avgReached || data.targetReached) {
+                  return (
+                    <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
+                      <p className="font-semibold text-lg mb-3">{label} - Goal Reached! 🎉</p>
+                      <div className="space-y-2 text-sm">
+                        {monthsToGoalTarget && (
+                          <div className="flex items-start gap-2">
+                            <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
+                            <div>
+                              <p className="font-medium">Target Saving: Reaches goal</p>
+                              <p className="text-muted-foreground">in {monthsToGoalTarget} months ({formatCurrency(activeGoal.targetAmount, preferences.currency)})</p>
+                            </div>
+                          </div>
+                        )}
+                        {monthsToGoalAvg && (
+                          <div className="flex items-start gap-2">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
+                            <div>
+                              <p className="font-medium">Average Saving: Takes {monthsToGoalAvg} months</p>
+                              {monthsToGoalTarget && monthsToGoalAvg > monthsToGoalTarget && (
+                                <p className="text-yellow-500">({monthsToGoalAvg - monthsToGoalTarget} months slower)</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg min-w-[280px]">
+                    <p className="font-semibold text-base mb-3">{label} (Month {monthIdx})</p>
+                    
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                          <span className="text-sm">Target Saving:</span>
+                        </div>
+                        <span className="font-semibold">{formatCurrency(targetVal, preferences.currency)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span className="text-sm">Average Saving:</span>
+                        </div>
+                        <span className="font-semibold">{formatCurrency(avgVal, preferences.currency)}</span>
+                      </div>
+                    </div>
+
+                    {remaining > 0 && (
+                      <div className="border-t border-border pt-3 text-sm text-muted-foreground">
+                        <p>Still {formatCurrency(remaining, preferences.currency)} to reach your {formatCurrency(activeGoal.targetAmount, preferences.currency)} goal</p>
+                        {monthsRemaining > 0 && (
+                          <p className="mt-1">Estimated: {monthsRemaining} months remaining</p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-primary" />
-                    <span className="text-muted-foreground">{t("yourTargetSaving", preferences.language)}</span>
+                );
+              };
+
+              return (
+                <>
+                  {/* Summary Card */}
+                  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                    <CardContent className="pt-6 space-y-4">
+                      <div className="flex items-center gap-2 text-lg font-semibold">
+                        <Target className="h-5 w-5 text-primary" />
+                        <span>Goal: {formatCurrency(activeGoal.targetAmount, preferences.currency)}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Current: {formatCurrency(activeGoal.currentAmount, preferences.currency)} ({Math.round((activeGoal.currentAmount / activeGoal.targetAmount) * 100)}%)
+                      </div>
+                      
+                      <div className="space-y-3 pt-2 border-t border-border/50">
+                        <p className="font-medium text-sm">Time to Goal:</p>
+                        
+                        {monthsToGoalTarget && (
+                          <div className="flex items-start gap-2">
+                            <div className="w-3 h-3 rounded-full bg-primary mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-sm">
+                                <span className="font-semibold">Target Saving</span> ({formatCurrency(targetSaving, preferences.currency)}/mo): {monthsToGoalTarget} months
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                → Reaches goal in {new Date(now.getFullYear(), now.getMonth() + monthsToGoalTarget, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {monthsToGoalAvg && (
+                          <div className="flex items-start gap-2">
+                            <div className="w-3 h-3 rounded-full bg-blue-500 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-sm">
+                                <span className="font-semibold">Average Saving</span> ({formatCurrency(avgSaving, preferences.currency)}/mo): {monthsToGoalAvg} months
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                → Reaches goal in {new Date(now.getFullYear(), now.getMonth() + monthsToGoalAvg, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {monthsToGoalTarget && monthsToGoalAvg && (
+                          <p className="text-sm font-medium text-primary">
+                            Difference: Target is {Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months {monthsToGoalTarget < monthsToGoalAvg ? 'faster' : 'slower'}
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Period Controls */}
+                  <div className="flex justify-end gap-2">
+                    {(['3M', '6M', '12M', 'GOAL'] as const).map((period) => (
+                      <Button
+                        key={period}
+                        variant={projectionPeriod === period ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setProjectionPeriod(period)}
+                      >
+                        {period === 'GOAL' ? 'Until Goal' : period}
+                      </Button>
+                    ))}
                   </div>
-                </div>
-              </div>
-            )}
+
+                  {/* Chart */}
+                  <div className="mt-6">
+                    <ResponsiveContainer width="100%" height={350}>
+                      <AreaChart data={projectionData}>
+                        <defs>
+                          <linearGradient id="colorAverage" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
+                          </linearGradient>
+                          <linearGradient id="colorTarget" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                        <XAxis 
+                          dataKey="month" 
+                          stroke="#9ca3af" 
+                          tick={{ fill: '#9ca3af', fontSize: 12 }}
+                          tickLine={false}
+                        />
+                        <YAxis 
+                          stroke="#9ca3af" 
+                          tick={{ fill: '#9ca3af', fontSize: 12 }}
+                          tickLine={false}
+                          tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <ReferenceLine 
+                          y={activeGoal.targetAmount} 
+                          stroke="#10b981" 
+                          strokeDasharray="5 5" 
+                          strokeWidth={2}
+                          label={{ value: 'Goal', position: 'insideTopRight', fill: '#10b981', fontSize: 12 }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="average" 
+                          stroke="#3b82f6" 
+                          strokeWidth={3}
+                          fill="url(#colorAverage)"
+                          name="Average Saving"
+                          dot={{ fill: '#3b82f6', r: 3 }}
+                          activeDot={{ r: 6 }}
+                          connectNulls={false}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="target" 
+                          stroke="#8b5cf6" 
+                          strokeWidth={3}
+                          fill="url(#colorTarget)"
+                          name="Target Saving"
+                          dot={{ fill: '#8b5cf6', r: 3 }}
+                          activeDot={{ r: 6 }}
+                          connectNulls={false}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    
+                    <div className="flex justify-center gap-6 mt-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-blue-500" />
+                        <span className="text-muted-foreground">Average Saving</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full bg-primary" />
+                        <span className="text-muted-foreground">Target Saving</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-1 bg-green-500" />
+                        <span className="text-muted-foreground">Goal Line</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
