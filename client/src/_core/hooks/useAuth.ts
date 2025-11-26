@@ -13,9 +13,12 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
   const utils = trpc.useUtils();
 
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('sessionToken');
+
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
+    enabled: hasToken, // Only query if token exists
   });
 
   console.log('[useAuth] Query state:', {
