@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { ArrowDown, ArrowUp, TrendingUp, Target } from "lucide-react";
 import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
@@ -23,9 +24,9 @@ export default function Analytics() {
   const { data: activeGoal } = trpc.goals.getActive.useQuery();
 
   const updateSettingsMutation = trpc.settings.update.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       utils.settings.get.invalidate();
-      setSavingTarget(""); // Clear input after save
+      setSavingTarget((variables.monthlySavingTarget / 100).toString()); // Mantém valor salvo
       toast.success(t("savingTargetUpdated", preferences.language));
     },
   });
@@ -86,9 +87,14 @@ export default function Analytics() {
   const netFlow = totalIncome - totalExpenses;
 
   const averageMonthlySaving = useMemo(() => {
-    const monthlySavings = monthlyData.map(m => m.income - m.expenses);
+    // Only count months with actual transactions (income OR expense)
+    const monthsWithTransactions = monthlyData.filter(m => m.income > 0 || m.expenses > 0);
+    
+    if (monthsWithTransactions.length === 0) return 0;
+    
+    const monthlySavings = monthsWithTransactions.map(m => m.income - m.expenses);
     const total = monthlySavings.reduce((sum, s) => sum + s, 0);
-    return monthlyData.length > 0 ? Math.round(total / monthlyData.length) : 0;
+    return Math.round(total / monthsWithTransactions.length);
   }, [monthlyData]);
 
   const currentTarget = settings?.monthlySavingTarget || 0;
@@ -100,6 +106,11 @@ export default function Analytics() {
           <h1 className="text-3xl font-bold text-foreground">{t("analytics", preferences.language)}</h1>
           <p className="text-muted-foreground">{t("trackFinancialPerformance", preferences.language)}</p>
         </div>
+
+        {/* Loader para gráfico/card enquanto carrega */}
+        {(!activeGoal || !settings) && (
+          <div className="animate-pulse bg-card border border-border rounded-lg h-32 w-full mb-4" />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/20">
@@ -247,30 +258,33 @@ export default function Analytics() {
             </div>
 
             {activeGoal && (() => {
+              // Inclui saldo Wise no valor inicial
+              const wiseBalance = activeGoal.wiseBalance || 0;
               const avgSaving = averageMonthlySaving;
               const targetSaving = currentTarget;
-              const remaining = activeGoal.targetAmount - activeGoal.currentAmount;
-              
+              const initialAmount = activeGoal.currentAmount + wiseBalance;
+              const remaining = activeGoal.targetAmount - initialAmount;
+
               const monthsToGoalAvg = avgSaving > 0 ? Math.ceil(remaining / avgSaving) : null;
               const monthsToGoalTarget = targetSaving > 0 ? Math.ceil(remaining / targetSaving) : null;
-              
+
               const maxMonths = projectionPeriod === '3M' ? 3 : 
                                 projectionPeriod === '6M' ? 6 : 
                                 projectionPeriod === '12M' ? 12 : 
                                 Math.max(monthsToGoalAvg || 12, monthsToGoalTarget || 12);
-              
+
               const projectionData = [];
-              let avgAccumulated = activeGoal.currentAmount;
-              let targetAccumulated = activeGoal.currentAmount;
+              let avgAccumulated = initialAmount;
+              let targetAccumulated = initialAmount;
               const now = new Date();
-              
+
               for (let i = 0; i <= maxMonths; i++) {
                 const futureDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
                 const monthLabel = futureDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
-                
+
                 const avgValue = avgAccumulated >= activeGoal.targetAmount ? null : avgAccumulated;
                 const targetValue = targetAccumulated >= activeGoal.targetAmount ? null : targetAccumulated;
-                
+
                 projectionData.push({
                   month: monthLabel,
                   monthIndex: i,
@@ -279,7 +293,7 @@ export default function Analytics() {
                   avgReached: avgAccumulated >= activeGoal.targetAmount && i > 0,
                   targetReached: targetAccumulated >= activeGoal.targetAmount && i > 0,
                 });
-                
+
                 avgAccumulated = Math.min(avgAccumulated + avgSaving, activeGoal.targetAmount);
                 targetAccumulated = Math.min(targetAccumulated + targetSaving, activeGoal.targetAmount);
               }
@@ -362,52 +376,51 @@ export default function Analytics() {
 
               return (
                 <>
-                  {/* Summary Card */}
-                  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-                    <CardContent className="pt-6 space-y-4">
-                      <div className="flex items-center gap-2 text-lg font-semibold">
-                        <Target className="h-5 w-5 text-primary" />
+                  {/* Compact Summary Card */}
+                  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 p-2">
+                    <CardContent className="py-3 px-4 space-y-2">
+                      <div className="flex items-center gap-2 text-base font-semibold">
+                        <Target className="h-4 w-4 text-primary" />
                         <span>Goal: {formatCurrency(activeGoal.targetAmount, preferences.currency)}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">Current: <span className="font-bold">
+                          <AnimatePresence mode="wait">
+                            <motion.span
+                              key={initialAmount}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              {formatCurrency(initialAmount, preferences.currency)}
+                            </motion.span>
+                          </AnimatePresence>
+                        </span> ({
+                          <AnimatePresence mode="wait">
+                            <motion.span
+                              key={Math.round((initialAmount / activeGoal.targetAmount) * 100)}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.5 }}
+                            >
+                              {Math.round((initialAmount / activeGoal.targetAmount) * 100)}%
+                            </motion.span>
+                          </AnimatePresence>
+                        })</span>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Current: {formatCurrency(activeGoal.currentAmount, preferences.currency)} ({Math.round((activeGoal.currentAmount / activeGoal.targetAmount) * 100)}%)
-                      </div>
-                      
-                      <div className="space-y-3 pt-2 border-t border-border/50">
-                        <p className="font-medium text-sm">Time to Goal:</p>
-                        
-                        {monthsToGoalTarget && (
-                          <div className="flex items-start gap-2">
-                            <div className="w-3 h-3 rounded-full bg-primary mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm">
-                                <span className="font-semibold">Target Saving</span> ({formatCurrency(targetSaving, preferences.currency)}/mo): {monthsToGoalTarget} months
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                → Reaches goal in {new Date(now.getFullYear(), now.getMonth() + monthsToGoalTarget, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {monthsToGoalAvg && (
-                          <div className="flex items-start gap-2">
-                            <div className="w-3 h-3 rounded-full bg-blue-500 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm">
-                                <span className="font-semibold">Average Saving</span> ({formatCurrency(avgSaving, preferences.currency)}/mo): {monthsToGoalAvg} months
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                → Reaches goal in {new Date(now.getFullYear(), now.getMonth() + monthsToGoalAvg, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
+                      {wiseBalance > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Wallet className="h-3 w-3 text-green-500" />
+                          Includes Wise balance: {formatCurrency(wiseBalance, preferences.currency)}
+                        </div>
+                      )}
+                      <div className="border-t border-border/50 pt-2 flex flex-col gap-1">
+                        <div className="flex gap-4 text-xs">
+                          <span className="font-medium">Target:</span> <span className="text-primary">{monthsToGoalTarget}m</span> ({new Date(now.getFullYear(), now.getMonth() + monthsToGoalTarget, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})
+                          <span className="font-medium">Average:</span> <span className="text-blue-500">{monthsToGoalAvg}m</span> ({new Date(now.getFullYear(), now.getMonth() + monthsToGoalAvg, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})
+                        </div>
                         {monthsToGoalTarget && monthsToGoalAvg && (
-                          <p className="text-sm font-medium text-primary">
-                            Difference: Target is {Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months {monthsToGoalTarget < monthsToGoalAvg ? 'faster' : 'slower'}
-                          </p>
+                          <span className="text-xs font-medium text-primary">Difference: Target is {Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months {monthsToGoalTarget < monthsToGoalAvg ? 'faster' : 'slower'}</span>
                         )}
                       </div>
                     </CardContent>
