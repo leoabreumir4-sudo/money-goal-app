@@ -749,7 +749,7 @@ export default function AQWorlds() {
                   {monthEvents.filter(event => event && event.id).map((event) => (
                     <div
                       key={event.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors group"
+                      className="relative flex items-center gap-3 p-3 rounded-lg border transition-colors group min-h-[52px]"
                       onMouseEnter={() => setHoveredEventId(event.id)}
                       onMouseLeave={() => setHoveredEventId(null)}
                     >
@@ -774,7 +774,7 @@ export default function AQWorlds() {
                                 </span>
                               )}
                               {hoveredEventId === event.id && (
-                                <div className="flex gap-1">
+                                <div className="flex gap-1 absolute right-3">
                                   <Button
                                     variant="ghost"
                                     size="sm"
