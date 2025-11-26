@@ -181,36 +181,53 @@ export default function AIMessage({ content }: AIMessageProps) {
             remarkPlugins={[remarkGfm]}
             components={{
               // Custom styling for markdown elements
-              h1: ({ children }) => <h1 className="text-xl font-semibold mt-4 mb-2">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-lg font-semibold mt-3 mb-2">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-base font-medium mt-2 mb-1">{children}</h3>,
-              p: ({ children }) => <p className="my-2 leading-relaxed font-normal">{children}</p>,
-              ul: ({ children }) => <ul className="list-disc list-inside my-2 space-y-1 font-normal">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal list-inside my-2 space-y-1 font-normal">{children}</ol>,
-              li: ({ children }) => <li className="ml-2 font-normal">{children}</li>,
-              strong: ({ children }) => <strong className="font-semibold text-primary">{children}</strong>,
-              em: ({ children }) => <em className="italic text-muted-foreground font-normal">{children}</em>,
+              h1: ({ children }) => <h1 className="text-xl font-semibold mt-4 mb-2 text-foreground">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-lg font-semibold mt-3 mb-2 text-foreground">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-base font-medium mt-2 mb-1 text-foreground">{children}</h3>,
+              p: ({ children }) => <p className="my-2 leading-relaxed font-normal text-muted-foreground">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc ml-6 my-2 space-y-1 font-normal text-muted-foreground">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal ml-6 my-2 space-y-1 font-normal text-muted-foreground">{children}</ol>,
+              li: ({ children }) => <li className="pl-2 font-normal text-muted-foreground">{children}</li>,
+              strong: ({ children }) => {
+                // Check if content contains money values
+                const content = String(children);
+                const hasMoneyValue = /[\$R€]\s*[\d,]+/.test(content);
+                const isNegative = content.includes('-') || content.toLowerCase().includes('negativ');
+                const isPositive = content.includes('+') || content.toLowerCase().includes('positiv');
+                
+                if (hasMoneyValue && isNegative) {
+                  return <strong className="font-semibold text-red-400">{children}</strong>;
+                }
+                if (hasMoneyValue && isPositive) {
+                  return <strong className="font-semibold text-green-400">{children}</strong>;
+                }
+                if (hasMoneyValue) {
+                  return <strong className="font-semibold text-blue-400">{children}</strong>;
+                }
+                return <strong className="font-semibold text-primary">{children}</strong>;
+              },
+              em: ({ children }) => <em className="italic text-muted-foreground/80 font-normal">{children}</em>,
               code: ({ children }) => (
-                <code className="px-1.5 py-0.5 bg-secondary rounded text-sm font-mono font-normal">{children}</code>
+                <code className="px-1.5 py-0.5 bg-secondary rounded text-sm font-mono font-normal text-blue-300">{children}</code>
               ),
               pre: ({ children }) => (
-                <pre className="p-3 bg-secondary rounded-lg overflow-x-auto my-2 font-normal">{children}</pre>
+                <pre className="p-3 bg-secondary/50 rounded-lg overflow-x-auto my-2 font-normal border border-border">{children}</pre>
               ),
               blockquote: ({ children }) => (
-                <blockquote className="border-l-4 border-primary pl-4 italic my-2 font-normal">{children}</blockquote>
+                <blockquote className="border-l-4 border-primary/50 pl-4 italic my-2 font-normal text-muted-foreground/90">{children}</blockquote>
               ),
               table: ({ children }) => (
                 <div className="overflow-x-auto my-4">
-                  <table className="min-w-full border-collapse font-normal">{children}</table>
+                  <table className="min-w-full border-collapse font-normal border border-border rounded-lg">{children}</table>
                 </div>
               ),
-              thead: ({ children }) => <thead className="bg-secondary">{children}</thead>,
+              thead: ({ children }) => <thead className="bg-secondary/50">{children}</thead>,
               tbody: ({ children }) => <tbody className="divide-y divide-border">{children}</tbody>,
-              tr: ({ children }) => <tr>{children}</tr>,
+              tr: ({ children }) => <tr className="hover:bg-secondary/30 transition-colors">{children}</tr>,
               th: ({ children }) => (
-                <th className="px-4 py-2 text-left font-medium text-sm">{children}</th>
+                <th className="px-4 py-2 text-left font-medium text-sm text-foreground">{children}</th>
               ),
-              td: ({ children }) => <td className="px-4 py-2 text-sm font-normal">{children}</td>,
+              td: ({ children }) => <td className="px-4 py-2 text-sm font-normal text-muted-foreground">{children}</td>,
             }}
           >
             {part.content}
