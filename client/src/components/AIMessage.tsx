@@ -13,14 +13,20 @@ interface AIMessageProps {
 
 // Parse chart markers in AI response
 function parseChartData(marker: string): { type: string; data: any } | null {
-  const match = marker.match(/\[CHART:([\w_]+)\s+data=({.*?})\]/);
-  if (!match) return null;
+  // Match format: [CHART:type data={"key":"value"}]
+  const match = marker.match(/\[CHART:([\w_]+)\s+data=(\{.+?\})\]/s);
+  if (!match) {
+    console.log('Failed to match chart marker:', marker);
+    return null;
+  }
   
   try {
     const type = match[1];
     const data = JSON.parse(match[2]);
+    console.log('Parsed chart:', { type, data });
     return { type, data };
-  } catch {
+  } catch (e) {
+    console.error('Failed to parse chart JSON:', match[2], e);
     return null;
   }
 }
@@ -124,7 +130,8 @@ export default function AIMessage({ content }: AIMessageProps) {
   // Parse content for charts
   const contentParts = useMemo(() => {
     const parts: Array<{ type: 'text' | 'chart'; content: string; chartData?: any }> = [];
-    const chartRegex = /\[CHART:[\w_]+\s+data={.*?}\]/g;
+    // Match chart markers - allow multiline content
+    const chartRegex = /\[CHART:[\w_]+\s+data=\{.+?\}\]/gs;
     
     let lastIndex = 0;
     let match;
@@ -134,7 +141,7 @@ export default function AIMessage({ content }: AIMessageProps) {
       if (match.index > lastIndex) {
         parts.push({
           type: 'text',
-          content: content.substring(lastIndex, match.index)
+          content: content.substring(lastIndex, match.index).trim()
         });
       }
       
@@ -145,6 +152,12 @@ export default function AIMessage({ content }: AIMessageProps) {
           type: 'chart',
           content: match[0],
           chartData
+        });
+      } else {
+        // If parsing failed, treat as text
+        parts.push({
+          type: 'text',
+          content: match[0]
         });
       }
       
@@ -181,40 +194,43 @@ export default function AIMessage({ content }: AIMessageProps) {
             remarkPlugins={[remarkGfm]}
             components={{
               // Custom styling for markdown elements
-              h1: ({ children }) => <h1 className="text-xl font-semibold mt-4 mb-2 text-foreground">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-lg font-semibold mt-3 mb-2 text-foreground">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-base font-medium mt-2 mb-1 text-foreground">{children}</h3>,
-              p: ({ children }) => <p className="my-2 leading-relaxed font-normal text-muted-foreground">{children}</p>,
-              ul: ({ children }) => <ul className="list-disc ml-6 my-2 space-y-1 font-normal text-muted-foreground">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal ml-6 my-2 space-y-1 font-normal text-muted-foreground">{children}</ol>,
-              li: ({ children }) => <li className="pl-2 font-normal text-muted-foreground">{children}</li>,
+              h1: ({ children }) => <h1 className="text-xl font-semibold mt-4 mb-2 text-white">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-lg font-semibold mt-3 mb-2 text-white">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-base font-medium mt-2 mb-1 text-white">{children}</h3>,
+              p: ({ children }) => <p className="my-2 leading-relaxed font-normal text-gray-200">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc ml-6 my-2 space-y-1 font-normal text-gray-200">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal ml-6 my-2 space-y-1 font-normal text-gray-200">{children}</ol>,
+              li: ({ children }) => <li className="pl-2 font-normal text-gray-200">{children}</li>,
               strong: ({ children }) => {
-                // Check if content contains money values
+                // Check if content contains money values or percentages
                 const content = String(children);
                 const hasMoneyValue = /[\$R€]\s*[\d,]+/.test(content);
-                const isNegative = content.includes('-') || content.toLowerCase().includes('negativ');
-                const isPositive = content.includes('+') || content.toLowerCase().includes('positiv');
+                const hasPercentage = /%/.test(content);
+                const isNegative = content.includes('-') || /negativ/i.test(content);
+                const isPositive = content.includes('+') || /positiv/i.test(content);
                 
-                if (hasMoneyValue && isNegative) {
+                // Color coding for financial values
+                if ((hasMoneyValue || hasPercentage) && isNegative) {
                   return <strong className="font-semibold text-red-400">{children}</strong>;
                 }
-                if (hasMoneyValue && isPositive) {
+                if ((hasMoneyValue || hasPercentage) && isPositive) {
                   return <strong className="font-semibold text-green-400">{children}</strong>;
                 }
                 if (hasMoneyValue) {
                   return <strong className="font-semibold text-blue-400">{children}</strong>;
                 }
-                return <strong className="font-semibold text-primary">{children}</strong>;
+                // Non-financial emphasis - use white for readability
+                return <strong className="font-semibold text-white">{children}</strong>;
               },
-              em: ({ children }) => <em className="italic text-muted-foreground/80 font-normal">{children}</em>,
+              em: ({ children }) => <em className="italic text-gray-300 font-normal">{children}</em>,
               code: ({ children }) => (
                 <code className="px-1.5 py-0.5 bg-secondary rounded text-sm font-mono font-normal text-blue-300">{children}</code>
               ),
               pre: ({ children }) => (
-                <pre className="p-3 bg-secondary/50 rounded-lg overflow-x-auto my-2 font-normal border border-border">{children}</pre>
+                <pre className="p-3 bg-secondary/50 rounded-lg overflow-x-auto my-2 font-normal border border-border text-gray-200">{children}</pre>
               ),
               blockquote: ({ children }) => (
-                <blockquote className="border-l-4 border-primary/50 pl-4 italic my-2 font-normal text-muted-foreground/90">{children}</blockquote>
+                <blockquote className="border-l-4 border-primary/50 pl-4 italic my-2 font-normal text-gray-300">{children}</blockquote>
               ),
               table: ({ children }) => (
                 <div className="overflow-x-auto my-4">
