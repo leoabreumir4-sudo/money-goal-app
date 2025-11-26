@@ -386,8 +386,12 @@ export default function Analytics() {
                 const futureDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
                 const monthLabel = futureDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 
-                const avgValue = avgAccumulated >= activeGoal.targetAmount ? null : avgAccumulated;
-                const targetValue = targetAccumulated >= activeGoal.targetAmount ? null : targetAccumulated;
+                // Keep showing the line even after one reaches the goal
+                // Only set to null when BOTH have reached the goal
+                const bothReached = avgAccumulated >= activeGoal.targetAmount && targetAccumulated >= activeGoal.targetAmount;
+                
+                const avgValue = bothReached ? null : avgAccumulated;
+                const targetValue = bothReached ? null : targetAccumulated;
 
                 projectionData.push({
                   month: monthLabel,
@@ -520,7 +524,14 @@ export default function Analytics() {
                           stroke="#10b981" 
                           strokeDasharray="5 5" 
                           strokeWidth={2}
-                          label={{ value: `Goal: ${formatCurrency(activeGoal.targetAmount, curr)}`, position: 'insideTopRight', fill: '#10b981', fontSize: 11, fontWeight: 600 }}
+                          label={{ 
+                            value: `Goal: ${formatCurrency(activeGoal.targetAmount, curr)}`, 
+                            position: 'insideTopLeft', 
+                            fill: '#10b981', 
+                            fontSize: 11, 
+                            fontWeight: 600,
+                            offset: 10
+                          }}
                         />
                         
                         {/* Vertical line for when expected projection reaches goal */}
