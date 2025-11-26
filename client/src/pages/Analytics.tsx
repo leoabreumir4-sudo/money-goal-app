@@ -12,6 +12,48 @@ import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
 
+// Custom Tooltip for Monthly Overview
+const CustomMonthlyTooltip = ({ active, payload, label, curr }: any) => {
+  if (!active || !payload || !payload.length) return null;
+  
+  const income = payload.find((p: any) => p.dataKey === 'income')?.value || 0;
+  const expense = payload.find((p: any) => p.dataKey === 'expenses')?.value || 0;
+  const netSaving = income - expense;
+
+  return (
+    <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
+      <p className="font-semibold text-base mb-3">{label}</p>
+      
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-6 p-2 bg-primary/5 rounded">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary" />
+            <span className="text-sm font-medium">Income</span>
+          </div>
+          <span className="font-semibold text-primary">{formatCurrency(income, curr)}</span>
+        </div>
+        
+        <div className="flex items-center justify-between gap-6 p-2 bg-destructive/5 rounded">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-destructive" />
+            <span className="text-sm font-medium">Expense</span>
+          </div>
+          <span className="font-semibold text-destructive">{formatCurrency(expense, curr)}</span>
+        </div>
+        
+        <div className="border-t border-border pt-2 mt-2">
+          <div className="flex items-center justify-between gap-6 p-2 bg-muted/30 rounded">
+            <span className="text-sm font-medium">Net Saving</span>
+            <span className={`font-bold ${netSaving >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+              {formatCurrency(netSaving, curr)}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Custom Tooltip Component
 const CustomProjectionTooltip = ({ 
   active, 
@@ -287,18 +329,9 @@ export default function Analytics() {
                   stroke="#9ca3af" 
                   tick={{ fill: '#9ca3af' }}
                   tickLine={false}
-                  tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
+                  tickFormatter={(value) => formatCurrency(value, curr)}
                 />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    padding: '12px'
-                  }}
-                  formatter={(value: number) => formatCurrency(value / 100, curr)}
-                  labelStyle={{ color: '#f3f4f6', fontWeight: 'bold', marginBottom: '8px' }}
-                />
+                <Tooltip content={<CustomMonthlyTooltip curr={curr} />} />
                 <Area 
                   type="monotone" 
                   dataKey="income" 
