@@ -226,7 +226,6 @@ export default function Spending() {
                           </div>
                           <div className="text-right">
                             <div className="font-bold">{formatCurrency(item.value, preferences.currency)} • {percentage.toFixed(1)}%</div>
-                            <div className="text-xs text-green-500">↑ 0.0% {t("vsPrevious", preferences.language)}</div>
                           </div>
                         </div>
                         <div className="w-full bg-secondary rounded-full h-2">
