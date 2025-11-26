@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 export default function Analytics() {
   const { preferences } = usePreferences();
@@ -146,39 +147,59 @@ export default function Analytics() {
             <CardTitle className="text-foreground">{t("monthlyOverview", preferences.language)}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {monthlyData.map((data) => {
-                const maxValue = Math.max(...monthlyData.map(m => Math.max(m.income, m.expenses)));
-                const incomeWidth = maxValue > 0 ? (data.income / maxValue) * 100 : 0;
-                const expensesWidth = maxValue > 0 ? (data.expenses / maxValue) * 100 : 0;
-
-                return (
-                  <div key={data.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-foreground">{data.name}</span>
-                      <div className="flex gap-4">
-                        <span className="text-primary">{formatCurrency(data.income / 100, preferences.currency)}</span>
-                        <span className="text-destructive">{formatCurrency(data.expenses / 100, preferences.currency)}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="flex-1 bg-secondary rounded-full h-6 overflow-hidden">
-                        <div
-                          className="bg-primary h-full rounded-full"
-                          style={{ width: `${incomeWidth}%` }}
-                        />
-                      </div>
-                      <div className="flex-1 bg-secondary rounded-full h-6 overflow-hidden">
-                        <div
-                          className="bg-destructive h-full rounded-full"
-                          style={{ width: `${expensesWidth}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={monthlyData}>
+                <defs>
+                  <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#9ca3af" 
+                  tick={{ fill: '#9ca3af' }}
+                  tickLine={false}
+                />
+                <YAxis 
+                  stroke="#9ca3af" 
+                  tick={{ fill: '#9ca3af' }}
+                  tickLine={false}
+                  tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f2937', 
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}
+                  formatter={(value: number) => formatCurrency(value / 100, preferences.currency)}
+                  labelStyle={{ color: '#f3f4f6', fontWeight: 'bold', marginBottom: '8px' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="income" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={3}
+                  fill="url(#colorIncome)"
+                  name={t("income", preferences.language)}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="expenses" 
+                  stroke="#ef4444" 
+                  strokeWidth={3}
+                  fill="url(#colorExpense)"
+                  name={t("expense", preferences.language)}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
             <div className="flex justify-center gap-6 mt-6 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-primary" />
