@@ -80,7 +80,7 @@ export default function Spending() {
   };
 
   const handleUpdateRecurring = () => {
-    const amount = Math.round(parseFloat(recurringAmount) * 100);
+    const amount = Math.round(parseFloat(recurringAmount.replace(',', '.')) * 100);
     if (isNaN(amount) || amount <= 0) {
       toast.error(t("pleaseEnterValidAmount", preferences.language));
       return;
@@ -100,7 +100,7 @@ export default function Spending() {
   };
 
   const handleAddRecurring = () => {
-    const amount = Math.round(parseFloat(recurringAmount) * 100);
+    const amount = Math.round(parseFloat(recurringAmount.replace(',', '.')) * 100);
     if (isNaN(amount) || amount <= 0) {
       toast.error(t("pleaseEnterValidAmount", preferences.language));
       return;
@@ -194,29 +194,29 @@ export default function Spending() {
             <h1 className="text-3xl font-bold text-foreground">{t("spendingAnalysis", preferences.language)}</h1>
             <p className="text-muted-foreground">{t("seeWhereMoney", preferences.language)}</p>
           </div>
-          <Button onClick={() => setIsAddRecurringModalOpen(true)} className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="mr-2 h-4 w-4" />
-            {t("recurringExpense", preferences.language)}
+          <Button onClick={() => setIsAddRecurringModalOpen(true)} className="bg-destructive hover:bg-destructive/90 flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            <span>{t("recurringExpense", preferences.language)}</span>
           </Button>
         </div>
 
         {/* Recurring Expenses Summary Card */}
         {recurringExpenses.length > 0 && (
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+          <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-7 w-7 text-purple-500" />
+                  <div className="h-14 w-14 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="h-7 w-7 text-destructive" />
                   </div>
-                  <div>
+                  <div className="flex flex-col justify-center">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                       Total Monthly Recurring Expenses
                     </p>
-                    <div className="text-5xl font-bold text-purple-500">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
+                    <div className="text-5xl font-bold text-destructive">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex flex-col justify-center">
                   <p className="text-sm text-muted-foreground">
                     {recurringExpenses.length} {recurringExpenses.length === 1 ? 'expense' : 'expenses'}
                   </p>
@@ -312,6 +312,7 @@ export default function Spending() {
                         strokeWidth={0}
                         isAnimationActive={true}
                         animationDuration={600}
+                        activeIndex={undefined}
                       >
                         {pieChartData.map((entry, index) => (
                           <Cell 
@@ -364,7 +365,7 @@ export default function Spending() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
                 {expensesByCategory.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
                     {t("noExpensesYet", preferences.language)}
@@ -430,22 +431,17 @@ export default function Spending() {
                     <div 
                       key={expense.id} 
                       onClick={() => handleEditRecurring(expense)}
-                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-md bg-card cursor-pointer"
+                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-destructive/50 transition-all hover:shadow-md bg-card cursor-pointer"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
                           <div className="font-semibold text-lg text-foreground">{expense.name}</div>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 font-medium capitalize">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium capitalize">
                             {expense.frequency}
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium text-foreground">{formatCurrency(monthlyEquivalent, preferences.currency)}</span> per month
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-destructive">
-                          {formatCurrency(expense.amount, preferences.currency)}
                         </div>
                       </div>
                     </div>
