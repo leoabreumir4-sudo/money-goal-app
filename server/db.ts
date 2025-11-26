@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "../drizzle/schema";
@@ -395,7 +395,11 @@ export async function getEventsByUserId(userId: string) {
   const db = getDb();
   if (!db) return [];
   
-  return await db.select().from(events).where(eq(events.userId, userId));
+  return await db
+    .select()
+    .from(events)
+    .where(eq(events.userId, userId))
+    .orderBy(asc(events.sortOrder), asc(events.id));
 }
 
 export async function getEventById(id: number, userId: string) {

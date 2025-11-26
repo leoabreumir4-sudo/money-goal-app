@@ -215,13 +215,13 @@ export default function AQWorlds() {
       
       return { previousEvents };
     },
+    onSuccess: () => {
+      // Do NOT invalidate - keep the optimistic update to preserve order
+    },
     onError: (err, variables, context) => {
       if (context?.previousEvents) {
         utils.events.getAll.setData(undefined, context.previousEvents);
       }
-    },
-    onSettled: () => {
-      utils.events.getAll.invalidate();
     },
   });
 

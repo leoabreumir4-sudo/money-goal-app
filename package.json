@@ -7,7 +7,7 @@
     "migrate": "tsx server/_core/migrate.ts",
     "start": "sh -lc 'if [ \"$MIGRATE\" = \"1\" ]; then pnpm run migrate; fi && NODE_ENV=production tsx server/_core/index.ts'",
     "start:no-migrate": "NODE_ENV=production tsx server/_core/index.ts",
-    "dev": "tsx-dev server/_core/index.ts"
+    "dev": "tsx watch server/_core/index.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
