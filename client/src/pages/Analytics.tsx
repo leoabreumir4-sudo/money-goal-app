@@ -14,10 +14,10 @@ import { formatCurrency } from "@/lib/currency";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
 
 export default function Analytics() {
-  const { preferences, isLoading } = usePreferences();
-  if (isLoading || !preferences) {
-    return <div className="flex items-center justify-center h-screen text-muted-foreground text-lg">Loading preferences...</div>;
-  }
+  const { preferences } = usePreferences();
+  const lang = preferences?.language || 'en';
+  const curr = preferences?.currency || 'USD';
+  
   const [savingTarget, setSavingTarget] = useState("");
   const [projectionPeriod, setProjectionPeriod] = useState<'3M' | '6M' | '12M' | 'GOAL'>('GOAL');
   
@@ -30,14 +30,14 @@ export default function Analytics() {
     onSuccess: (_, variables) => {
       utils.settings.get.invalidate();
       setSavingTarget((variables.monthlySavingTarget / 100).toString()); // Mantém valor salvo
-      toast.success(t("savingTargetUpdated", preferences.language));
+      toast.success(t("savingTargetUpdated", lang));
     },
   });
 
   const handleSaveSavingTarget = () => {
     const target = Math.round(parseFloat(savingTarget) * 100);
     if (isNaN(target) || target <= 0) {
-      toast.error(t("pleaseEnterValidAmount", preferences.language));
+      toast.error(t("pleaseEnterValidAmount", lang));
       return;
     }
 
@@ -106,8 +106,8 @@ export default function Analytics() {
     <DashboardLayout>
       <div className="p-8 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t("analytics", preferences.language)}</h1>
-          <p className="text-muted-foreground">{t("trackFinancialPerformance", preferences.language)}</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("analytics", lang)}</h1>
+          <p className="text-muted-foreground">{t("trackFinancialPerformance", lang)}</p>
         </div>
 
         {/* Loader para gráfico/card enquanto carrega */}
@@ -120,12 +120,12 @@ export default function Analytics() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ArrowUp className="h-5 w-5 text-primary" />
-                <CardTitle className="text-sm text-muted-foreground">{t("income", preferences.language).toUpperCase()}</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">{t("income", lang).toUpperCase()}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalIncome, preferences.currency)}</p>
-              <p className="text-sm text-muted-foreground">{t("last6Months", preferences.language)}</p>
+              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalIncome, curr)}</p>
+              <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
             </CardContent>
           </Card>
 
@@ -133,12 +133,12 @@ export default function Analytics() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ArrowDown className="h-5 w-5 text-destructive" />
-                <CardTitle className="text-sm text-muted-foreground">{t("expense", preferences.language).toUpperCase()}</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">{t("expense", lang).toUpperCase()}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalExpenses, preferences.currency)}</p>
-              <p className="text-sm text-muted-foreground">{t("last6Months", preferences.language)}</p>
+              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalExpenses, curr)}</p>
+              <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
             </CardContent>
           </Card>
 
@@ -146,21 +146,21 @@ export default function Analytics() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-accent" />
-                <CardTitle className="text-sm text-muted-foreground">{t("netSavings", preferences.language).toUpperCase()}</CardTitle>
+                <CardTitle className="text-sm text-muted-foreground">{t("netSavings", lang).toUpperCase()}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <p className={`text-3xl font-bold ${netFlow >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                {formatCurrency(netFlow, preferences.currency)}
+                {formatCurrency(netFlow, curr)}
               </p>
-              <p className="text-sm text-muted-foreground">{t("positiveFlow", preferences.language)}</p>
+              <p className="text-sm text-muted-foreground">{t("positiveFlow", lang)}</p>
             </CardContent>
           </Card>
         </div>
 
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">{t("monthlyOverview", preferences.language)}</CardTitle>
+            <CardTitle className="text-foreground">{t("monthlyOverview", lang)}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
@@ -195,7 +195,7 @@ export default function Analytics() {
                     borderRadius: '8px',
                     padding: '12px'
                   }}
-                  formatter={(value: number) => formatCurrency(value / 100, preferences.currency)}
+                  formatter={(value: number) => formatCurrency(value / 100, curr)}
                   labelStyle={{ color: '#f3f4f6', fontWeight: 'bold', marginBottom: '8px' }}
                 />
                 <Area 
@@ -204,7 +204,7 @@ export default function Analytics() {
                   stroke="#8b5cf6" 
                   strokeWidth={3}
                   fill="url(#colorIncome)"
-                  name={t("income", preferences.language)}
+                  name={t("income", lang)}
                 />
                 <Area 
                   type="monotone" 
@@ -212,18 +212,18 @@ export default function Analytics() {
                   stroke="#ef4444" 
                   strokeWidth={3}
                   fill="url(#colorExpense)"
-                  name={t("expense", preferences.language)}
+                  name={t("expense", lang)}
                 />
               </AreaChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-6 mt-6 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-primary" />
-                <span className="text-muted-foreground">{t("income", preferences.language)}</span>
+                <span className="text-muted-foreground">{t("income", lang)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-destructive" />
-                <span className="text-muted-foreground">{t("expense", preferences.language)}</span>
+                <span className="text-muted-foreground">{t("expense", lang)}</span>
               </div>
             </div>
           </CardContent>
@@ -231,7 +231,7 @@ export default function Analytics() {
 
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">{t("monthlySavingTargetTitle", preferences.language)}</CardTitle>
+            <CardTitle className="text-foreground">{t("monthlySavingTargetTitle", lang)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -252,11 +252,11 @@ export default function Analytics() {
                   />
                 </div>
                 <Button onClick={handleSaveSavingTarget} disabled={updateSettingsMutation.isPending}>
-                  {t("save", preferences.language)}
+                  {t("save", lang)}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Based on your average: {formatCurrency(averageMonthlySaving, preferences.currency)}/month
+                Based on your average: {formatCurrency(averageMonthlySaving, curr)}/month
               </p>
             </div>
 
@@ -324,7 +324,7 @@ export default function Analytics() {
                             <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
                             <div>
                               <p className="font-medium">Target Saving: Reaches goal</p>
-                              <p className="text-muted-foreground">in {monthsToGoalTarget} months ({formatCurrency(activeGoal.targetAmount, preferences.currency)})</p>
+                              <p className="text-muted-foreground">in {monthsToGoalTarget} months ({formatCurrency(activeGoal.targetAmount, curr)})</p>
                             </div>
                           </div>
                         )}
@@ -354,20 +354,20 @@ export default function Analytics() {
                           <div className="w-2 h-2 rounded-full bg-primary" />
                           <span className="text-sm">Target Saving:</span>
                         </div>
-                        <span className="font-semibold">{formatCurrency(targetVal, preferences.currency)}</span>
+                        <span className="font-semibold">{formatCurrency(targetVal, curr)}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-blue-500" />
                           <span className="text-sm">Average Saving:</span>
                         </div>
-                        <span className="font-semibold">{formatCurrency(avgVal, preferences.currency)}</span>
+                        <span className="font-semibold">{formatCurrency(avgVal, curr)}</span>
                       </div>
                     </div>
 
                     {remaining > 0 && (
                       <div className="border-t border-border pt-3 text-sm text-muted-foreground">
-                        <p>Still {formatCurrency(remaining, preferences.currency)} to reach your {formatCurrency(activeGoal.targetAmount, preferences.currency)} goal</p>
+                        <p>Still {formatCurrency(remaining, curr)} to reach your {formatCurrency(activeGoal.targetAmount, curr)} goal</p>
                         {monthsRemaining > 0 && (
                           <p className="mt-1">Estimated: {monthsRemaining} months remaining</p>
                         )}
@@ -384,7 +384,7 @@ export default function Analytics() {
                     <CardContent className="py-3 px-4 space-y-2">
                       <div className="flex items-center gap-2 text-base font-semibold">
                         <Target className="h-4 w-4 text-primary" />
-                        <span>Goal: {formatCurrency(activeGoal.targetAmount, preferences.currency)}</span>
+                        <span>Goal: {formatCurrency(activeGoal.targetAmount, curr)}</span>
                         <span className="ml-auto text-xs text-muted-foreground">Current: <span className="font-bold">
                           <AnimatePresence mode="wait">
                             <motion.span
@@ -394,7 +394,7 @@ export default function Analytics() {
                               exit={{ opacity: 0, y: -10 }}
                               transition={{ duration: 0.5 }}
                             >
-                              {formatCurrency(initialAmount, preferences.currency)}
+                              {formatCurrency(initialAmount, curr)}
                             </motion.span>
                           </AnimatePresence>
                         </span> ({
@@ -414,7 +414,7 @@ export default function Analytics() {
                       {wiseBalance > 0 && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Wallet className="h-3 w-3 text-green-500" />
-                          Includes Wise balance: {formatCurrency(wiseBalance, preferences.currency)}
+                          Includes Wise balance: {formatCurrency(wiseBalance, curr)}
                         </div>
                       )}
                       <div className="border-t border-border/50 pt-2 flex flex-col gap-1">
