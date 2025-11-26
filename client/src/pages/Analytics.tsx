@@ -22,6 +22,7 @@ export default function Analytics() {
   const updateSettingsMutation = trpc.settings.update.useMutation({
     onSuccess: () => {
       utils.settings.get.invalidate();
+      setSavingTarget(""); // Clear input after save
       toast.success(t("savingTargetUpdated", preferences.language));
     },
   });
