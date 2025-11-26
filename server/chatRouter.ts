@@ -208,6 +208,17 @@ async function buildUserFinancialContext(userId: string) {
   const avgMonthlySavings = avgMonthlyIncome - avgMonthlyExpenses;
   const savingsRate = avgMonthlyIncome > 0 ? Math.round((avgMonthlySavings / avgMonthlyIncome) * 100) : 0;
 
+  // Debug logging to understand the values
+  console.log('[AI Chat Context] Financial calculations:', {
+    monthsCount,
+    totalIncome: income / 100, // Convert cents to dollars for readability
+    totalExpenses: expenses / 100,
+    avgMonthlyIncome: avgMonthlyIncome / 100,
+    avgMonthlyExpenses: avgMonthlyExpenses / 100,
+    avgMonthlySavings: avgMonthlySavings / 100,
+    savingsRate: `${savingsRate}%`,
+  });
+
   // Active goal
   const activeGoal = goals.find((g: any) => g.status === "active");
 
