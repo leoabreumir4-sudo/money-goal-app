@@ -151,15 +151,23 @@ export default function Spending() {
     }, 0);
   }, [recurringExpenses]);
 
-  // Group expenses by category (using reason as category for now)
+  // Group expenses by category (using real categories from database)
   const expensesByCategory = useMemo(() => {
-    const grouped: Record<string, number> = {};
+    const grouped: Record<number, { name: string; value: number; emoji: string; color: string }> = {};
     
     // Add real transactions if not filtering to only recurring
     if (!showOnlyRecurring) {
       expenseTransactions.forEach(t => {
-        const category = t.reason || "Uncategorized";
-        grouped[category] = (grouped[category] || 0) + t.amount;
+        const category = categories.find(c => c.id === t.categoryId);
+        const categoryId = category?.id || 0; // 0 for uncategorized
+        const categoryName = category?.name || "Other";
+        const categoryEmoji = category?.emoji || "📦";
+        const categoryColor = category?.color || "#94a3b8";
+        
+        if (!grouped[categoryId]) {
+          grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
+        }
+        grouped[categoryId].value += t.amount;
       });
     }
     
@@ -169,14 +177,22 @@ export default function Spending() {
                           expense.frequency === 'yearly' ? expense.amount / 12 :
                           expense.frequency === 'weekly' ? expense.amount * 4.33 :
                           expense.frequency === 'daily' ? expense.amount * 30 : 0;
-      const category = `${expense.name} (Recurring)`;
-      grouped[category] = (grouped[category] || 0) + monthlyAmount;
+      
+      const category = categories.find(c => c.id === expense.categoryId);
+      const categoryId = category?.id || 0;
+      const categoryName = category?.name || "Other";
+      const categoryEmoji = category?.emoji || "📦";
+      const categoryColor = category?.color || "#94a3b8";
+      
+      if (!grouped[categoryId]) {
+        grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
+      }
+      grouped[categoryId].value += monthlyAmount;
     });
     
-    return Object.entries(grouped)
-      .map(([name, value]) => ({ name, value }))
+    return Object.values(grouped)
       .sort((a, b) => b.value - a.value);
-  }, [expenseTransactions, recurringExpenses, showOnlyRecurring]);
+  }, [expenseTransactions, recurringExpenses, showOnlyRecurring, categories]);
 
   // Prepare data for pie chart
   const pieChartData = useMemo(() => {
@@ -316,7 +332,7 @@ export default function Spending() {
                         {pieChartData.map((entry, index) => (
                           <Cell 
                             key={`cell-${index}`} 
-                            fill={COLORS[index % COLORS.length]} 
+                            fill={entry.color || COLORS[index % COLORS.length]} 
                             stroke="none"
                           />
                         ))}
@@ -372,7 +388,7 @@ export default function Spending() {
                 ) : (
                   expensesByCategory.map((item, index) => {
                     const percentage = totalSpending > 0 ? (item.value / totalSpending) * 100 : 0;
-                    const color = COLORS[index % COLORS.length];
+                    const color = item.color || COLORS[index % COLORS.length];
                     
                     return (
                       <div key={item.name} className="space-y-2">
@@ -382,6 +398,7 @@ export default function Spending() {
                               className="w-3 h-3 rounded-full flex-shrink-0" 
                               style={{ backgroundColor: color }}
                             />
+                            <span className="text-lg mr-1">{item.emoji}</span>
                             <span className="font-medium text-sm">{item.name}</span>
                           </div>
                           <div className="text-right flex items-center gap-2">

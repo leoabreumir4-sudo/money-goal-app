@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
+import type { Category } from "@shared/types";
 import { ArrowDown, ArrowUp, Pencil, Sparkles, Wallet } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
@@ -23,8 +25,10 @@ export default function Dashboard() {
   
   const [incomeAmount, setIncomeAmount] = useState("");
   const [incomeReason, setIncomeReason] = useState("");
+  const [incomeCategory, setIncomeCategory] = useState<string>("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseReason, setExpenseReason] = useState("");
+  const [expenseCategory, setExpenseCategory] = useState<string>("");
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTarget, setNewGoalTarget] = useState("");
   const [editGoalName, setEditGoalName] = useState("");
@@ -34,6 +38,7 @@ export default function Dashboard() {
   const { data: activeGoal, isLoading: goalLoading } = trpc.goals.getActive.useQuery();
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
   const { data: wiseBalance = 0 } = trpc.wise.getTotalBalanceConverted.useQuery();
+  const { data: categories = [] } = trpc.categories.getAll.useQuery();
 
   const createGoalMutation = trpc.goals.create.useMutation({
     onSuccess: () => {
@@ -62,10 +67,12 @@ export default function Dashboard() {
         setIsIncomeModalOpen(false);
         setIncomeAmount("");
         setIncomeReason("");
+        setIncomeCategory("");
       } else {
         setIsExpenseModalOpen(false);
         setExpenseAmount("");
         setExpenseReason("");
+        setExpenseCategory("");
       }
       
       toast.success(`${variables.type === "income" ? "Income" : "Expense"} added successfully!`);
@@ -109,6 +116,7 @@ export default function Dashboard() {
       type: "income",
       amount,
       reason: incomeReason,
+      categoryId: incomeCategory ? parseInt(incomeCategory) : undefined,
     });
   };
 
@@ -134,6 +142,7 @@ export default function Dashboard() {
       type: "expense",
       amount,
       reason: expenseReason,
+      categoryId: expenseCategory ? parseInt(expenseCategory) : undefined,
     });
   };
 
@@ -243,6 +252,21 @@ export default function Dashboard() {
                       onChange={(e) => setIncomeReason(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="income-category">Category (optional)</Label>
+                    <Select value={incomeCategory} onValueChange={setIncomeCategory}>
+                      <SelectTrigger id="income-category">
+                        <SelectValue placeholder="Auto-detect or select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id.toString()}>
+                            {cat.emoji} {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsIncomeModalOpen(false)}>
@@ -287,6 +311,21 @@ export default function Dashboard() {
                       value={expenseReason}
                       onChange={(e) => setExpenseReason(e.target.value)}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expense-category">Category (optional)</Label>
+                    <Select value={expenseCategory} onValueChange={setExpenseCategory}>
+                      <SelectTrigger id="expense-category">
+                        <SelectValue placeholder="Auto-detect or select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id.toString()}>
+                            {cat.emoji} {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <DialogFooter>
@@ -372,6 +411,14 @@ export default function Dashboard() {
                                   <div>
                                     <div className="flex items-center gap-2">
                                       <p className="font-medium text-foreground">{transaction.reason}</p>
+                                      {transaction.categoryId && (() => {
+                                        const category = categories.find(c => c.id === transaction.categoryId);
+                                        return category ? (
+                                          <span className="text-sm" title={category.name}>
+                                            {category.emoji}
+                                          </span>
+                                        ) : null;
+                                      })()}
                                       {transaction.source && (
                                         <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
                                           transaction.source === 'wise' 

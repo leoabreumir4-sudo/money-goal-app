@@ -200,6 +200,10 @@ export const csvRouter = router({
         let importedCount = 0;
         let skippedCount = 0;
 
+        // Get categories for auto-categorization
+        const categories = await db.getAllCategories(ctx.user.id);
+        const { categorizeTransaction } = await import("./_core/categorization");
+
         for (const transaction of transactions) {
           // Check if transaction already exists (by reference)
           const existing = await db.getTransactionsByGoalId(input.goalId, ctx.user.id);
@@ -219,12 +223,16 @@ export const csvRouter = router({
           // Simple description without amount
           const reason = transaction.description;
 
+          // Auto-categorize based on description
+          const categoryId = categorizeTransaction(reason, categories);
+
           // Parse date from CSV (format: "2025-11-25 19:36:10")
           const transactionDate = new Date(transaction.date);
 
           await db.createTransaction({
             userId: ctx.user.id,
             goalId: input.goalId,
+            categoryId,
             type,
             amount,
             reason,
@@ -278,6 +286,10 @@ export const csvRouter = router({
         let importedCount = 0;
         let skippedCount = 0;
 
+        // Get categories for auto-categorization
+        const categories = await db.getAllCategories(ctx.user.id);
+        const { categorizeTransaction } = await import("./_core/categorization");
+
         for (const transaction of transactions) {
           // Check if transaction already exists (by description and date)
           const existing = await db.getTransactionsByGoalId(input.goalId, ctx.user.id);
@@ -294,9 +306,13 @@ export const csvRouter = router({
           const amount = Math.abs(Math.round(transaction.amount * 100)); // Convert to cents
           const type = transaction.amount > 0 ? "income" : "expense";
 
+          // Auto-categorize based on description
+          const categoryId = categorizeTransaction(transaction.description, categories);
+
           await db.createTransaction({
             userId: ctx.user.id,
             goalId: input.goalId,
+            categoryId,
             type,
             amount,
             reason: transaction.description,

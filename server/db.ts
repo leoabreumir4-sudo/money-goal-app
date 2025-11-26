@@ -269,15 +269,49 @@ export async function createCategory(category: InsertCategory) {
   const db = getDb();
   if (!db) throw new Error("Database not available");
   
-  const result = await db.insert(categories).values(category);
-  return result;
+  const result = await db.insert(categories).values(category).returning();
+  return result[0];
+}
+
+export async function getAllCategories() {
+  const db = getDb();
+  if (!db) return [];
+  
+  // Get all default categories and user-specific ones
+  return await db.select().from(categories).orderBy(asc(categories.name));
 }
 
 export async function getCategoriesByUserId(userId: string) {
   const db = getDb();
   if (!db) return [];
   
-  return await db.select().from(categories).where(eq(categories.userId, userId));
+  // Get default categories (userId is null) AND user's custom categories
+  return await db.select().from(categories).where(
+    eq(categories.userId, userId)
+  ).orderBy(asc(categories.name));
+}
+
+export async function getCategoryById(id: number) {
+  const db = getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateCategory(id: number, data: Partial<InsertCategory>) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.update(categories).set(data).where(eq(categories.id, id)).returning();
+  return result[0];
+}
+
+export async function deleteCategory(id: number) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(categories).where(eq(categories.id, id));
 }
 
 // User Settings

@@ -50,10 +50,13 @@ export type InsertGoal = typeof goals.$inferInsert;
  */
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
-  userId: uuid("userId").notNull(),
+  userId: uuid("userId"),
   name: varchar("name", { length: 255 }).notNull(),
   emoji: varchar("emoji", { length: 10 }).notNull(),
   color: varchar("color", { length: 7 }).notNull(), // Hex color
+  keywords: text("keywords").array(), // Array of keywords for auto-categorization
+  isDefault: boolean("isDefault").default(false).notNull(), // System default categories
+  createdDate: timestamp("createdDate").defaultNow().notNull(),
 });
 
 export type Category = typeof categories.$inferSelect;
@@ -71,7 +74,8 @@ export const transactions = pgTable("transactions", {
   amount: integer("amount").notNull(), // Store as cents
   reason: varchar("reason", { length: 255 }).notNull(),
   source: varchar("source", { length: 50 }), // "wise", "csv", or null for manual
-  currency: varchar("currency", { length: 3 }), // ISO currency code (USD, BRL, EUR, etc.)
+  currency: varchar("currency", { length: 3 }).default("USD"), // ISO currency code (USD, BRL, EUR, etc.)
+  exchangeRate: text("exchangeRate"), // Exchange rate at time of transaction (for historical accuracy)
   createdDate: timestamp("createdDate").defaultNow().notNull(),
 });
 

@@ -8,6 +8,7 @@ import { authRouter } from "./authRouter";
 import { wiseRouter } from "./wiseRouter";
 import { csvRouter } from "./csvRouter";
 import { webhookRouter } from "./webhookRouter";
+import { categoryRouter } from "./categoryRouter";
 
 export const appRouter = router({
   system: systemRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   wise: wiseRouter, // Wise bank synchronization
   csv: csvRouter, // CSV import (Nubank, etc.)
   webhooks: webhookRouter, // Webhook endpoints
+  categories: categoryRouter, // Category management with auto-categorization
 
   // TEMPORARY: Delete all users (REMOVE AFTER USE!)
   _dangerDeleteAllUsers: publicProcedure.mutation(async () => {
@@ -141,27 +143,6 @@ export const appRouter = router({
       }),
   }),
 
-  // Categories
-  categories: router({
-    getAll: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getCategoriesByUserId(ctx.user.id);
-    }),
-
-    create: protectedProcedure
-      .input(z.object({
-        name: z.string(),
-        emoji: z.string(),
-        color: z.string(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await db.createCategory({
-          userId: ctx.user.id,
-          ...input,
-        });
-        return { success: true };
-      }),
-  }),
-
   // Transactions
   transactions: router({
     getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -181,12 +162,28 @@ export const appRouter = router({
         type: z.enum(["income", "expense"]),
         amount: z.number(),
         reason: z.string(),
+        currency: z.string().optional(),
+        exchangeRate: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Auto-categorize if no categoryId provided
+        let categoryId = input.categoryId;
+        if (!categoryId) {
+          const { categorizeTransaction } = await import("./_core/categorization");
+          const categories = await db.getAllCategories(ctx.user.id);
+          categoryId = categorizeTransaction(input.reason, categories);
+        }
+
         // Create the transaction
         await db.createTransaction({
           userId: ctx.user.id,
-          ...input,
+          goalId: input.goalId,
+          categoryId,
+          type: input.type,
+          amount: input.amount,
+          reason: input.reason,
+          currency: input.currency || "USD",
+          exchangeRate: input.exchangeRate,
         });
         
         // Update goal's currentAmount
