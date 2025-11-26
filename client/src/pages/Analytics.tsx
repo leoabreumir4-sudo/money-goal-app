@@ -12,6 +12,27 @@ import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
 
+// Currency conversion helper
+const convertToPreferredCurrency = (amount: number, fromCurrency: string, toCurrency: string, exchangeRate?: string | null): number => {
+  if (fromCurrency === toCurrency) return amount;
+  
+  // Use historical exchange rate if available
+  if (exchangeRate) {
+    const rate = parseFloat(exchangeRate);
+    return Math.round(amount / rate);
+  }
+  
+  // Fallback exchange rates (approximate)
+  const rates: Record<string, Record<string, number>> = {
+    'BRL': { 'USD': 0.186, 'EUR': 0.17 },
+    'USD': { 'BRL': 5.38, 'EUR': 0.92 },
+    'EUR': { 'BRL': 5.85, 'USD': 1.09 },
+  };
+  
+  const rate = rates[fromCurrency]?.[toCurrency] || 1;
+  return Math.round(amount * rate);
+};
+
 // Custom Tooltip for Monthly Overview
 const CustomMonthlyTooltip = ({ active, payload, label, curr }: any) => {
   if (!active || !payload || !payload.length) return null;
@@ -203,15 +224,31 @@ export default function Analytics() {
 
       const income = monthTransactions
         .filter(t => t.type === "income")
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => {
+          const convertedAmount = convertToPreferredCurrency(
+            t.amount,
+            t.currency || "USD",
+            curr || "USD",
+            t.exchangeRate
+          );
+          return sum + convertedAmount;
+        }, 0);
       
       const expenses = monthTransactions
         .filter(t => t.type === "expense")
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => {
+          const convertedAmount = convertToPreferredCurrency(
+            t.amount,
+            t.currency || "USD",
+            curr || "USD",
+            t.exchangeRate
+          );
+          return sum + convertedAmount;
+        }, 0);
 
       return { name, income, expenses };
     });
-  }, [transactions, last6Months]);
+  }, [transactions, last6Months, curr]);
 
   const totalIncome = useMemo(() => {
     return monthlyData.reduce((sum, m) => sum + m.income, 0);
