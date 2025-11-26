@@ -138,13 +138,13 @@ export default function Dashboard() {
   };
 
   const handleCreateGoal = () => {
-    const targetAmount = Math.round(parseFloat(goalTarget) * 100);
+    const targetAmount = Math.round(parseFloat(newGoalTarget) * 100);
     if (isNaN(targetAmount) || targetAmount <= 0) {
       toast.error(t("pleaseEnterValidTarget", preferences.language));
       return;
     }
     
-    if (!goalName.trim()) {
+    if (!newGoalName.trim()) {
       toast.error(t("pleaseEnterGoalName", preferences.language));
       return;
     }

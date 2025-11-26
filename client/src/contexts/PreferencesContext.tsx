@@ -17,7 +17,10 @@ interface PreferencesContextType {
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
 
 export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
-  const { data: settings, isLoading } = trpc.settings.get.useQuery();
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('sessionToken');
+  const { data: settings, isLoading } = trpc.settings.get.useQuery(undefined, {
+    enabled: hasToken, // Only fetch settings if user is authenticated
+  });
   const [preferences, setPreferences] = useState<UserPreferences>({
     language: "en",
     currency: "USD",
