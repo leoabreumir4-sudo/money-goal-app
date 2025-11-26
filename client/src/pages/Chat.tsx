@@ -72,6 +72,7 @@ export default function Chat() {
   const { preferences } = usePreferences();
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { data: chatHistory = [], refetch } = trpc.chat.getHistory.useQuery();
@@ -82,8 +83,8 @@ export default function Chat() {
   const chatMutation = trpc.chat.sendMessage.useMutation();
   const clearHistoryMutation = trpc.chat.clearHistory.useMutation();
 
-  // Convert chat history to messages format
-  const messages = chatHistory.map(msg => ({
+  // Combine real chat history with optimistic messages
+  const messages = [...chatHistory, ...optimisticMessages].map(msg => ({
     role: msg.role as "user" | "assistant",
     content: msg.content,
   }));
@@ -121,19 +122,20 @@ export default function Chat() {
       createdDate: new Date(),
     };
     
-    setMessages((prev) => [...prev, optimisticUserMessage]);
+    setOptimisticMessages([optimisticUserMessage]);
     setIsLoading(true);
 
     try {
       await chatMutation.mutateAsync({ message: userMessage });
       
-      // Refetch to get updated history with AI response
+      // Clear optimistic message and refetch to get real history with AI response
+      setOptimisticMessages([]);
       await refetch();
     } catch (error: any) {
       console.error("Chat error:", error);
       
       // Remove optimistic message on error
-      setMessages((prev) => prev.filter(m => m.id !== optimisticUserMessage.id));
+      setOptimisticMessages([]);
       
       // Show specific error messages
       if (error.message?.includes("Rate limit")) {
