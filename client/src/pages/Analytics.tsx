@@ -109,7 +109,6 @@ export default function Analytics() {
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
   const { data: settings } = trpc.settings.get.useQuery();
   const { data: activeGoal } = trpc.goals.getActive.useQuery();
-  const { data: activeGoal } = trpc.goals.getActive.useQuery();
 
   const updateSettingsMutation = trpc.settings.update.useMutation({
     onSuccess: (_, variables) => {
