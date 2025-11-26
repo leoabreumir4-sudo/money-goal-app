@@ -3,11 +3,70 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { Loader2, Send, Sparkles, TrendingUp, Target, PauseCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Streamdown } from "streamdown";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
+import { toast } from "sonner";
+
+// Component to render action buttons based on AI suggestions
+function ActionButtons({ content, onAction }: { content: string; onAction: (action: string) => void }) {
+  const actions: { label: string; action: string; icon: any; variant?: "default" | "outline" | "destructive" }[] = [];
+  
+  // Detect if AI suggests creating a goal
+  if (content.toLowerCase().includes("create a goal") || content.toLowerCase().includes("set a goal")) {
+    actions.push({
+      label: "Create Goal",
+      action: "create_goal",
+      icon: Target,
+      variant: "default"
+    });
+  }
+  
+  // Detect if AI suggests pausing/canceling expenses
+  if (content.toLowerCase().includes("pause") || content.toLowerCase().includes("cancel") || 
+      content.toLowerCase().includes("subscription")) {
+    actions.push({
+      label: "Manage Subscriptions",
+      action: "manage_subscriptions",
+      icon: PauseCircle,
+      variant: "outline"
+    });
+  }
+  
+  // Detect if AI talks about savings/investment
+  if (content.toLowerCase().includes("save") || content.toLowerCase().includes("saving")) {
+    actions.push({
+      label: "View Savings Tips",
+      action: "savings_tips",
+      icon: TrendingUp,
+      variant: "outline"
+    });
+  }
+  
+  if (actions.length === 0) return null;
+  
+  return (
+    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
+      {actions.map((action, idx) => {
+        const Icon = action.icon;
+        return (
+          <Button
+            key={idx}
+            variant={action.variant || "outline"}
+            size="sm"
+            onClick={() => onAction(action.action)}
+            className="text-xs"
+          >
+            <Icon className="h-3 w-3 mr-1" />
+            {action.label}
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Chat() {
   const { preferences } = usePreferences();
@@ -16,6 +75,7 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { data: chatHistory = [], refetch } = trpc.chat.getHistory.useQuery();
+  const { data: suggestedPrompts = [] } = trpc.chat.getSuggestedPrompts.useQuery();
   const chatMutation = trpc.chat.sendMessage.useMutation();
   const clearHistoryMutation = trpc.chat.clearHistory.useMutation();
 
@@ -24,6 +84,16 @@ export default function Chat() {
     role: msg.role as "user" | "assistant",
     content: msg.content,
   }));
+
+  // Calculate messages sent in last 24h
+  const userMessagesLast24h = chatHistory.filter((msg) => {
+    if (msg.role !== "user") return false;
+    const msgDate = new Date(msg.createdDate);
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return msgDate >= oneDayAgo;
+  }).length;
+  
+  const messagesRemaining = Math.max(0, 50 - userMessagesLast24h);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,7 +104,7 @@ export default function Chat() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading || messagesRemaining === 0) return;
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
@@ -45,8 +115,17 @@ export default function Chat() {
       
       // Refetch to get updated history
       await refetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
+      
+      // Show specific error messages
+      if (error.message?.includes("Rate limit")) {
+        toast.error("Daily message limit reached. Try again tomorrow!");
+      } else if (error.message?.includes("Invalid response")) {
+        toast.error("AI service unavailable. Please try again.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +142,33 @@ export default function Chat() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handlePromptClick = (prompt: string) => {
+    setInputMessage(prompt);
+    // Auto-send after a small delay so user sees it
+    setTimeout(() => {
+      handleSendMessage();
+    }, 100);
+  };
+
+  const handleAction = (action: string) => {
+    switch (action) {
+      case "create_goal":
+        window.location.href = "/dashboard"; // Redirect to dashboard to create goal
+        toast.success("Navigate to Dashboard to create a new goal");
+        break;
+      case "manage_subscriptions":
+        window.location.href = "/spending"; // Redirect to spending page
+        toast.success("Navigate to Spending page to manage subscriptions");
+        break;
+      case "savings_tips":
+        setInputMessage("Give me 5 specific tips to increase my savings rate");
+        setTimeout(() => handleSendMessage(), 100);
+        break;
+      default:
+        break;
     }
   };
 
@@ -116,16 +222,14 @@ export default function Chat() {
                   </p>
                 </div>
                 <div className="space-y-2 w-full max-w-2xl">
-                  <p className="text-sm text-muted-foreground font-medium">💡 Try asking:</p>
+                  <p className="text-sm text-muted-foreground font-medium">💡 Suggested questions based on your finances:</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {suggestedQuestions.map((question, index) => (
+                    {suggestedPrompts.map((question, index) => (
                       <Button
                         key={index}
                         variant="outline"
-                        className="text-left h-auto py-3 px-4 whitespace-normal"
-                        onClick={() => {
-                          setInputMessage(question);
-                        }}
+                        className="text-left h-auto py-3 px-4 whitespace-normal justify-start"
+                        onClick={() => handlePromptClick(question)}
                       >
                         <span className="text-sm">{question}</span>
                       </Button>
@@ -148,7 +252,10 @@ export default function Chat() {
                       }`}
                     >
                       {message.role === "assistant" ? (
-                        <Streamdown>{message.content}</Streamdown>
+                        <>
+                          <Streamdown>{message.content}</Streamdown>
+                          <ActionButtons content={message.content} onAction={handleAction} />
+                        </>
                       ) : (
                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       )}
@@ -160,7 +267,7 @@ export default function Chat() {
                     <div className="max-w-[80%] rounded-lg p-4 bg-secondary text-secondary-foreground">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">{t("thinking", preferences.language)}</span>
+                        <span className="text-sm">Analyzing your finances...</span>
                       </div>
                     </div>
                   </div>
@@ -172,6 +279,15 @@ export default function Chat() {
 
           {/* Input Area */}
           <div className="p-4 border-t border-border">
+            {messagesRemaining < 10 && (
+              <div className="mb-2 text-xs text-muted-foreground text-center">
+                {messagesRemaining > 0 ? (
+                  <span>⚠️ {messagesRemaining} messages remaining today</span>
+                ) : (
+                  <span className="text-destructive">❌ Daily limit reached. Try again in 24 hours.</span>
+                )}
+              </div>
+            )}
             <div className="flex gap-2">
               <Input
                 placeholder="Ask me anything about your finances..."
@@ -183,7 +299,7 @@ export default function Chat() {
               />
               <Button
                 onClick={handleSendMessage}
-                disabled={isLoading || !inputMessage.trim()}
+                disabled={isLoading || !inputMessage.trim() || messagesRemaining === 0}
                 size="icon"
               >
                 {isLoading ? (

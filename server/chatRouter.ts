@@ -149,6 +149,48 @@ async function buildUserFinancialContext(userId: string) {
 }
 
 export const chatRouter = router({
+  // Get suggested prompts based on user's financial situation
+  getSuggestedPrompts: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.user.id;
+    const financialContext = await buildUserFinancialContext(userId);
+    
+    const prompts: string[] = [];
+    
+    // Always available prompts
+    prompts.push("Analyze my financial health");
+    prompts.push("How can I save more money?");
+    
+    // Goal-specific prompts
+    if (financialContext.activeGoal) {
+      prompts.push(`Am I on track to reach my ${financialContext.activeGoal.name}?`);
+      if (financialContext.activeGoal.monthsToGoal) {
+        prompts.push(`How can I reach my goal faster?`);
+      }
+    } else {
+      prompts.push("Help me set a financial goal");
+    }
+    
+    // Spending-related prompts
+    if (financialContext.topCategories.length > 0) {
+      const topCategory = financialContext.topCategories[0];
+      prompts.push(`Is my spending on ${topCategory.name} normal?`);
+    }
+    
+    // Recurring expenses prompts
+    if (financialContext.recurringExpenses.length > 0) {
+      prompts.push("Should I cancel any subscriptions?");
+    }
+    
+    // Savings rate prompts
+    if (financialContext.savingsRateRaw < 20) {
+      prompts.push("Why is my savings rate low?");
+    } else if (financialContext.savingsRateRaw > 40) {
+      prompts.push("Am I saving too much?");
+    }
+    
+    return prompts.slice(0, 6); // Return max 6 prompts
+  }),
+
   // Send a message to the AI advisor
   sendMessage: protectedProcedure
     .input(z.object({
@@ -157,6 +199,20 @@ export const chatRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
+
+      // Rate limiting: Check message count in last 24 hours
+      const dbInstance = await db.getDb();
+      if (!dbInstance) throw new Error("Database not available");
+      
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const recentMessages = await db.getChatMessagesByUserId(userId);
+      const userMessagesLast24h = recentMessages.filter(
+        (msg: any) => msg.role === "user" && new Date(msg.createdDate) >= oneDayAgo
+      );
+      
+      if (userMessagesLast24h.length >= 50) {
+        throw new Error("Rate limit exceeded. Please try again in 24 hours. (Max 50 messages/day)");
+      }
 
       // Build financial context
       const financialContext = await buildUserFinancialContext(userId);
@@ -180,6 +236,14 @@ YOUR ROLE:
 CURRENT USER FINANCIAL PROFILE:
 ${JSON.stringify(financialContext, null, 2)}
 
+RESPONSE FORMAT:
+- Start with a brief analysis (1-2 sentences)
+- Provide key numbers and calculations
+- List 2-4 specific, actionable recommendations
+- End with encouragement or next steps
+- Use emojis sparingly for visual organization
+- Keep responses concise (max 300 words)
+
 GUIDELINES:
 1. Always use the user's ACTUAL numbers from the profile above
 2. Account for recurring expenses in calculations
@@ -188,9 +252,9 @@ GUIDELINES:
 5. Suggest trade-offs when goals are ambitious
 6. Consider the user's savings rate and consistency
 7. If data is insufficient, acknowledge it and provide general guidance
-8. Format numbers with proper currency symbols
-9. Use emojis sparingly for visual organization (📊 📈 💰 ✅ ⚠️)
-10. Keep responses concise but informative (max 300 words)
+8. When suggesting actions, be specific (e.g., "Save $500/month" not "save more")
+9. Include timeframes in your recommendations (e.g., "in 3 months", "by June 2026")
+10. If suggesting to cut expenses, name specific categories or items
 
 IMPORTANT: Base ALL calculations and advice on the financial data provided above. Do not make assumptions beyond what's in the profile.`;
 
