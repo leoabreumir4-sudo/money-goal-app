@@ -225,7 +225,7 @@ export default function Spending() {
                             <span className="font-medium">{item.name}</span>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold">{formatCurrency(item.value / 100, preferences.currency)} • {percentage.toFixed(1)}%</div>
+                            <div className="font-bold">{formatCurrency(item.value, preferences.currency)} • {percentage.toFixed(1)}%</div>
                             <div className="text-xs text-green-500">↑ 0.0% {t("vsPrevious", preferences.language)}</div>
                           </div>
                         </div>
