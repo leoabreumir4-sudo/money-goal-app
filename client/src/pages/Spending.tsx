@@ -203,24 +203,24 @@ export default function Spending() {
         {/* Recurring Expenses Summary Card */}
         {recurringExpenses.length > 0 && (
           <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
-            <CardContent className="py-6">
+            <CardContent className="py-4">
               <div className="flex items-center justify-between h-full">
                 <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-7 w-7 text-destructive" />
+                  <div className="h-12 w-12 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="h-6 w-6 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                       Total Monthly Recurring Expenses
                     </p>
-                    <div className="text-5xl font-bold text-destructive leading-none">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
+                    <div className="text-4xl font-bold text-destructive leading-none">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground mb-1">
                     {recurringExpenses.length} {recurringExpenses.length === 1 ? 'expense' : 'expenses'}
                   </p>
-                  <p className="text-lg font-semibold text-foreground">
+                  <p className="text-base font-semibold text-foreground">
                     Annual: {formatCurrency(totalMonthlyRecurring * 12, preferences.currency)}
                   </p>
                 </div>
@@ -231,7 +231,7 @@ export default function Spending() {
 
         {/* Filters */}
         <Card className="bg-card border-border">
-          <CardContent className="py-4">
+          <CardContent className="py-3">
             <div className="flex flex-wrap gap-3 items-center">
               <div className="flex gap-2 items-center">
                 <Button
@@ -300,7 +300,7 @@ export default function Spending() {
               ) : (
                 <div className="relative">
                   <ResponsiveContainer width="100%" height={350}>
-                    <PieChart>
+                    <PieChart onMouseEnter={() => {}} onMouseMove={() => {}} onClick={() => {}}>
                       <Pie
                         data={pieChartData}
                         cx="50%"
@@ -312,8 +312,6 @@ export default function Spending() {
                         strokeWidth={0}
                         isAnimationActive={true}
                         animationDuration={600}
-                        activeIndex={-1}
-                        activeShape={undefined}
                       >
                         {pieChartData.map((entry, index) => (
                           <Cell 
@@ -502,8 +500,7 @@ export default function Spending() {
                 <Label htmlFor="recurringAmount">{t("amount", preferences.language)}</Label>
                 <Input
                   id="recurringAmount"
-                  type="number"
-                  step="0.01"
+                  type="text"
                   value={recurringAmount}
                   onChange={(e) => setRecurringAmount(e.target.value)}
                   placeholder="0.00"
@@ -556,8 +553,7 @@ export default function Spending() {
                 <Label htmlFor="editRecurringAmount">{t("amount", preferences.language)}</Label>
                 <Input
                   id="editRecurringAmount"
-                  type="number"
-                  step="0.01"
+                  type="text"
                   value={recurringAmount}
                   onChange={(e) => setRecurringAmount(e.target.value)}
                   placeholder="0.00"
@@ -584,10 +580,7 @@ export default function Spending() {
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
               </Button>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setIsEditRecurringModalOpen(false)}>{t("cancel", preferences.language)}</Button>
-                <Button onClick={handleUpdateRecurring}>Update</Button>
-              </div>
+              <Button onClick={handleUpdateRecurring}>Update</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
