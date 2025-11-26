@@ -203,24 +203,24 @@ export default function Spending() {
         {/* Recurring Expenses Summary Card */}
         {recurringExpenses.length > 0 && (
           <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+            <CardContent className="py-6">
+              <div className="flex items-center justify-between h-full">
                 <div className="flex items-center gap-4">
                   <div className="h-14 w-14 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
                     <Calendar className="h-7 w-7 text-destructive" />
                   </div>
-                  <div className="flex flex-col justify-center">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                       Total Monthly Recurring Expenses
                     </p>
-                    <div className="text-5xl font-bold text-destructive">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
+                    <div className="text-5xl font-bold text-destructive leading-none">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
                   </div>
                 </div>
-                <div className="text-right flex flex-col justify-center">
-                  <p className="text-sm text-muted-foreground">
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground mb-1">
                     {recurringExpenses.length} {recurringExpenses.length === 1 ? 'expense' : 'expenses'}
                   </p>
-                  <p className="text-lg font-semibold text-foreground mt-1">
+                  <p className="text-lg font-semibold text-foreground">
                     Annual: {formatCurrency(totalMonthlyRecurring * 12, preferences.currency)}
                   </p>
                 </div>
@@ -312,7 +312,8 @@ export default function Spending() {
                         strokeWidth={0}
                         isAnimationActive={true}
                         animationDuration={600}
-                        activeIndex={undefined}
+                        activeIndex={-1}
+                        activeShape={undefined}
                       >
                         {pieChartData.map((entry, index) => (
                           <Cell 
