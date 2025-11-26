@@ -525,6 +525,22 @@ ${flowContext}
 CURRENT USER FINANCIAL PROFILE:
 ${JSON.stringify(financialContext, null, 2)}
 
+⚠️ CRITICAL - UNDERSTANDING THE DATA:
+The financial profile above contains TWO versions of each amount:
+1. **Formatted strings** (e.g., "avgMonthlyIncome": "$4,392.55") - Use THESE for display
+2. **Raw numbers** (e.g., "avgMonthlyIncomeRaw": 439255) - These are in CENTS, NOT dollars
+
+WHEN DOING CALCULATIONS:
+✅ ALWAYS use the FORMATTED string values (they're already in dollars/currency)
+❌ NEVER calculate with "Raw" values - they're in cents and will give wrong results
+
+Example:
+- avgMonthlyIncome = "$4,392.55" ✅ Use this
+- avgMonthlyIncomeRaw = 439255 ❌ This is 439,255 CENTS (internal storage)
+
+The savingsRate is already calculated correctly: ${financialContext.savingsRate}
+Just use it directly - DO NOT recalculate!
+
 SALARY INFORMATION:
 ${financialContext.hasSalary ? `✅ User has regular salary from ${financialContext.salarySource}
 - Average monthly salary: ${financialContext.avgMonthlySalary}
@@ -552,19 +568,23 @@ RESPONSE FORMAT:
 STRICT VALIDATION RULES (MUST FOLLOW):
 
 🔢 **MATH VALIDATION - SHOW YOUR WORK**:
-Before ANY calculation, write it out step-by-step:
+⚠️ CRITICAL: The savingsRate is ALREADY CALCULATED for you: ${financialContext.savingsRate}
+Just COPY this value directly - DO NOT recalculate it!
+
+When showing calculations to the user, extract from formatted strings:
    ✅ CORRECT Example:
-   "Your income: $4,392.55
-    Your expenses: $4,312.56
-    Monthly savings: $4,392.55 - $4,312.56 = $79.99
-    Savings rate: ($79.99 ÷ $4,392.55) × 100 = 1.82% ✅"
+   "Your income: ${financialContext.avgMonthlyIncome}
+    Your expenses: ${financialContext.avgMonthlyExpenses}
+    Monthly savings: ${financialContext.avgMonthlySavings}
+    Savings rate: ${financialContext.savingsRate} ✅ (already calculated)"
    
    ❌ WRONG Example (NEVER DO THIS):
-   "Savings rate: -272%" (This is MATHEMATICALLY IMPOSSIBLE if income > expenses!)
+   "I calculated your savings rate as -272%" (NEVER recalculate - use the provided value!)
    
-   RULE: If avgMonthlySavings is POSITIVE → rate is POSITIVE (1-100%)
-         If avgMonthlySavings is NEGATIVE → rate is NEGATIVE (-100% to -1%)
-         NEVER mix signs! Positive savings = Positive rate!
+   RULE: Use financialContext.savingsRate DIRECTLY
+         Use financialContext.avgMonthlySavings DIRECTLY
+         If avgMonthlySavings shows positive (e.g., "$79.99"), then savings is POSITIVE
+         If savingsRate shows positive (e.g., "1%"), then rate is POSITIVE
 
 📊 **DATA VALIDATION - USE ONLY PROVIDED DATA**:
 The user's ACTUAL spending categories are listed in topCategories array:
