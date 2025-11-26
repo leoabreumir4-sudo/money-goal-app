@@ -38,7 +38,7 @@ const CustomProjectionTooltip = ({
             <div className="flex items-start gap-2 bg-primary/10 p-2 rounded">
               <div className="w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
               <div>
-                <p className="font-medium text-primary">Target Saving Goal Reached!</p>
+                <p className="font-medium text-primary">Expected Goal Reached!</p>
                 <p className="text-muted-foreground text-xs">Reached in {monthsToGoalTarget} months</p>
               </div>
             </div>
@@ -47,7 +47,7 @@ const CustomProjectionTooltip = ({
             <div className="flex items-start gap-2 bg-blue-500/10 p-2 rounded">
               <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
               <div>
-                <p className="font-medium text-blue-500">Average Saving Goal Reached!</p>
+                <p className="font-medium text-blue-500">Actual Goal Reached!</p>
                 <p className="text-muted-foreground text-xs">Reached in {monthsToGoalAvg} months</p>
               </div>
             </div>
@@ -74,14 +74,14 @@ const CustomProjectionTooltip = ({
         <div className="flex items-center justify-between p-2 bg-primary/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-sm font-medium">Target Saving</span>
+            <span className="text-sm font-medium">Expected</span>
           </div>
           <span className="font-semibold">{formatCurrency(targetVal, curr)}</span>
         </div>
         <div className="flex items-center justify-between p-2 bg-blue-500/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span className="text-sm font-medium">Average Saving</span>
+            <span className="text-sm font-medium">Actual</span>
           </div>
           <span className="font-semibold">{formatCurrency(avgVal, curr)}</span>
         </div>
@@ -406,39 +406,55 @@ export default function Analytics() {
                 <>
                   {/* Compact Summary Card */}
                   <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-                    <CardContent className="py-4 px-5 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Target className="h-5 w-5 text-primary" />
-                          <div className="flex flex-col">
-                            <span className="text-sm text-muted-foreground">Goal</span>
-                            <span className="text-xl font-bold">{formatCurrency(activeGoal.targetAmount, curr)}</span>
+                    <CardContent className="py-6 px-6">
+                      <div className="grid grid-cols-2 gap-6 mb-5">
+                        {/* Goal Section */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-primary/10 rounded-lg">
+                              <Target className="h-5 w-5 text-primary" />
+                            </div>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Your Goal</span>
+                          </div>
+                          <p className="text-3xl font-bold text-foreground">{formatCurrency(activeGoal.targetAmount, curr)}</p>
+                        </div>
+                        
+                        {/* Current Progress Section */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-primary/10 rounded-lg">
+                              <Wallet className="h-5 w-5 text-primary" />
+                            </div>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Progress</span>
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-3xl font-bold text-primary">
+                              {formatCurrency(initialAmount, curr)}
+                            </p>
+                            <span className="text-xl font-semibold text-primary/60">
+                              {Math.round((initialAmount / activeGoal.targetAmount) * 100)}%
+                            </span>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <span className="text-sm text-muted-foreground">You have</span>
-                          <span className="text-xl font-bold text-primary">
-                            {formatCurrency(initialAmount, curr)}
-                          </span>
-                          <span className="text-xs text-muted-foreground">({Math.round((initialAmount / activeGoal.targetAmount) * 100)}% complete)</span>
-                        </div>
                       </div>
+                      
                       {wiseBalance > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-green-500/10 px-2 py-1 rounded">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-green-500/10 px-2 py-1 rounded mb-4">
                           <Wallet className="h-3 w-3 text-green-500" />
                           Includes Wise balance: {formatCurrency(wiseBalance, curr)}
                         </div>
                       )}
-                      <div className="border-t border-border/50 pt-3 space-y-2">
+                      
+                      <div className="border-t border-border/50 pt-4 space-y-3">
                         <div className="text-sm font-semibold text-foreground">Time to reach goal:</div>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="bg-primary/10 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground mb-1">With Target Saving</div>
+                            <div className="text-xs text-muted-foreground mb-1">Expected Target</div>
                             <div className="text-lg font-bold text-primary">{monthsToGoalTarget} months</div>
                             <div className="text-xs text-muted-foreground">({new Date(now.getFullYear(), now.getMonth() + (monthsToGoalTarget || 0), 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})</div>
                           </div>
                           <div className="bg-blue-500/10 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground mb-1">With Average Saving</div>
+                            <div className="text-xs text-muted-foreground mb-1">Actual Average</div>
                             <div className="text-lg font-bold text-blue-500">{monthsToGoalAvg} months</div>
                             <div className="text-xs text-muted-foreground">({new Date(now.getFullYear(), now.getMonth() + (monthsToGoalAvg || 0), 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})</div>
                           </div>
@@ -507,7 +523,7 @@ export default function Analytics() {
                           label={{ value: `Goal: ${formatCurrency(activeGoal.targetAmount, curr)}`, position: 'insideTopRight', fill: '#10b981', fontSize: 11, fontWeight: 600 }}
                         />
                         
-                        {/* Vertical line for when target projection reaches goal */}
+                        {/* Vertical line for when expected projection reaches goal */}
                         {monthsToGoalTarget && monthsToGoalTarget <= projectionData.length && (
                           <ReferenceLine 
                             x={projectionData[monthsToGoalTarget - 1]?.name} 
@@ -515,7 +531,7 @@ export default function Analytics() {
                             strokeDasharray="3 3"
                             strokeWidth={2}
                             label={{ 
-                              value: `🎯 Target (${monthsToGoalTarget}mo)`, 
+                              value: `🎯 Expected (${monthsToGoalTarget}mo)`, 
                               position: 'top',
                               fill: '#8b5cf6', 
                               fontSize: 11,
@@ -525,7 +541,7 @@ export default function Analytics() {
                           />
                         )}
                         
-                        {/* Vertical line for when average projection reaches goal */}
+                        {/* Vertical line for when actual average projection reaches goal */}
                         {monthsToGoalAvg && monthsToGoalAvg <= projectionData.length && monthsToGoalAvg !== monthsToGoalTarget && (
                           <ReferenceLine 
                             x={projectionData[monthsToGoalAvg - 1]?.name} 
@@ -533,7 +549,7 @@ export default function Analytics() {
                             strokeDasharray="3 3"
                             strokeWidth={2}
                             label={{ 
-                              value: `📊 Average (${monthsToGoalAvg}mo)`, 
+                              value: `📊 Actual (${monthsToGoalAvg}mo)`, 
                               position: 'top',
                               fill: '#3b82f6', 
                               fontSize: 11,
@@ -549,7 +565,7 @@ export default function Analytics() {
                           stroke="#3b82f6" 
                           strokeWidth={3}
                           fill="url(#colorAverage)"
-                          name="Average Saving"
+                          name="Actual Average"
                           dot={{ fill: '#3b82f6', r: 3 }}
                           activeDot={{ r: 6 }}
                           connectNulls={false}
@@ -560,7 +576,7 @@ export default function Analytics() {
                           stroke="#8b5cf6" 
                           strokeWidth={3}
                           fill="url(#colorTarget)"
-                          name="Target Saving"
+                          name="Expected Target"
                           dot={{ fill: '#8b5cf6', r: 3 }}
                           activeDot={{ r: 6 }}
                           connectNulls={false}
@@ -571,11 +587,11 @@ export default function Analytics() {
                     <div className="flex justify-center gap-6 mt-4 text-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-blue-500" />
-                        <span className="text-muted-foreground">Average Saving</span>
+                        <span className="text-muted-foreground">Actual Average</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded-full bg-primary" />
-                        <span className="text-muted-foreground">Target Saving</span>
+                        <span className="text-muted-foreground">Expected Target</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-1 bg-green-500" />
