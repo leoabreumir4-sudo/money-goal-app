@@ -28,34 +28,27 @@ const CustomProjectionTooltip = ({
   const avgVal = data.average !== null ? data.average : activeGoal.targetAmount;
   const targetVal = data.target !== null ? data.target : activeGoal.targetAmount;
   const monthIdx = data.monthIndex;
-  const remaining = activeGoal.targetAmount - Math.max(avgVal, targetVal);
-  const monthsRemaining = Math.max(
-    monthsToGoalAvg ? monthsToGoalAvg - monthIdx : 0,
-    monthsToGoalTarget ? monthsToGoalTarget - monthIdx : 0
-  );
 
   if (data.avgReached || data.targetReached) {
     return (
       <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
-        <p className="font-semibold text-lg mb-3">{label} - Goal Reached! 🎉</p>
+        <p className="font-semibold text-lg mb-3">{label} 🎉</p>
         <div className="space-y-2 text-sm">
-          {monthsToGoalTarget && (
-            <div className="flex items-start gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
+          {data.targetReached && monthsToGoalTarget && (
+            <div className="flex items-start gap-2 bg-primary/10 p-2 rounded">
+              <div className="w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
               <div>
-                <p className="font-medium">Target Saving: Reaches goal</p>
-                <p className="text-muted-foreground">in {monthsToGoalTarget} months ({formatCurrency(activeGoal.targetAmount, curr)})</p>
+                <p className="font-medium text-primary">Target Saving Goal Reached!</p>
+                <p className="text-muted-foreground text-xs">Reached in {monthsToGoalTarget} months</p>
               </div>
             </div>
           )}
-          {monthsToGoalAvg && (
-            <div className="flex items-start gap-2">
-              <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
+          {data.avgReached && monthsToGoalAvg && (
+            <div className="flex items-start gap-2 bg-blue-500/10 p-2 rounded">
+              <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
               <div>
-                <p className="font-medium">Average Saving: Takes {monthsToGoalAvg} months</p>
-                {monthsToGoalTarget && monthsToGoalAvg > monthsToGoalTarget && (
-                  <p className="text-yellow-500">({monthsToGoalAvg - monthsToGoalTarget} months slower)</p>
-                )}
+                <p className="font-medium text-blue-500">Average Saving Goal Reached!</p>
+                <p className="text-muted-foreground text-xs">Reached in {monthsToGoalAvg} months</p>
               </div>
             </div>
           )}
@@ -64,33 +57,49 @@ const CustomProjectionTooltip = ({
     );
   }
 
+  // Calculate which projection reaches goal first
+  const targetReachesFirst = monthsToGoalTarget && monthsToGoalAvg && monthsToGoalTarget < monthsToGoalAvg;
+  const fastestProjection = targetReachesFirst ? targetVal : avgVal;
+  const remaining = activeGoal.targetAmount - fastestProjection;
+  const monthsLeft = targetReachesFirst 
+    ? (monthsToGoalTarget || 0) - monthIdx 
+    : (monthsToGoalAvg || 0) - monthIdx;
+
   return (
-    <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg min-w-[280px]">
-      <p className="font-semibold text-base mb-3">{label} (Month {monthIdx})</p>
+    <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg min-w-[300px]">
+      <p className="font-semibold text-base mb-3">{label}</p>
+      <p className="text-xs text-muted-foreground mb-3">In {monthIdx} {monthIdx === 1 ? 'month' : 'months'} from now</p>
       
       <div className="space-y-2 mb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between p-2 bg-primary/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-sm">Target Saving:</span>
+            <span className="text-sm font-medium">Target Saving</span>
           </div>
           <span className="font-semibold">{formatCurrency(targetVal, curr)}</span>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between p-2 bg-blue-500/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span className="text-sm">Average Saving:</span>
+            <span className="text-sm font-medium">Average Saving</span>
           </div>
           <span className="font-semibold">{formatCurrency(avgVal, curr)}</span>
         </div>
       </div>
 
-      {remaining > 0 && (
-        <div className="border-t border-border pt-3 text-sm text-muted-foreground">
-          <p>Still {formatCurrency(remaining, curr)} to reach your {formatCurrency(activeGoal.targetAmount, curr)} goal</p>
-          {monthsRemaining > 0 && (
-            <p className="mt-1">Estimated: {monthsRemaining} months remaining</p>
-          )}
+      {remaining > 0 && monthsLeft > 0 && (
+        <div className="border-t border-border pt-3 text-sm">
+          <div className="bg-muted/30 p-2 rounded space-y-1">
+            <p className="text-xs text-muted-foreground">
+              {targetReachesFirst ? '🎯 Target pace' : '📊 Average pace'} to reach goal:
+            </p>
+            <p className="font-medium">
+              {formatCurrency(remaining, curr)} remaining
+            </p>
+            <p className="text-xs text-muted-foreground">
+              ⏱️ About {monthsLeft} {monthsLeft === 1 ? 'month' : 'months'} left
+            </p>
+          </div>
         </div>
       )}
     </div>
@@ -345,8 +354,9 @@ export default function Analytics() {
                   {t("save", lang)}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Based on your average: {formatCurrency(averageMonthlySaving, curr)}/month
+              <p className="text-sm text-muted-foreground mt-1">
+                💡 Your actual average saving: <span className="font-semibold">{formatCurrency(averageMonthlySaving, curr)}/month</span>
+                <span className="block text-xs mt-0.5 opacity-70">(Income minus expenses over the last 6 months)</span>
               </p>
             </div>
 
@@ -395,28 +405,51 @@ export default function Analytics() {
               return (
                 <>
                   {/* Compact Summary Card */}
-                  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 p-2">
-                    <CardContent className="py-3 px-4 space-y-2">
-                      <div className="flex items-center gap-2 text-base font-semibold">
-                        <Target className="h-4 w-4 text-primary" />
-                        <span>Goal: {formatCurrency(activeGoal.targetAmount, curr)}</span>
-                        <span className="ml-auto text-xs text-muted-foreground">Current: <span className="font-bold">
-                          {formatCurrency(initialAmount, curr)}
-                        </span> ({Math.round((initialAmount / activeGoal.targetAmount) * 100)}%)</span>
+                  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                    <CardContent className="py-4 px-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Target className="h-5 w-5 text-primary" />
+                          <div className="flex flex-col">
+                            <span className="text-sm text-muted-foreground">Goal</span>
+                            <span className="text-xl font-bold">{formatCurrency(activeGoal.targetAmount, curr)}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-sm text-muted-foreground">You have</span>
+                          <span className="text-xl font-bold text-primary">
+                            {formatCurrency(initialAmount, curr)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">({Math.round((initialAmount / activeGoal.targetAmount) * 100)}% complete)</span>
+                        </div>
                       </div>
                       {wiseBalance > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-green-500/10 px-2 py-1 rounded">
                           <Wallet className="h-3 w-3 text-green-500" />
                           Includes Wise balance: {formatCurrency(wiseBalance, curr)}
                         </div>
                       )}
-                      <div className="border-t border-border/50 pt-2 flex flex-col gap-1">
-                        <div className="flex gap-4 text-xs">
-                          <span className="font-medium">Target:</span> <span className="text-primary">{monthsToGoalTarget}m</span> ({new Date(now.getFullYear(), now.getMonth() + monthsToGoalTarget, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})
-                          <span className="font-medium">Average:</span> <span className="text-blue-500">{monthsToGoalAvg}m</span> ({new Date(now.getFullYear(), now.getMonth() + monthsToGoalAvg, 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})
+                      <div className="border-t border-border/50 pt-3 space-y-2">
+                        <div className="text-sm font-semibold text-foreground">Time to reach goal:</div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-primary/10 rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground mb-1">With Target Saving</div>
+                            <div className="text-lg font-bold text-primary">{monthsToGoalTarget} months</div>
+                            <div className="text-xs text-muted-foreground">({new Date(now.getFullYear(), now.getMonth() + (monthsToGoalTarget || 0), 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})</div>
+                          </div>
+                          <div className="bg-blue-500/10 rounded-lg p-3">
+                            <div className="text-xs text-muted-foreground mb-1">With Average Saving</div>
+                            <div className="text-lg font-bold text-blue-500">{monthsToGoalAvg} months</div>
+                            <div className="text-xs text-muted-foreground">({new Date(now.getFullYear(), now.getMonth() + (monthsToGoalAvg || 0), 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})</div>
+                          </div>
                         </div>
-                        {monthsToGoalTarget && monthsToGoalAvg && (
-                          <span className="text-xs font-medium text-primary">Difference: Target is {Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months {monthsToGoalTarget < monthsToGoalAvg ? 'faster' : 'slower'}</span>
+                        {monthsToGoalTarget && monthsToGoalAvg && monthsToGoalTarget !== monthsToGoalAvg && (
+                          <div className="text-xs text-center py-1 px-2 bg-primary/5 rounded">
+                            {monthsToGoalTarget < monthsToGoalAvg 
+                              ? `⚡ Your target plan is ${Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months faster!`
+                              : `⏳ Average pace is ${Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months faster`
+                            }
+                          </div>
                         )}
                       </div>
                     </CardContent>
@@ -464,13 +497,52 @@ export default function Analytics() {
                           tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
                         />
                         <Tooltip content={<CustomProjectionTooltip activeGoal={activeGoal} monthsToGoalAvg={monthsToGoalAvg} monthsToGoalTarget={monthsToGoalTarget} curr={curr} />} />
+                        
+                        {/* Horizontal line showing the goal amount */}
                         <ReferenceLine 
                           y={activeGoal.targetAmount} 
                           stroke="#10b981" 
                           strokeDasharray="5 5" 
                           strokeWidth={2}
-                          label={{ value: 'Goal', position: 'insideTopRight', fill: '#10b981', fontSize: 12 }}
+                          label={{ value: `Goal: ${formatCurrency(activeGoal.targetAmount, curr)}`, position: 'insideTopRight', fill: '#10b981', fontSize: 11, fontWeight: 600 }}
                         />
+                        
+                        {/* Vertical line for when target projection reaches goal */}
+                        {monthsToGoalTarget && monthsToGoalTarget <= projectionData.length && (
+                          <ReferenceLine 
+                            x={projectionData[monthsToGoalTarget - 1]?.name} 
+                            stroke="#8b5cf6" 
+                            strokeDasharray="3 3"
+                            strokeWidth={2}
+                            label={{ 
+                              value: `🎯 Target (${monthsToGoalTarget}mo)`, 
+                              position: 'top',
+                              fill: '#8b5cf6', 
+                              fontSize: 11,
+                              fontWeight: 600,
+                              offset: 10
+                            }}
+                          />
+                        )}
+                        
+                        {/* Vertical line for when average projection reaches goal */}
+                        {monthsToGoalAvg && monthsToGoalAvg <= projectionData.length && monthsToGoalAvg !== monthsToGoalTarget && (
+                          <ReferenceLine 
+                            x={projectionData[monthsToGoalAvg - 1]?.name} 
+                            stroke="#3b82f6" 
+                            strokeDasharray="3 3"
+                            strokeWidth={2}
+                            label={{ 
+                              value: `📊 Average (${monthsToGoalAvg}mo)`, 
+                              position: 'top',
+                              fill: '#3b82f6', 
+                              fontSize: 11,
+                              fontWeight: 600,
+                              offset: 10
+                            }}
+                          />
+                        )}
+                        
                         <Area 
                           type="monotone" 
                           dataKey="average" 
