@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { ArrowDown, ArrowUp, TrendingUp, Target } from "lucide-react";
+import { ArrowDown, ArrowUp, TrendingUp, Target, Wallet } from "lucide-react";
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -12,6 +12,91 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
+
+// Custom Tooltip Component
+const CustomProjectionTooltip = ({ 
+  active, 
+  payload, 
+  label,
+  activeGoal,
+  monthsToGoalAvg,
+  monthsToGoalTarget,
+  curr
+}: any) => {
+  if (!active || !payload || !payload.length || !activeGoal) return null;
+  
+  const data = payload[0].payload;
+  const avgVal = data.average !== null ? data.average : activeGoal.targetAmount;
+  const targetVal = data.target !== null ? data.target : activeGoal.targetAmount;
+  const monthIdx = data.monthIndex;
+  const remaining = activeGoal.targetAmount - Math.max(avgVal, targetVal);
+  const monthsRemaining = Math.max(
+    monthsToGoalAvg ? monthsToGoalAvg - monthIdx : 0,
+    monthsToGoalTarget ? monthsToGoalTarget - monthIdx : 0
+  );
+
+  if (data.avgReached || data.targetReached) {
+    return (
+      <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
+        <p className="font-semibold text-lg mb-3">{label} - Goal Reached! 🎉</p>
+        <div className="space-y-2 text-sm">
+          {monthsToGoalTarget && (
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
+              <div>
+                <p className="font-medium">Target Saving: Reaches goal</p>
+                <p className="text-muted-foreground">in {monthsToGoalTarget} months ({formatCurrency(activeGoal.targetAmount, curr)})</p>
+              </div>
+            </div>
+          )}
+          {monthsToGoalAvg && (
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
+              <div>
+                <p className="font-medium">Average Saving: Takes {monthsToGoalAvg} months</p>
+                {monthsToGoalTarget && monthsToGoalAvg > monthsToGoalTarget && (
+                  <p className="text-yellow-500">({monthsToGoalAvg - monthsToGoalTarget} months slower)</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg min-w-[280px]">
+      <p className="font-semibold text-base mb-3">{label} (Month {monthIdx})</p>
+      
+      <div className="space-y-2 mb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary" />
+            <span className="text-sm">Target Saving:</span>
+          </div>
+          <span className="font-semibold">{formatCurrency(targetVal, curr)}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <span className="text-sm">Average Saving:</span>
+          </div>
+          <span className="font-semibold">{formatCurrency(avgVal, curr)}</span>
+        </div>
+      </div>
+
+      {remaining > 0 && (
+        <div className="border-t border-border pt-3 text-sm text-muted-foreground">
+          <p>Still {formatCurrency(remaining, curr)} to reach your {formatCurrency(activeGoal.targetAmount, curr)} goal</p>
+          {monthsRemaining > 0 && (
+            <p className="mt-1">Estimated: {monthsRemaining} months remaining</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Analytics() {
   const { preferences } = usePreferences();
@@ -24,6 +109,7 @@ export default function Analytics() {
   const utils = trpc.useUtils();
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
   const { data: settings } = trpc.settings.get.useQuery();
+  const { data: activeGoal } = trpc.goals.getActive.useQuery();
   const { data: activeGoal } = trpc.goals.getActive.useQuery();
 
   const updateSettingsMutation = trpc.settings.update.useMutation({
@@ -301,82 +387,6 @@ export default function Analytics() {
                 targetAccumulated = Math.min(targetAccumulated + targetSaving, activeGoal.targetAmount);
               }
 
-              const CustomTooltip = ({ active, payload, label }: any) => {
-                if (!active || !payload || !payload.length) return null;
-                
-                const data = payload[0].payload;
-                const avgVal = data.average !== null ? data.average : activeGoal.targetAmount;
-                const targetVal = data.target !== null ? data.target : activeGoal.targetAmount;
-                const monthIdx = data.monthIndex;
-                const remaining = activeGoal.targetAmount - Math.max(avgVal, targetVal);
-                const monthsRemaining = Math.max(
-                  monthsToGoalAvg ? monthsToGoalAvg - monthIdx : 0,
-                  monthsToGoalTarget ? monthsToGoalTarget - monthIdx : 0
-                );
-
-                if (data.avgReached || data.targetReached) {
-                  return (
-                    <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
-                      <p className="font-semibold text-lg mb-3">{label} - Goal Reached! 🎉</p>
-                      <div className="space-y-2 text-sm">
-                        {monthsToGoalTarget && (
-                          <div className="flex items-start gap-2">
-                            <div className="w-2 h-2 rounded-full bg-primary mt-1.5" />
-                            <div>
-                              <p className="font-medium">Target Saving: Reaches goal</p>
-                              <p className="text-muted-foreground">in {monthsToGoalTarget} months ({formatCurrency(activeGoal.targetAmount, curr)})</p>
-                            </div>
-                          </div>
-                        )}
-                        {monthsToGoalAvg && (
-                          <div className="flex items-start gap-2">
-                            <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
-                            <div>
-                              <p className="font-medium">Average Saving: Takes {monthsToGoalAvg} months</p>
-                              {monthsToGoalTarget && monthsToGoalAvg > monthsToGoalTarget && (
-                                <p className="text-yellow-500">({monthsToGoalAvg - monthsToGoalTarget} months slower)</p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg min-w-[280px]">
-                    <p className="font-semibold text-base mb-3">{label} (Month {monthIdx})</p>
-                    
-                    <div className="space-y-2 mb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-primary" />
-                          <span className="text-sm">Target Saving:</span>
-                        </div>
-                        <span className="font-semibold">{formatCurrency(targetVal, curr)}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-blue-500" />
-                          <span className="text-sm">Average Saving:</span>
-                        </div>
-                        <span className="font-semibold">{formatCurrency(avgVal, curr)}</span>
-                      </div>
-                    </div>
-
-                    {remaining > 0 && (
-                      <div className="border-t border-border pt-3 text-sm text-muted-foreground">
-                        <p>Still {formatCurrency(remaining, curr)} to reach your {formatCurrency(activeGoal.targetAmount, curr)} goal</p>
-                        {monthsRemaining > 0 && (
-                          <p className="mt-1">Estimated: {monthsRemaining} months remaining</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              };
-
               return (
                 <>
                   {/* Compact Summary Card */}
@@ -470,7 +480,7 @@ export default function Analytics() {
                           tickLine={false}
                           tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
                         />
-                        <Tooltip content={<CustomTooltip />} />
+                        <Tooltip content={<CustomProjectionTooltip activeGoal={activeGoal} monthsToGoalAvg={monthsToGoalAvg} monthsToGoalTarget={monthsToGoalTarget} curr={curr} />} />
                         <ReferenceLine 
                           y={activeGoal.targetAmount} 
                           stroke="#10b981" 
