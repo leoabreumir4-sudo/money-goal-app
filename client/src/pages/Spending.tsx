@@ -30,8 +30,18 @@ export default function Spending() {
 
   const utils = trpc.useUtils();
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
-  const { data: categories = [] } = trpc.categories.getAll.useQuery();
+  const { data: categoriesRaw = [] } = trpc.categories.getAll.useQuery();
   const { data: recurringExpenses = [] } = trpc.recurringExpenses.getAll.useQuery();
+  
+  // Remove duplicates (keep only unique categories by ID)
+  const categories = useMemo(() => {
+    const seen = new Set<number>();
+    return categoriesRaw.filter(cat => {
+      if (seen.has(cat.id)) return false;
+      seen.add(cat.id);
+      return true;
+    });
+  }, [categoriesRaw]);
 
   const createRecurringMutation = trpc.recurringExpenses.create.useMutation({
     onSuccess: () => {
@@ -153,7 +163,7 @@ export default function Spending() {
 
   // Group expenses by category (using real categories from database)
   const expensesByCategory = useMemo(() => {
-    const grouped: Record<number, { name: string; value: number; emoji: string; color: string }> = {};
+    const grouped: Record<number, { name: string; value: number; emoji: string; color: string; currency: string }> = {};
     
     // Add real transactions if not filtering to only recurring
     if (!showOnlyRecurring) {
@@ -163,9 +173,10 @@ export default function Spending() {
         const categoryName = category?.name || "Other";
         const categoryEmoji = category?.emoji || "📦";
         const categoryColor = category?.color || "#94a3b8";
+        const currency = t.currency || "USD";
         
         if (!grouped[categoryId]) {
-          grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
+          grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor, currency };
         }
         grouped[categoryId].value += t.amount;
       });
@@ -183,9 +194,10 @@ export default function Spending() {
       const categoryName = category?.name || "Other";
       const categoryEmoji = category?.emoji || "📦";
       const categoryColor = category?.color || "#94a3b8";
+      const currency = preferences.currency || "USD";
       
       if (!grouped[categoryId]) {
-        grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
+        grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor, currency };
       }
       grouped[categoryId].value += monthlyAmount;
     });

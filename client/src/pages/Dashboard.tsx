@@ -38,7 +38,17 @@ export default function Dashboard() {
   const { data: activeGoal, isLoading: goalLoading } = trpc.goals.getActive.useQuery();
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
   const { data: wiseBalance = 0 } = trpc.wise.getTotalBalanceConverted.useQuery();
-  const { data: categories = [] } = trpc.categories.getAll.useQuery();
+  const { data: categoriesRaw = [] } = trpc.categories.getAll.useQuery();
+  
+  // Remove duplicates (keep only unique categories by ID)
+  const categories = useMemo(() => {
+    const seen = new Set<number>();
+    return categoriesRaw.filter(cat => {
+      if (seen.has(cat.id)) return false;
+      seen.add(cat.id);
+      return true;
+    });
+  }, [categoriesRaw]);
 
   const createGoalMutation = trpc.goals.create.useMutation({
     onSuccess: () => {
@@ -414,8 +424,15 @@ export default function Dashboard() {
                                       {transaction.categoryId && (() => {
                                         const category = categories.find(c => c.id === transaction.categoryId);
                                         return category ? (
-                                          <span className="text-sm" title={category.name}>
-                                            {category.emoji}
+                                          <span 
+                                            className="px-2 py-0.5 text-xs rounded-full font-medium flex items-center gap-1"
+                                            style={{ 
+                                              backgroundColor: `${category.color}20`,
+                                              color: category.color
+                                            }}
+                                          >
+                                            <span>{category.emoji}</span>
+                                            <span>{category.name}</span>
                                           </span>
                                         ) : null;
                                       })()}

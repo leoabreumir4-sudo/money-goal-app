@@ -1,4 +1,4 @@
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, or, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "../drizzle/schema";
@@ -273,12 +273,22 @@ export async function createCategory(category: InsertCategory) {
   return result[0];
 }
 
-export async function getAllCategories() {
+export async function getAllCategories(userId?: string) {
   const db = getDb();
   if (!db) return [];
   
-  // Get all default categories and user-specific ones
-  return await db.select().from(categories).orderBy(asc(categories.name));
+  if (!userId) {
+    // Get only default categories if no user specified
+    return await db.select().from(categories).where(eq(categories.isDefault, true)).orderBy(asc(categories.name));
+  }
+  
+  // Get default categories OR user's custom categories
+  return await db.select().from(categories).where(
+    or(
+      eq(categories.isDefault, true),
+      eq(categories.userId, userId)
+    )
+  ).orderBy(asc(categories.name));
 }
 
 export async function getCategoriesByUserId(userId: string) {

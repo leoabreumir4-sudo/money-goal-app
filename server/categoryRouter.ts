@@ -6,10 +6,7 @@ import { categorizeTransaction } from "./_core/categorization";
 export const categoryRouter = router({
   // Get all categories (default + user's custom)
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    // Get default categories
-    const defaultCategories = await db.getAllCategories();
-    const filtered = defaultCategories.filter(c => c.isDefault || c.userId === ctx.user.id);
-    return filtered;
+    return await db.getAllCategories(ctx.user.id);
   }),
 
   // Get category by ID
