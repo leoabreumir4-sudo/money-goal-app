@@ -251,11 +251,6 @@ export default function Analytics() {
           <p className="text-muted-foreground">{t("trackFinancialPerformance", lang)}</p>
         </div>
 
-        {/* Loader para gráfico/card enquanto carrega */}
-        {(!activeGoal || !settings) && (
-          <div className="animate-pulse bg-card border border-border rounded-lg h-32 w-full mb-4" />
-        )}
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="pb-3">

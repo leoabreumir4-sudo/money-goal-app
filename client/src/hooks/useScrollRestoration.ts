@@ -1,43 +1,42 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 
 const scrollPositions = new Map<string, number>();
 
 export function useScrollRestoration() {
   const [location] = useLocation();
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    // Save scroll position before unmounting
-    const saveScrollPosition = () => {
-      scrollPositions.set(location, window.scrollY);
-    };
-
-    // Restore scroll position after mounting
-    const restoreScrollPosition = () => {
+    // Restore scroll position when location changes
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      
       const savedPosition = scrollPositions.get(location);
       if (savedPosition !== undefined) {
-        // Use setTimeout to ensure DOM is fully rendered
-        setTimeout(() => {
-          window.scrollTo(0, savedPosition);
-        }, 0);
+        // Need to wait for content to render
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            window.scrollTo(0, savedPosition);
+          });
+        });
       } else {
-        // New page, scroll to top
         window.scrollTo(0, 0);
       }
-    };
+    }
 
-    restoreScrollPosition();
-
-    // Save scroll position on scroll
+    // Save scroll position on scroll and before unmounting
     const handleScroll = () => {
       scrollPositions.set(location, window.scrollY);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      saveScrollPosition();
+      // Save final position before leaving
+      scrollPositions.set(location, window.scrollY);
       window.removeEventListener('scroll', handleScroll);
+      isFirstRender.current = true;
     };
   }, [location]);
 }
