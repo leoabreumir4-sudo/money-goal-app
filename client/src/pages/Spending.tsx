@@ -76,20 +76,54 @@ export default function Spending() {
   }, [transactions]);
 
   const totalSpending = useMemo(() => {
-    return expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
-  }, [expenseTransactions]);
+    const transactionsTotal = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+    // Add monthly recurring to total
+    const recurringTotal = recurringExpenses.reduce((sum, expense) => {
+      const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
+                          expense.frequency === 'yearly' ? expense.amount / 12 :
+                          expense.frequency === 'weekly' ? expense.amount * 4.33 :
+                          expense.frequency === 'daily' ? expense.amount * 30 : 0;
+      return sum + monthlyAmount;
+    }, 0);
+    return transactionsTotal + recurringTotal;
+  }, [expenseTransactions, recurringExpenses]);
+
+  // Calculate total monthly recurring expenses
+  const totalMonthlyRecurring = useMemo(() => {
+    return recurringExpenses.reduce((sum, expense) => {
+      // Convert all to monthly amount
+      const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
+                          expense.frequency === 'yearly' ? expense.amount / 12 :
+                          expense.frequency === 'weekly' ? expense.amount * 4.33 :
+                          expense.frequency === 'daily' ? expense.amount * 30 : 0;
+      return sum + monthlyAmount;
+    }, 0);
+  }, [recurringExpenses]);
 
   // Group expenses by category (using reason as category for now)
   const expensesByCategory = useMemo(() => {
     const grouped: Record<string, number> = {};
+    
+    // Add real transactions
     expenseTransactions.forEach(t => {
       const category = t.reason || "Uncategorized";
       grouped[category] = (grouped[category] || 0) + t.amount;
     });
+    
+    // Add recurring expenses (converted to monthly)
+    recurringExpenses.forEach(expense => {
+      const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
+                          expense.frequency === 'yearly' ? expense.amount / 12 :
+                          expense.frequency === 'weekly' ? expense.amount * 4.33 :
+                          expense.frequency === 'daily' ? expense.amount * 30 : 0;
+      const category = `${expense.name} (Recurring)`;
+      grouped[category] = (grouped[category] || 0) + monthlyAmount;
+    });
+    
     return Object.entries(grouped)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [expenseTransactions]);
+  }, [expenseTransactions, recurringExpenses]);
 
   // Prepare data for pie chart
   const pieChartData = useMemo(() => {
@@ -155,6 +189,21 @@ export default function Spending() {
             {t("showOnlyRecurring", preferences.language)}
           </Button>
         </div>
+
+        {/* Recurring Expenses Summary */}
+        {recurringExpenses.length > 0 && (
+          <Card className="bg-purple-500/10 border-purple-500/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Monthly Recurring Expenses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-500">{formatCurrency(totalMonthlyRecurring / 100, preferences.currency)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {recurringExpenses.length} {recurringExpenses.length === 1 ? 'recurring expense' : 'recurring expenses'} • Annual: {formatCurrency(totalMonthlyRecurring * 12 / 100, preferences.currency)}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
