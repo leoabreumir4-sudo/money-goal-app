@@ -7,6 +7,14 @@ interface ProtectedRouteProps extends RouteProps {
 }
 
 export default function ProtectedRoute({ component: Component, ...rest }: ProtectedRouteProps) {
+  return (
+    <Route {...rest}>
+      {(params) => <ProtectedContent Component={Component} params={params} />}
+    </Route>
+  );
+}
+
+function ProtectedContent({ Component, params }: { Component: React.ComponentType<any>; params: any }) {
   // Check if token exists before making the query
   const hasToken = !!localStorage.getItem('sessionToken');
   
@@ -27,5 +35,5 @@ export default function ProtectedRoute({ component: Component, ...rest }: Protec
     return <Redirect to="/auth" />;
   }
 
-  return <Route {...rest} component={Component} />;
+  return <Component {...params} />;
 }
