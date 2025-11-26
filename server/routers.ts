@@ -9,6 +9,7 @@ import { wiseRouter } from "./wiseRouter";
 import { csvRouter } from "./csvRouter";
 import { webhookRouter } from "./webhookRouter";
 import { categoryRouter } from "./categoryRouter";
+import { chatRouter } from "./chatRouter";
 
 export const appRouter = router({
   system: systemRouter,
@@ -17,6 +18,7 @@ export const appRouter = router({
   csv: csvRouter, // CSV import (Nubank, etc.)
   webhooks: webhookRouter, // Webhook endpoints
   categories: categoryRouter, // Category management with auto-categorization
+  chat: chatRouter, // AI Financial Advisor
 
   // TEMPORARY: Delete all users (REMOVE AFTER USE!)
   _dangerDeleteAllUsers: publicProcedure.mutation(async () => {

@@ -597,10 +597,10 @@ export default function AQWorlds() {
                     }`}
                     onClick={() => openEventModal(monthIndex)}
                   >
-                    <CardHeader className="pb-1 pt-4">
+                    <CardHeader className="pb-2">
                       <CardTitle className="text-base">{month}</CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-2">
+                    <CardContent className="pt-0">
                       <div className="space-y-1 text-xs">
                         {monthEventsList.length === 0 ? (
                           <div className="text-muted-foreground">No events</div>

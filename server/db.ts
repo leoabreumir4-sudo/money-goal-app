@@ -502,7 +502,14 @@ export async function getChatMessagesByUserId(userId: string) {
   const db = getDb();
   if (!db) return [];
   
-  return await db.select().from(chatMessages).where(eq(chatMessages.userId, userId)).orderBy(desc(chatMessages.createdDate));
+  return await db.select().from(chatMessages).where(eq(chatMessages.userId, userId)).orderBy(asc(chatMessages.createdDate));
+}
+
+export async function clearChatMessages(userId: string) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(chatMessages).where(eq(chatMessages.userId, userId));
 }
 
 // Monthly Payments

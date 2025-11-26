@@ -11,12 +11,19 @@ import { t } from "@/lib/i18n";
 
 export default function Chat() {
   const { preferences } = usePreferences();
-  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
+  const { data: chatHistory = [], refetch } = trpc.chat.getHistory.useQuery();
   const chatMutation = trpc.chat.sendMessage.useMutation();
+  const clearHistoryMutation = trpc.chat.clearHistory.useMutation();
+
+  // Convert chat history to messages format
+  const messages = chatHistory.map(msg => ({
+    role: msg.role as "user" | "assistant",
+    content: msg.content,
+  }));
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,25 +40,22 @@ export default function Chat() {
     setInputMessage("");
     setIsLoading(true);
 
-    // Add user message to chat
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
-
     try {
-      const response = await chatMutation.mutateAsync({ message: userMessage });
+      await chatMutation.mutateAsync({ message: userMessage });
       
-      // Add assistant response to chat
-      setMessages(prev => [...prev, { role: "assistant", content: response.message }]);
+      // Refetch to get updated history
+      await refetch();
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages(prev => [
-        ...prev,
-        { 
-          role: "assistant", 
-          content: "Sorry, I encountered an error. Please try again." 
-        }
-      ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (confirm("Are you sure you want to clear all chat history?")) {
+      await clearHistoryMutation.mutateAsync();
+      await refetch();
     }
   };
 
@@ -63,26 +67,38 @@ export default function Chat() {
   };
 
   const suggestedQuestions = [
-    t("travelQuestion", preferences.language),
-    t("optimizeSpending", preferences.language),
-    t("projectsForGoal", preferences.language),
-    t("analyzeLastMonth", preferences.language),
+    "Can I travel to Orlando in 2026?",
+    "How are my spending habits?",
+    "What can I cut to save more?",
+    "Am I on track with my goal?",
+    "Create a savings plan for me",
+    "Should I pause any subscriptions?",
   ];
 
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-2rem)] flex flex-col p-6">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
               <Sparkles className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">FinanAI</h1>
-              <p className="text-sm text-muted-foreground">{t("aiAssistant", preferences.language)}</p>
+              <h1 className="text-2xl font-bold text-foreground">MoneyGoal Advisor</h1>
+              <p className="text-sm text-muted-foreground">Your AI Financial Advisor</p>
             </div>
           </div>
+          {messages.length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleClearHistory}
+              disabled={clearHistoryMutation.isPending}
+            >
+              Clear History
+            </Button>
+          )}
         </div>
 
         {/* Chat Messages */}
@@ -94,13 +110,13 @@ export default function Chat() {
                   <Sparkles className="h-10 w-10 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-2">{t("helloFinanAI", preferences.language)}</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-2">Hello! I'm your Financial Advisor 👋</h2>
                   <p className="text-muted-foreground max-w-md">
-                    {t("finanAIDescription", preferences.language)}
+                    I have access to all your financial data and can help you make smart money decisions. Ask me anything!
                   </p>
                 </div>
                 <div className="space-y-2 w-full max-w-2xl">
-                  <p className="text-sm text-muted-foreground font-medium">{t("examplesTitle", preferences.language)}</p>
+                  <p className="text-sm text-muted-foreground font-medium">💡 Try asking:</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {suggestedQuestions.map((question, index) => (
                       <Button
@@ -158,7 +174,7 @@ export default function Chat() {
           <div className="p-4 border-t border-border">
             <div className="flex gap-2">
               <Input
-                placeholder={t("typeMessage", preferences.language)}
+                placeholder="Ask me anything about your finances..."
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
