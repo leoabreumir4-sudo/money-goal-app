@@ -271,10 +271,10 @@ export default function Spending() {
                       />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
                     <div className="text-center">
                       <div className="text-sm text-muted-foreground mb-1">{t("totalSpending", preferences.language)}</div>
-                      <div className="text-2xl font-bold">{formatCurrency(totalSpending / 100, preferences.currency)}</div>
+                      <div className="text-2xl font-bold">{formatCurrency(totalSpending, preferences.currency)}</div>
                     </div>
                   </div>
                 </div>
