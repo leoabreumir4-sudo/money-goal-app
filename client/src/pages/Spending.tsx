@@ -16,6 +16,27 @@ import { formatCurrency } from "@/lib/currency";
 
 const COLORS = ['#3b82f6', '#22c55e', '#14b8a6', '#ec4899', '#8b5cf6', '#f59e0b', '#06b6d4', '#f97316'];
 
+// Simple currency conversion helper (uses rough estimates)
+const convertToPreferredCurrency = (amount: number, fromCurrency: string, toCurrency: string, exchangeRate?: string | null): number => {
+  if (fromCurrency === toCurrency) return amount;
+  
+  // Use historical exchange rate if available
+  if (exchangeRate) {
+    const rate = parseFloat(exchangeRate);
+    return Math.round(amount / rate);
+  }
+  
+  // Fallback exchange rates (approximate)
+  const rates: Record<string, Record<string, number>> = {
+    'BRL': { 'USD': 0.186, 'EUR': 0.17 },
+    'USD': { 'BRL': 5.38, 'EUR': 0.92 },
+    'EUR': { 'BRL': 5.85, 'USD': 1.09 },
+  };
+  
+  const rate = rates[fromCurrency]?.[toCurrency] || 1;
+  return Math.round(amount * rate);
+};
+
 export default function Spending() {
   const { preferences } = usePreferences();
   const [isAddRecurringModalOpen, setIsAddRecurringModalOpen] = useState(false);
@@ -137,8 +158,18 @@ export default function Spending() {
   }, [transactions]);
 
   const totalSpending = useMemo(() => {
-    const transactionsTotal = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
-    // Add monthly recurring to total
+    // Convert all transactions to user's preferred currency
+    const transactionsTotal = expenseTransactions.reduce((sum, t) => {
+      const convertedAmount = convertToPreferredCurrency(
+        t.amount,
+        t.currency || "USD",
+        preferences.currency || "USD",
+        t.exchangeRate
+      );
+      return sum + convertedAmount;
+    }, 0);
+    
+    // Add monthly recurring to total (already in user's preferred currency)
     const recurringTotal = recurringExpenses.reduce((sum, expense) => {
       const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
                           expense.frequency === 'yearly' ? expense.amount / 12 :
@@ -147,7 +178,7 @@ export default function Spending() {
       return sum + monthlyAmount;
     }, 0);
     return transactionsTotal + recurringTotal;
-  }, [expenseTransactions, recurringExpenses]);
+  }, [expenseTransactions, recurringExpenses, preferences.currency]);
 
   // Calculate total monthly recurring expenses
   const totalMonthlyRecurring = useMemo(() => {
@@ -163,22 +194,30 @@ export default function Spending() {
 
   // Group expenses by category (using real categories from database)
   const expensesByCategory = useMemo(() => {
-    const grouped: Record<number, { name: string; value: number; emoji: string; color: string; currency: string }> = {};
+    const grouped: Record<number, { name: string; value: number; emoji: string; color: string }> = {};
     
     // Add real transactions if not filtering to only recurring
     if (!showOnlyRecurring) {
       expenseTransactions.forEach(t => {
         const category = categories.find(c => c.id === t.categoryId);
-        const categoryId = category?.id || 0; // 0 for uncategorized
+        // Use actual categoryId from transaction, or find "Other" category as fallback
+        const categoryId = t.categoryId || categories.find(c => c.name === "Other")?.id || 0;
         const categoryName = category?.name || "Other";
         const categoryEmoji = category?.emoji || "📦";
         const categoryColor = category?.color || "#94a3b8";
-        const currency = t.currency || "USD";
+        
+        // Convert to user's preferred currency
+        const convertedAmount = convertToPreferredCurrency(
+          t.amount,
+          t.currency || "USD",
+          preferences.currency || "USD",
+          t.exchangeRate
+        );
         
         if (!grouped[categoryId]) {
-          grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor, currency };
+          grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
         }
-        grouped[categoryId].value += t.amount;
+        grouped[categoryId].value += convertedAmount;
       });
     }
     
@@ -190,14 +229,13 @@ export default function Spending() {
                           expense.frequency === 'daily' ? expense.amount * 30 : 0;
       
       const category = categories.find(c => c.id === expense.categoryId);
-      const categoryId = category?.id || 0;
+      const categoryId = expense.categoryId;
       const categoryName = category?.name || "Other";
       const categoryEmoji = category?.emoji || "📦";
       const categoryColor = category?.color || "#94a3b8";
-      const currency = preferences.currency || "USD";
       
       if (!grouped[categoryId]) {
-        grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor, currency };
+        grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
       }
       grouped[categoryId].value += monthlyAmount;
     });
