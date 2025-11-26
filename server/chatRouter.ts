@@ -2,6 +2,7 @@ import { protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
+import { convertCurrency } from "./_core/currency";
 
 /**
  * Detect language from user message using simple keyword matching and character patterns
@@ -193,13 +194,39 @@ async function buildUserFinancialContext(userId: string) {
   const totalSalaryIncome = artixIncomeTransactions.reduce((sum: number, t: any) => sum + t.amount, 0);
   const avgMonthlySalary = hasSalary && monthsCount > 0 ? Math.round(totalSalaryIncome / monthsCount) : 0;
   
-  const income = recentTransactions
-    .filter((t: any) => t.type === "income")
-    .reduce((sum: number, t: any) => sum + t.amount, 0);
+  // Get user's preferred currency
+  const preferredCurrency = settings?.currency || "USD";
   
-  const expenses = recentTransactions
+  // Convert all transactions to preferred currency before summing
+  const incomePromises = recentTransactions
+    .filter((t: any) => t.type === "income")
+    .map(async (t: any) => {
+      const converted = await convertCurrency(
+        t.amount,
+        t.currency || "USD",
+        preferredCurrency,
+        t.exchangeRate
+      );
+      return converted;
+    });
+  
+  const expensePromises = recentTransactions
     .filter((t: any) => t.type === "expense")
-    .reduce((sum: number, t: any) => sum + t.amount, 0);
+    .map(async (t: any) => {
+      const converted = await convertCurrency(
+        t.amount,
+        t.currency || "USD",
+        preferredCurrency,
+        t.exchangeRate
+      );
+      return converted;
+    });
+  
+  const incomeAmounts = await Promise.all(incomePromises);
+  const expenseAmounts = await Promise.all(expensePromises);
+  
+  const income = incomeAmounts.reduce((sum: number, amount: number) => sum + amount, 0);
+  const expenses = expenseAmounts.reduce((sum: number, amount: number) => sum + amount, 0);
 
   const avgMonthlyIncome = monthsCount > 0 ? Math.round(income / monthsCount) : 0;
   const avgMonthlyExpenses = monthsCount > 0 ? Math.round(expenses / monthsCount) : 0;
