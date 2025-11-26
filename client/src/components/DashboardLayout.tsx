@@ -89,10 +89,7 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
-  const { preferences, isLoading } = usePreferences();
-  if (isLoading || !preferences) {
-    return <div className="flex items-center justify-center h-screen text-muted-foreground text-lg">Loading preferences...</div>;
-  }
+  const { preferences, isLoading: preferencesLoading } = usePreferences();
 
   useEffect(() => {
     if (isCollapsed) {
@@ -181,7 +178,7 @@ function DashboardLayoutContent({
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
                 const isActive = location === item.path;
-                const label = 'labelKey' in item ? t(item.labelKey, preferences.language) : item.label;
+                const label = 'labelKey' in item ? t(item.labelKey, preferences?.language || 'en') : item.label;
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
@@ -226,7 +223,7 @@ function DashboardLayoutContent({
                   className="cursor-pointer text-white hover:bg-primary-foreground/10 focus:bg-primary-foreground/10 focus:text-white"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>{t("signOut", preferences.language)}</span>
+                  <span>{t("signOut", preferences?.language || 'en')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
