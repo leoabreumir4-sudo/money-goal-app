@@ -229,9 +229,9 @@ export default function Spending() {
                         outerRadius={130}
                         fill="#8884d8"
                         dataKey="value"
-                        paddingAngle={3}
                         strokeWidth={0}
                         isAnimationActive={false}
+                        activeShape={{ strokeWidth: 3, stroke: '#fff' }}
                       >
                         {pieChartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -381,7 +381,7 @@ export default function Spending() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="recurringName">{t("name", preferences.language)}</Label>
                 <Input
                   id="recurringName"
@@ -391,7 +391,7 @@ export default function Spending() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="recurringAmount">{t("amount", preferences.language)}</Label>
                 <Input
                   id="recurringAmount"
@@ -403,7 +403,7 @@ export default function Spending() {
                 />
               </div>
 
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="recurringFrequency">{t("frequency", preferences.language)}</Label>
                 <Select value={recurringFrequency} onValueChange={(v: any) => setRecurringFrequency(v)}>
                   <SelectTrigger id="recurringFrequency">

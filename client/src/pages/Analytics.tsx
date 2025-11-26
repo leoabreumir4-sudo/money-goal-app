@@ -229,7 +229,7 @@ export default function Analytics() {
                   value={savingTarget}
                   onChange={(e) => setSavingTarget(e.target.value)}
                 />
-                <Button onClick={handleSaveTarget} disabled={updateSettingsMutation.isPending}>
+                <Button onClick={handleSaveSavingTarget} disabled={updateSettingsMutation.isPending}>
                   {t("save", preferences.language)}
                 </Button>
               </div>
