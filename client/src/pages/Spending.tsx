@@ -231,8 +231,8 @@ export default function Spending() {
 
         {/* Filters */}
         <Card className="bg-card border-border">
-          <CardContent className="py-3">
-            <div className="flex flex-wrap gap-3 items-center">
+          <CardContent className="py-2">
+            <div className="flex flex-wrap gap-2 items-center">
               <div className="flex gap-2 items-center">
                 <Button
                   variant={filterType === "All" ? "default" : "outline"}

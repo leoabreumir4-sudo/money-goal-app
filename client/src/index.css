@@ -173,6 +173,19 @@
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
   }
+  
+  /* Remove outline from Recharts SVG elements */
+  .recharts-wrapper svg,
+  .recharts-surface,
+  .recharts-sector,
+  .recharts-pie-sector {
+    outline: none !important;
+  }
+  
+  .recharts-sector:focus,
+  .recharts-pie-sector:focus {
+    outline: none !important;
+  }
 }
 
 @layer components {
