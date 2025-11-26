@@ -49,7 +49,7 @@ export default function Spending() {
   });
 
   const handleAddRecurring = () => {
-    const amount = Math.round(parseFloat(recurringAmount) * 100);
+    const amount = Math.round(parseFloat(recurringAmount));
     if (isNaN(amount) || amount <= 0) {
       toast.error(t("pleaseEnterValidAmount", preferences.language));
       return;
@@ -231,24 +231,49 @@ export default function Spending() {
                         dataKey="value"
                         strokeWidth={0}
                         isAnimationActive={false}
-                        activeShape={{ strokeWidth: 3, stroke: '#fff' }}
+                        activeShape={(props: any) => {
+                          const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+                          return (
+                            <g>
+                              <path
+                                d={`M ${cx},${cy} L ${cx + (outerRadius + 8) * Math.cos(-startAngle * Math.PI / 180)},${cy + (outerRadius + 8) * Math.sin(-startAngle * Math.PI / 180)} A ${outerRadius + 8},${outerRadius + 8} 0 ${endAngle - startAngle > 180 ? 1 : 0} 1 ${cx + (outerRadius + 8) * Math.cos(-endAngle * Math.PI / 180)},${cy + (outerRadius + 8) * Math.sin(-endAngle * Math.PI / 180)} L ${cx + innerRadius * Math.cos(-endAngle * Math.PI / 180)},${cy + innerRadius * Math.sin(-endAngle * Math.PI / 180)} A ${innerRadius},${innerRadius} 0 ${endAngle - startAngle > 180 ? 1 : 0} 0 ${cx + innerRadius * Math.cos(-startAngle * Math.PI / 180)},${cy + innerRadius * Math.sin(-startAngle * Math.PI / 180)} Z`}
+                                fill={fill}
+                              />
+                            </g>
+                          );
+                        }}
                       >
                         {pieChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value: number) => formatCurrency(value, preferences.currency)}
-                        contentStyle={{ 
-                          backgroundColor: '#1f2937', 
-                          border: '1px solid #374151',
-                          borderRadius: '8px',
-                          padding: '8px 12px'
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0];
+                            return (
+                              <div style={{
+                                backgroundColor: '#1f2937',
+                                border: '1px solid #374151',
+                                borderRadius: '8px',
+                                padding: '8px 12px',
+                                zIndex: 9999
+                              }}>
+                                <p style={{ color: data.payload.fill, fontWeight: 'bold', margin: 0 }}>
+                                  {data.name}
+                                </p>
+                                <p style={{ color: '#f3f4f6', margin: '4px 0 0 0' }}>
+                                  {formatCurrency(data.value as number, preferences.currency)}
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
                         }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }>
                     <div className="text-center">
                       <div className="text-sm text-muted-foreground mb-1">{t("totalSpending", preferences.language)}</div>
                       <div className="text-2xl font-bold">{formatCurrency(totalSpending / 100, preferences.currency)}</div>
@@ -325,7 +350,7 @@ export default function Spending() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-lg font-bold text-red-500">
-                        {formatCurrency(expense.amount / 100, preferences.currency)}
+                        {formatCurrency(expense.amount, preferences.currency)}
                       </div>
                       <Button
                         variant="ghost"

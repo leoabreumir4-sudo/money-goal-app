@@ -19,6 +19,7 @@ export default function Analytics() {
   const utils = trpc.useUtils();
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
   const { data: settings } = trpc.settings.get.useQuery();
+  const { data: activeGoal } = trpc.goals.getActive.useQuery();
 
   const updateSettingsMutation = trpc.settings.update.useMutation({
     onSuccess: () => {
@@ -108,7 +109,7 @@ export default function Analytics() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalIncome / 100, preferences.currency)}</p>
+              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalIncome, preferences.currency)}</p>
               <p className="text-sm text-muted-foreground">{t("last6Months", preferences.language)}</p>
             </CardContent>
           </Card>
@@ -121,7 +122,7 @@ export default function Analytics() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalExpenses / 100, preferences.currency)}</p>
+              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalExpenses, preferences.currency)}</p>
               <p className="text-sm text-muted-foreground">{t("last6Months", preferences.language)}</p>
             </CardContent>
           </Card>
@@ -135,7 +136,7 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               <p className={`text-3xl font-bold ${netFlow >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                {formatCurrency(netFlow / 100, preferences.currency)}
+                {formatCurrency(netFlow, preferences.currency)}
               </p>
               <p className="text-sm text-muted-foreground">{t("positiveFlow", preferences.language)}</p>
             </CardContent>
@@ -225,7 +226,7 @@ export default function Analytics() {
                   id="saving-target"
                   type="number"
                   step="0.01"
-                  placeholder={(currentTarget / 100).toFixed(2)}
+                  placeholder={(currentTarget).toFixed(2)}
                   value={savingTarget}
                   onChange={(e) => setSavingTarget(e.target.value)}
                 />
@@ -235,27 +236,85 @@ export default function Analytics() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-secondary/50 border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-muted-foreground">{t("averageMonthlySaving", preferences.language)}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(averageMonthlySaving / 100, preferences.currency)}</p>
-                  <p className="text-sm text-muted-foreground">{t("basedOnLast6Months", preferences.language)}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-secondary/50 border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-muted-foreground">{t("yourTargetSaving", preferences.language)}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(currentTarget / 100, preferences.currency)}</p>
-                  <p className="text-sm text-muted-foreground">{t("setTargetAbove", preferences.language)}</p>
-                </CardContent>
-              </Card>
-            </div>
+            {activeGoal && (
+              <div className="mt-6">
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={(() => {
+                    const months = [];
+                    const goalAmount = activeGoal.targetAmount - activeGoal.currentAmount;
+                    const avgSaving = averageMonthlySaving;
+                    const targetSaving = currentTarget;
+                    
+                    let avgAccumulated = activeGoal.currentAmount;
+                    let targetAccumulated = activeGoal.currentAmount;
+                    
+                    for (let i = 0; i <= 12; i++) {
+                      months.push({
+                        month: i === 0 ? 'Now' : `M${i}`,
+                        average: avgAccumulated,
+                        target: targetAccumulated
+                      });
+                      
+                      avgAccumulated = Math.min(avgAccumulated + avgSaving, activeGoal.targetAmount);
+                      targetAccumulated = Math.min(targetAccumulated + targetSaving, activeGoal.targetAmount);
+                    }
+                    
+                    return months;
+                  })()}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                    <XAxis 
+                      dataKey="month" 
+                      stroke="#9ca3af" 
+                      tick={{ fill: '#9ca3af' }}
+                      tickLine={false}
+                    />
+                    <YAxis 
+                      stroke="#9ca3af" 
+                      tick={{ fill: '#9ca3af' }}
+                      tickLine={false}
+                      tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1f2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        padding: '12px'
+                      }}
+                      formatter={(value: number) => formatCurrency(value, preferences.currency)}
+                      labelStyle={{ color: '#f3f4f6', fontWeight: 'bold', marginBottom: '8px' }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="average" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      name={t("averageMonthlySaving", preferences.language)}
+                      dot={{ fill: '#3b82f6', r: 4 }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="target" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={3}
+                      name={t("yourTargetSaving", preferences.language)}
+                      dot={{ fill: '#8b5cf6', r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+                
+                <div className="flex justify-center gap-6 mt-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-blue-500" />
+                    <span className="text-muted-foreground">{t("averageMonthlySaving", preferences.language)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-primary" />
+                    <span className="text-muted-foreground">{t("yourTargetSaving", preferences.language)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
