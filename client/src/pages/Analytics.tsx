@@ -332,6 +332,8 @@ export default function Analytics() {
                   strokeWidth={3}
                   fill="url(#colorIncome)"
                   name={t("income", lang)}
+                  isAnimationActive={true}
+                  animationDuration={600}
                 />
                 <Area 
                   type="monotone" 
@@ -340,6 +342,8 @@ export default function Analytics() {
                   strokeWidth={3}
                   fill="url(#colorExpense)"
                   name={t("expense", lang)}
+                  isAnimationActive={true}
+                  animationDuration={600}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -608,6 +612,8 @@ export default function Analytics() {
                           dot={{ fill: '#3b82f6', r: 3 }}
                           activeDot={{ r: 6 }}
                           connectNulls={false}
+                          isAnimationActive={true}
+                          animationDuration={600}
                         />
                         <Area 
                           type="monotone" 
@@ -619,6 +625,8 @@ export default function Analytics() {
                           dot={{ fill: '#8b5cf6', r: 3 }}
                           activeDot={{ r: 6 }}
                           connectNulls={false}
+                          isAnimationActive={true}
+                          animationDuration={600}
                         />
                       </AreaChart>
                     </ResponsiveContainer>

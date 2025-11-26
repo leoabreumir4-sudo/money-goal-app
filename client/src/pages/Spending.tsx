@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Plus, Trash, Edit } from "lucide-react";
+import { Plus, Trash, Edit, TrendingDown, DollarSign, Calendar, BarChart3 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from 'recharts';
@@ -21,6 +21,7 @@ export default function Spending() {
   const [isAddRecurringModalOpen, setIsAddRecurringModalOpen] = useState(false);
   const [isEditRecurringModalOpen, setIsEditRecurringModalOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<any>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState("This Month");
   const [recurringName, setRecurringName] = useState("");
   const [recurringAmount, setRecurringAmount] = useState("");
   const [recurringFrequency, setRecurringFrequency] = useState<"monthly" | "daily" | "weekly" | "yearly">("monthly");
@@ -68,6 +69,14 @@ export default function Spending() {
     setRecurringAmount((expense.amount / 100).toString());
     setRecurringFrequency(expense.frequency);
     setIsEditRecurringModalOpen(true);
+  };
+
+  const handleDeleteRecurring = () => {
+    if (editingRecurring && confirm(t("deleteRecurringConfirm", preferences.language))) {
+      deleteRecurringMutation.mutate({ id: editingRecurring.id });
+      setIsEditRecurringModalOpen(false);
+      setEditingRecurring(null);
+    }
   };
 
   const handleUpdateRecurring = () => {
@@ -146,11 +155,13 @@ export default function Spending() {
   const expensesByCategory = useMemo(() => {
     const grouped: Record<string, number> = {};
     
-    // Add real transactions
-    expenseTransactions.forEach(t => {
-      const category = t.reason || "Uncategorized";
-      grouped[category] = (grouped[category] || 0) + t.amount;
-    });
+    // Add real transactions if not filtering to only recurring
+    if (!showOnlyRecurring) {
+      expenseTransactions.forEach(t => {
+        const category = t.reason || "Uncategorized";
+        grouped[category] = (grouped[category] || 0) + t.amount;
+      });
+    }
     
     // Add recurring expenses (converted to monthly)
     recurringExpenses.forEach(expense => {
@@ -165,7 +176,7 @@ export default function Spending() {
     return Object.entries(grouped)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [expenseTransactions, recurringExpenses]);
+  }, [expenseTransactions, recurringExpenses, showOnlyRecurring]);
 
   // Prepare data for pie chart
   const pieChartData = useMemo(() => {
@@ -194,11 +205,16 @@ export default function Spending() {
           <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                    Total Monthly Recurring Expenses
-                  </p>
-                  <div className="text-5xl font-bold text-purple-500">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="h-7 w-7 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                      Total Monthly Recurring Expenses
+                    </p>
+                    <div className="text-5xl font-bold text-purple-500">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
+                  </div>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">
@@ -241,7 +257,7 @@ export default function Spending() {
                 </Button>
               </div>
 
-              <Select defaultValue="This Month">
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                 <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
@@ -269,7 +285,12 @@ export default function Spending() {
           {/* Spending Distribution (Pie Chart) */}
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-foreground">{t("spendingDistribution", preferences.language)}</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-purple-500" />
+                </div>
+                <CardTitle className="text-foreground">{t("spendingDistribution", preferences.language)}</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               {pieChartData.length === 0 ? (
@@ -289,27 +310,14 @@ export default function Spending() {
                         fill="#8884d8"
                         dataKey="value"
                         strokeWidth={0}
-                        animationDuration={800}
-                        animationBegin={0}
-                        activeShape={(props: any) => {
-                          return (
-                            <g>
-                              <Sector
-                                {...props}
-                                outerRadius={props.outerRadius + 10}
-                                innerRadius={props.innerRadius}
-                                style={{ transition: 'all 0.3s ease-in-out' }}
-                              />
-                            </g>
-                          );
-                        }}
+                        isAnimationActive={true}
+                        animationDuration={600}
                       >
                         {pieChartData.map((entry, index) => (
                           <Cell 
                             key={`cell-${index}`} 
                             fill={COLORS[index % COLORS.length]} 
                             stroke="none"
-                            style={{ transition: 'all 0.3s ease-in-out' }}
                           />
                         ))}
                       </Pie>
@@ -348,7 +356,12 @@ export default function Spending() {
           {/* By Category */}
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-foreground">{t("byCategory", preferences.language)}</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <TrendingDown className="h-5 w-5 text-blue-500" />
+                </div>
+                <CardTitle className="text-foreground">{t("byCategory", preferences.language)}</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -398,7 +411,12 @@ export default function Spending() {
         {recurringExpenses.length > 0 && (
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-foreground">{t("recurringExpenses", preferences.language)}</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <DollarSign className="h-5 w-5 text-green-500" />
+                </div>
+                <CardTitle className="text-foreground">{t("recurringExpenses", preferences.language)}</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -409,7 +427,11 @@ export default function Spending() {
                                           expense.frequency === 'daily' ? expense.amount * 30 : expense.amount;
                   
                   return (
-                    <div key={expense.id} className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-md bg-card">
+                    <div 
+                      key={expense.id} 
+                      onClick={() => handleEditRecurring(expense)}
+                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-md bg-card cursor-pointer"
+                    >
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
                           <div className="font-semibold text-lg text-foreground">{expense.name}</div>
@@ -418,36 +440,13 @@ export default function Spending() {
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          Monthly equivalent: <span className="font-medium text-foreground">{formatCurrency(monthlyEquivalent, preferences.currency)}</span>
+                          <span className="font-medium text-foreground">{formatCurrency(monthlyEquivalent, preferences.currency)}</span> per month
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-right mr-3">
-                          <div className="text-2xl font-bold text-destructive">
-                            {formatCurrency(expense.amount, preferences.currency)}
-                          </div>
-                          <div className="text-xs text-muted-foreground">per {expense.frequency === 'monthly' ? 'month' : expense.frequency === 'yearly' ? 'year' : expense.frequency === 'weekly' ? 'week' : 'day'}</div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-destructive">
+                          {formatCurrency(expense.amount, preferences.currency)}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditRecurring(expense)}
-                          className="h-9 w-9 p-0"
-                        >
-                          <Edit className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm(t("deleteRecurringConfirm", preferences.language))) {
-                              deleteRecurringMutation.mutate({ id: expense.id });
-                            }
-                          }}
-                          className="h-9 w-9 p-0"
-                        >
-                          <Trash className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                        </Button>
                       </div>
                     </div>
                   );
@@ -542,7 +541,7 @@ export default function Spending() {
             <DialogHeader>
               <DialogTitle>Edit Recurring Expense</DialogTitle>
               <DialogDescription>
-                Update the details of your recurring expense
+                Update the details of your recurring expense or delete it
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -583,9 +582,15 @@ export default function Spending() {
                 </Select>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditRecurringModalOpen(false)}>{t("cancel", preferences.language)}</Button>
-              <Button onClick={handleUpdateRecurring}>Update</Button>
+            <DialogFooter className="flex justify-between">
+              <Button variant="destructive" onClick={handleDeleteRecurring}>
+                <Trash className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsEditRecurringModalOpen(false)}>{t("cancel", preferences.language)}</Button>
+                <Button onClick={handleUpdateRecurring}>Update</Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
