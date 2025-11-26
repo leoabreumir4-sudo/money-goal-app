@@ -12,7 +12,16 @@ import Spending from "./pages/Spending";
 import Analytics from "./pages/Analytics";
 import Archived from "./pages/Archived";
 import Settings from "./pages/Settings";
-import ProtectedRoute from "./components/ProtectedRoute"; // <-- NOVO IMPORT
+import { withAuth } from "./components/ProtectedRoute";
+
+// Wrap protected pages with authentication
+const ProtectedDashboard = withAuth(Dashboard);
+const ProtectedAQWorlds = withAuth(AQWorlds);
+const ProtectedChat = withAuth(Chat);
+const ProtectedSpending = withAuth(Spending);
+const ProtectedAnalytics = withAuth(Analytics);
+const ProtectedArchived = withAuth(Archived);
+const ProtectedSettings = withAuth(Settings);
 
 function Router() {
   return (
@@ -20,14 +29,14 @@ function Router() {
       {/* Rota de Autenticação (Pública) */}
       <Route path={"/auth"} component={AuthPage} />
 
-      {/* Rotas Protegidas (Usam ProtectedRoute) */}
-      <ProtectedRoute path={"/"} component={Dashboard} />
-      <ProtectedRoute path={"/aqworlds"} component={AQWorlds} />
-      <ProtectedRoute path={"/chat"} component={Chat} />
-      <ProtectedRoute path={"/spending"} component={Spending} />
-      <ProtectedRoute path={"/analytics"} component={Analytics} />
-      <ProtectedRoute path={"/archived"} component={Archived} />
-      <ProtectedRoute path={"/settings"} component={Settings} />
+      {/* Rotas Protegidas */}
+      <Route path={"/"} component={ProtectedDashboard} />
+      <Route path={"/aqworlds"} component={ProtectedAQWorlds} />
+      <Route path={"/chat"} component={ProtectedChat} />
+      <Route path={"/spending"} component={ProtectedSpending} />
+      <Route path={"/analytics"} component={ProtectedAnalytics} />
+      <Route path={"/archived"} component={ProtectedArchived} />
+      <Route path={"/settings"} component={ProtectedSettings} />
 
       {/* Rotas de Erro (Públicas) */}
       <Route path={"/404"} component={NotFound} />

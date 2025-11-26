@@ -1,39 +1,30 @@
 import { trpc } from "@/lib/trpc";
-import { Redirect, Route, RouteProps } from "wouter";
+import { Redirect } from "wouter";
 import FullPageLoader from "./FullPageLoader";
+import { ComponentType } from "react";
 
-interface ProtectedRouteProps extends RouteProps {
-  component: React.ComponentType<any>;
-}
+export function withAuth<P extends object>(Component: ComponentType<P>) {
+  return function ProtectedComponent(props: P) {
+    // Check if token exists before making the query
+    const hasToken = !!localStorage.getItem('sessionToken');
+    
+    const { data: user, isLoading } = trpc.auth.me.useQuery(undefined, {
+      enabled: hasToken, // Only run query if token exists
+    });
 
-export default function ProtectedRoute({ component: Component, ...rest }: ProtectedRouteProps) {
-  return (
-    <Route {...rest}>
-      {(params) => <ProtectedContent Component={Component} params={params} />}
-    </Route>
-  );
-}
+    // If no token, redirect immediately
+    if (!hasToken) {
+      return <Redirect to="/auth" />;
+    }
 
-function ProtectedContent({ Component, params }: { Component: React.ComponentType<any>; params: any }) {
-  // Check if token exists before making the query
-  const hasToken = !!localStorage.getItem('sessionToken');
-  
-  const { data: user, isLoading } = trpc.auth.me.useQuery(undefined, {
-    enabled: hasToken, // Only run query if token exists
-  });
+    if (isLoading) {
+      return <FullPageLoader />;
+    }
 
-  // If no token, redirect immediately
-  if (!hasToken) {
-    return <Redirect to="/auth" />;
-  }
+    if (!user) {
+      return <Redirect to="/auth" />;
+    }
 
-  if (isLoading) {
-    return <FullPageLoader />;
-  }
-
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
-
-  return <Component {...params} />;
+    return <Component {...props} />;
+  };
 }
