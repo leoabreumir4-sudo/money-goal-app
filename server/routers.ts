@@ -479,40 +479,6 @@ export const appRouter = router({
       }),
   }),
 
-  // Chat Messages
-  chat: router({
-    getHistory: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getChatMessagesByUserId(ctx.user.id);
-    }),
-
-    sendMessage: protectedProcedure
-      .input(z.object({
-        message: z.string(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        // Save user message
-        await db.createChatMessage({
-          userId: ctx.user.id,
-          role: "user",
-          content: input.message,
-        });
-
-        // Get AI response
-        const response = await invokeLLM([
-          { role: "user", content: input.message },
-        ]);
-
-        // Save AI response
-        await db.createChatMessage({
-          userId: ctx.user.id,
-          role: "assistant",
-          content: response,
-        });
-
-        return { message: response };
-      }),
-  }),
-
   // Monthly Payments
   monthlyPayments: router({
     getAll: protectedProcedure.query(async ({ ctx }) => {
