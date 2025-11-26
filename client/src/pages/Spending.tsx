@@ -52,6 +52,16 @@ export default function Spending() {
   const [recurringIsActive, setRecurringIsActive] = useState(true);
   const [filterType, setFilterType] = useState("All");
   const [showOnlyRecurring, setShowOnlyRecurring] = useState(false);
+  
+  // Category details modal
+  const [isCategoryDetailsOpen, setIsCategoryDetailsOpen] = useState(false);
+  const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<{
+    name: string;
+    emoji: string;
+    color: string;
+    value: number;
+    categoryId: number;
+  } | null>(null);
 
   const utils = trpc.useUtils();
   const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
@@ -294,8 +304,39 @@ export default function Spending() {
     return expensesByCategory.map(item => ({
       name: item.name,
       value: item.value / 100, // Convert cents to dollars
+      color: item.color,
     }));
   }, [expensesByCategory]);
+
+  // Get transactions for selected category
+  const categoryTransactions = useMemo(() => {
+    if (!selectedCategoryDetails) return [];
+    
+    return expenseTransactions.filter(t => {
+      const category = categories.find(c => c.id === t.categoryId);
+      const categoryId = t.categoryId || categories.find(c => c.name === "Other")?.id || 0;
+      return categoryId === selectedCategoryDetails.categoryId;
+    }).sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
+  }, [expenseTransactions, selectedCategoryDetails, categories]);
+
+  const handleCategoryClick = (categoryName: string, categoryEmoji: string, categoryColor: string, categoryValue: number) => {
+    // Find the categoryId from expensesByCategory
+    const categoryData = expensesByCategory.find(c => c.name === categoryName);
+    if (!categoryData) return;
+    
+    // Find the actual category to get the ID
+    const category = categories.find(c => c.name === categoryName);
+    const categoryId = category?.id || categories.find(c => c.name === "Other")?.id || 0;
+    
+    setSelectedCategoryDetails({
+      name: categoryName,
+      emoji: categoryEmoji,
+      color: categoryColor,
+      value: categoryValue,
+      categoryId: categoryId,
+    });
+    setIsCategoryDetailsOpen(true);
+  };
 
   return (
     <DashboardLayout>
@@ -487,7 +528,11 @@ export default function Spending() {
                     const color = item.color || COLORS[index % COLORS.length];
                     
                     return (
-                      <div key={item.name} className="space-y-2">
+                      <div 
+                        key={item.name} 
+                        className="space-y-2 cursor-pointer hover:bg-secondary/30 p-3 rounded-lg transition-colors"
+                        onClick={() => handleCategoryClick(item.name, item.emoji, color, item.value)}
+                      >
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <div 
@@ -801,6 +846,86 @@ export default function Spending() {
               </Button>
               <Button onClick={handleUpdateRecurring}>Update</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Category Details Modal */}
+        <Dialog open={isCategoryDetailsOpen} onOpenChange={setIsCategoryDetailsOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <span className="text-3xl">{selectedCategoryDetails?.emoji}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span>{selectedCategoryDetails?.name}</span>
+                    <div 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: selectedCategoryDetails?.color }}
+                    />
+                  </div>
+                  <div className="text-sm font-normal text-muted-foreground mt-1">
+                    {formatCurrency(selectedCategoryDetails?.value || 0, preferences.currency)} • {categoryTransactions.length} {categoryTransactions.length === 1 ? 'transaction' : 'transactions'}
+                  </div>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-4">
+              {categoryTransactions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No transactions in this category</p>
+              ) : (
+                categoryTransactions.map((transaction) => {
+                  const convertedAmount = convertToPreferredCurrency(
+                    transaction.amount,
+                    transaction.currency || "USD",
+                    preferences.currency || "USD",
+                    transaction.exchangeRate
+                  );
+                  
+                  return (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium text-foreground">{transaction.reason}</p>
+                          {transaction.source && (
+                            <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                              transaction.source === 'wise' 
+                                ? 'bg-[#9fe870]/20 text-[#9fe870]' 
+                                : transaction.source === 'recurring'
+                                ? 'bg-purple-500/20 text-purple-400'
+                                : 'bg-blue-500/20 text-blue-400'
+                            }`}>
+                              {transaction.source === 'wise' ? 'Wise' : transaction.source === 'recurring' ? 'Auto' : 'CSV'}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(transaction.createdDate).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-foreground">
+                          {formatCurrency(convertedAmount, preferences.currency)}
+                        </p>
+                        {transaction.currency !== preferences.currency && (
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(transaction.amount, transaction.currency)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>
