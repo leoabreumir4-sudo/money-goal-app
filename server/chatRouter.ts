@@ -175,14 +175,14 @@ async function buildUserFinancialContext(userId: string) {
   ]);
 
   const now = new Date();
-  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
   // Calculate financial metrics
-  const recentTransactions = transactions.filter((t: any) => new Date(t.createdDate) >= threeMonthsAgo);
+  const recentTransactions = transactions.filter((t: any) => new Date(t.createdDate) >= sixMonthsAgo);
   
-  const monthsCount = Math.min(3, Math.ceil((now.getTime() - threeMonthsAgo.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+  const monthsCount = Math.min(6, Math.ceil((now.getTime() - sixMonthsAgo.getTime()) / (1000 * 60 * 60 * 24 * 30)));
   
   // Detect salary from Artix Entertainment LLC income transactions
   const artixIncomeTransactions = recentTransactions.filter((t: any) => 
@@ -288,7 +288,7 @@ async function buildUserFinancialContext(userId: string) {
     // Memories (context from previous conversations)
     memories,
     
-    // Income & Expenses (last 3 months average)
+    // Income & Expenses (last 6 months average)
     avgMonthlyIncome: formatMoney(avgMonthlyIncome),
     avgMonthlyIncomeRaw: avgMonthlyIncome,
     avgMonthlyExpenses: formatMoney(avgMonthlyExpenses),
@@ -550,7 +550,7 @@ ${JSON.stringify(financialContext, null, 2)}
 ⚠️ CRITICAL - USER'S CURRENT FINANCIAL SUMMARY:
 These values are PRE-CALCULATED and VERIFIED. Copy them EXACTLY as shown:
 
-📊 **Monthly Averages (Last 3 months):**
+📊 **Monthly Averages (Last 6 months):**
 - Income: ${financialContext.avgMonthlyIncome}
 - Expenses: ${financialContext.avgMonthlyExpenses}
 - Net Savings: ${financialContext.avgMonthlySavings}
