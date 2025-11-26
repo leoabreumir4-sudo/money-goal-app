@@ -164,14 +164,12 @@ async function buildUserFinancialContext(userId: string) {
   if (!dbInstance) throw new Error("Database not available");
 
   // Get all user data in parallel
-  const [transactions, goals, recurringExpenses, categories, settings, projects, monthlyPayments] = await Promise.all([
+  const [transactions, goals, recurringExpenses, categories, settings] = await Promise.all([
     db.getAllTransactionsByUserId(userId),
     db.getGoalsByUserId(userId),
     db.getRecurringExpensesByUserId(userId),
     db.getCategoriesByUserId(userId),
     db.getUserSettings(userId),
-    db.getProjectsByUserId(userId),
-    db.getMonthlyPaymentsByUserId(userId),
   ]);
 
   const now = new Date();
@@ -266,15 +264,6 @@ async function buildUserFinancialContext(userId: string) {
 
   // Parse chat memories from settings
   const memories: string[] = settings?.chatMemory ? JSON.parse(settings.chatMemory) : [];
-
-  // AQWorlds work data (Artix Entertainment freelance projects)
-  const activeProjects = projects.filter((p: any) => p.status === 'active');
-  const currentMonthPayments = monthlyPayments.filter((p: any) => {
-    const paymentDate = new Date(p.month);
-    return paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear();
-  });
-  const totalProjectValue = activeProjects.reduce((sum: number, p: any) => sum + (p.monthlyValue || 0), 0);
-  const isPaidThisMonth = currentMonthPayments.some((p: any) => p.isPaid);
 
   return {
     // Overview
@@ -563,19 +552,11 @@ USE ONLY the formatted values shown above (with $ symbols).
 SALARY & WORK INFORMATION:
 ${financialContext.hasSalary ? `✅ User has regular salary from ${financialContext.salarySource}
 - Average monthly salary: ${financialContext.avgMonthlySalary}
-- ${financialContext.salaryTransactionsCount} salary payments in last 3 months
+- ${financialContext.salaryTransactionsCount} salary payments in last 6 months
 - This is the user's PRIMARY income source - treat it as stable recurring income
 - Other income sources are SECONDARY (bonuses, side projects, etc.)` : `❌ No regular salary detected
 - All income appears to be from various sources
 - Treat income as variable/unstable`}
-
-🎮 AQWORLDS WORK CONTEXT:
-${financialContext.aqworlds.activeProjects > 0 ? `The user works as a freelance artist for Artix Entertainment (AQWorlds game):
-- Active Projects: ${financialContext.aqworlds.activeProjects} (${financialContext.aqworlds.projectNames})
-- Monthly Project Value: ${financialContext.aqworlds.totalMonthlyValue}
-- Payment Status: ${financialContext.aqworlds.paidThisMonth ? '✅ Paid this month' : '⏳ Awaiting payment'}
-- This is tracked separately in the AQWorlds Dashboard
-- Consider this work schedule when giving financial advice (project deadlines, event calendar)` : 'No active AQWorlds projects'}
 
 RESPONSE FORMAT:
 - Start with a brief analysis (1-2 sentences)
