@@ -58,7 +58,15 @@ export function ThemeProvider({
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error("useTheme must be used within ThemeProvider");
+    // Fallback seguro: retorna valores padrão e avisa no console
+    if (typeof window !== "undefined") {
+      console.error("useTheme: ThemeProvider não encontrado! Retornando valores padrão.");
+    }
+    return {
+      theme: "dark",
+      switchable: false,
+      toggleTheme: () => {},
+    };
   }
   return context;
 }
