@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { Loader2, Send, Sparkles, TrendingUp, Target, PauseCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { Streamdown } from "streamdown";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { toast } from "sonner";
+import AIMessage from "@/components/AIMessage";
 
 // Component to render action buttons based on AI suggestions
 function ActionButtons({ content, onAction }: { content: string; onAction: (action: string) => void }) {
@@ -76,6 +76,7 @@ export default function Chat() {
   
   const { data: chatHistory = [], refetch } = trpc.chat.getHistory.useQuery();
   const { data: suggestedPrompts = [] } = trpc.chat.getSuggestedPrompts.useQuery();
+  const { data: welcomeData } = trpc.chat.getWelcomeInsights.useQuery();
   const chatMutation = trpc.chat.sendMessage.useMutation();
   const clearHistoryMutation = trpc.chat.clearHistory.useMutation();
 
@@ -216,10 +217,25 @@ export default function Chat() {
                   <Sparkles className="h-10 w-10 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-2">Hello! I'm your Financial Advisor 👋</h2>
-                  <p className="text-muted-foreground max-w-md">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
+                    Hello{welcomeData?.userName && `, ${welcomeData.userName}`}! 👋
+                  </h2>
+                  <p className="text-muted-foreground max-w-md mb-4">
                     I have access to all your financial data and can help you make smart money decisions. Ask me anything!
                   </p>
+                  
+                  {welcomeData?.insights && welcomeData.insights.length > 0 && (
+                    <div className="bg-secondary/50 rounded-lg p-4 max-w-md mb-4">
+                      <p className="text-sm font-semibold mb-2">Quick insights from your finances:</p>
+                      <ul className="space-y-1 text-sm">
+                        {welcomeData.insights.map((insight, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span>{insight}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2 w-full max-w-2xl">
                   <p className="text-sm text-muted-foreground font-medium">💡 Suggested questions based on your finances:</p>
@@ -253,7 +269,7 @@ export default function Chat() {
                     >
                       {message.role === "assistant" ? (
                         <>
-                          <Streamdown>{message.content}</Streamdown>
+                          <AIMessage content={message.content} />
                           <ActionButtons content={message.content} onAction={handleAction} />
                         </>
                       ) : (

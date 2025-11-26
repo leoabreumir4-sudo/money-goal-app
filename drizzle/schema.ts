@@ -95,6 +95,7 @@ export const userSettings = pgTable("userSettings", {
   hasUnreadArchived: boolean("hasUnreadArchived").notNull().default(false),
   wiseApiToken: text("wiseApiToken"), // Wise API token for bank sync
   wiseWebhookSecret: text("wiseWebhookSecret"), // Secret for validating Wise webhooks
+  chatMemory: text("chatMemory"), // JSON array of key facts extracted from conversations
 });
 
 export type UserSettings = typeof userSettings.$inferSelect;
@@ -163,6 +164,8 @@ export const chatMessages = pgTable("chatMessages", {
   role: chatRoleEnum("role").notNull(),
   content: text("content").notNull(),
   createdDate: timestamp("createdDate").defaultNow().notNull(),
+  conversationFlow: varchar("conversationFlow", { length: 50 }), // e.g., "create_goal", "budget_review"
+  flowStep: integer("flowStep"), // Current step in multi-step flow (1, 2, 3...)
 });
 
 export type ChatMessage = typeof chatMessages.$inferSelect;

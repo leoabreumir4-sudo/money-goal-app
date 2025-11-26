@@ -57,6 +57,20 @@
       "when": 1764171812080,
       "tag": "0007_freezing_newton_destine",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1764175004795,
+      "tag": "0008_common_pete_wisdom",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1764175662150,
+      "tag": "0009_talented_chamber",
+      "breakpoints": true
     }
   ]
 }

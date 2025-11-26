@@ -3,6 +3,161 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 
+/**
+ * Detect language from user message using simple keyword matching and character patterns
+ */
+function detectLanguage(message: string): "en" | "pt" | "es" {
+  const portugueseKeywords = /\b(olá|oi|obrigad[oa]|como|está|você|voce|porque|por que|quero|posso|preciso|fazer|tenho|meu|minha|sim|não|nao)\b/i;
+  const spanishKeywords = /\b(hola|gracias|cómo|como|está|usted|porque|por qué|quiero|puedo|necesito|hacer|tengo|mi|sí|no)\b/i;
+  
+  // Check for Portuguese-specific characters
+  const hasPortugueseChars = /[ãçõê]/i.test(message);
+  
+  // Check for Spanish-specific characters (excluding those shared with Portuguese)
+  const hasSpanishChars = /[ñ¿¡]/i.test(message);
+  
+  if (portugueseKeywords.test(message) || hasPortugueseChars) {
+    return "pt";
+  }
+  
+  if (spanishKeywords.test(message) || hasSpanishChars) {
+    return "es";
+  }
+  
+  return "en";
+}
+
+/**
+ * Define conversation flows with their steps
+ */
+const CONVERSATION_FLOWS = {
+  create_goal: {
+    name: "Create Savings Goal",
+    steps: [
+      { step: 1, question: "What would you like to save for? (e.g., vacation, emergency fund, new car)" },
+      { step: 2, question: "How much money do you need to save for this goal?" },
+      { step: 3, question: "When do you want to achieve this goal? (e.g., in 6 months, by December 2025)" },
+    ],
+    finalAction: "create_goal_action",
+  },
+  budget_review: {
+    name: "Monthly Budget Review",
+    steps: [
+      { step: 1, question: "Let me analyze your spending. What's your biggest concern right now?" },
+      { step: 2, question: "Which expense category would you like to focus on reducing?" },
+      { step: 3, question: "What's a realistic monthly budget for this category?" },
+    ],
+    finalAction: "budget_review_summary",
+  },
+  savings_plan: {
+    name: "Personalized Savings Plan",
+    steps: [
+      { step: 1, question: "What's your main motivation for saving right now?" },
+      { step: 2, question: "How much can you comfortably save each month without sacrificing essentials?" },
+      { step: 3, question: "Are you willing to cut any specific expenses to boost your savings?" },
+    ],
+    finalAction: "savings_plan_summary",
+  },
+};
+
+type FlowType = keyof typeof CONVERSATION_FLOWS;
+
+/**
+ * Detect if user wants to start a conversation flow
+ */
+function detectFlowIntent(message: string): FlowType | null {
+  const lowerMessage = message.toLowerCase();
+  
+  // Create goal patterns
+  if (/(criar|create|start|começar|empezar).*(meta|goal|objetivo)/i.test(message) ||
+      /(quero|want|need|preciso|necesito).*(economizar|save|poupar|ahorrar)/i.test(message)) {
+    return "create_goal";
+  }
+  
+  // Budget review patterns
+  if (/(revisar|review|analisar|analyze|analizar).*(orçamento|budget|gastos|expenses|despesas)/i.test(message) ||
+      /onde (estou|tô|to) gastando/i.test(message) ||
+      /where (am i|i'm) spending/i.test(message)) {
+    return "budget_review";
+  }
+  
+  // Savings plan patterns
+  if (/(plano|plan).*(poupança|savings|ahorro)/i.test(message) ||
+      /(plano|plan).*(economizar|save|poupar|ahorrar)/i.test(message) ||
+      /(como|how).*(economizar mais|save more|poupar mais|ahorrar más)/i.test(message)) {
+    return "savings_plan";
+  }
+  
+  return null;
+}
+
+/**
+ * Get the next step in a conversation flow
+ */
+function getNextFlowStep(flowType: FlowType, currentStep: number | null): { step: number; question: string } | null {
+  const flow = CONVERSATION_FLOWS[flowType];
+  const nextStep = (currentStep || 0) + 1;
+  
+  const stepData = flow.steps.find(s => s.step === nextStep);
+  return stepData || null;
+}
+
+/**
+ * Extract key facts from a conversation for memory
+ * Returns array of memory strings to append
+ */
+function extractMemoriesFromMessage(userMessage: string, aiResponse: string): string[] {
+  const memories: string[] = [];
+  
+  // Pattern: User mentions a goal or aspiration
+  const goalPatterns = [
+    /(?:quero|want to|planning to|planejo|planeo)\s+(?:comprar|buy|purchase|adquirir)\s+([a-zA-Z\s]+)/i,
+    /(?:quero|want to|need to|preciso|necesito)\s+(?:economizar|save|juntar|ahorrar)\s+(?:para|for|to)\s+([a-zA-Z\s]+)/i,
+    /my goal is (?:to\s+)?([a-zA-Z\s]+)/i,
+    /minha meta (?:é|e)\s+([a-zA-Z\s]+)/i,
+  ];
+  
+  for (const pattern of goalPatterns) {
+    const match = userMessage.match(pattern);
+    if (match && match[1]) {
+      memories.push(`User wants to: ${match[1].trim()}`);
+    }
+  }
+  
+  // Pattern: User mentions a preference
+  const preferencePatterns = [
+    /(?:i prefer|prefiro|prefiero)\s+([a-zA-Z\s]+)/i,
+    /(?:i like|gosto|me gusta)\s+(?:to\s+)?([a-zA-Z\s]+)/i,
+  ];
+  
+  for (const pattern of preferencePatterns) {
+    const match = userMessage.match(pattern);
+    if (match && match[1]) {
+      memories.push(`User prefers: ${match[1].trim()}`);
+    }
+  }
+  
+  // Pattern: User mentions family/personal context
+  if (/\b(family|familia|família|kids|children|filhos|hijos|spouse|cônjuge|cónyuge)\b/i.test(userMessage)) {
+    memories.push(`User has family considerations mentioned in conversation`);
+  }
+  
+  return memories;
+}
+
+/**
+ * Get system prompt in the appropriate language
+ */
+function getSystemPrompt(language: "en" | "pt" | "es"): string {
+  const prompts = {
+    en: `You are an expert AI Financial Advisor integrated into MoneyGoal, a personal finance app. Your role is to help users make informed financial decisions, track their goals, manage their spending, and improve their financial health.`,
+    pt: `Você é um Consultor Financeiro de IA especializado integrado ao MoneyGoal, um aplicativo de finanças pessoais. Seu papel é ajudar os usuários a tomar decisões financeiras informadas, acompanhar suas metas, gerenciar seus gastos e melhorar sua saúde financeira.`,
+    es: `Eres un Asesor Financiero de IA experto integrado en MoneyGoal, una aplicación de finanzas personales. Tu función es ayudar a los usuarios a tomar decisiones financieras informadas, realizar un seguimiento de sus objetivos, gestionar sus gastos y mejorar su salud financiera.`
+  };
+  
+  return prompts[language];
+}
+
 // Build comprehensive financial context for the AI
 async function buildUserFinancialContext(userId: string) {
   const dbInstance = await db.getDb();
@@ -84,6 +239,9 @@ async function buildUserFinancialContext(userId: string) {
     return `${symbol}${(cents / 100).toFixed(2)}`;
   };
 
+  // Parse chat memories from settings
+  const memories: string[] = settings?.chatMemory ? JSON.parse(settings.chatMemory) : [];
+
   return {
     // Overview
     currentDate: now.toISOString().split('T')[0],
@@ -92,6 +250,9 @@ async function buildUserFinancialContext(userId: string) {
     // Balances
     currentBalance: formatMoney(currentBalance),
     currentBalanceCents: currentBalance,
+    
+    // Memories (context from previous conversations)
+    memories,
     
     // Income & Expenses (last 3 months average)
     avgMonthlyIncome: formatMoney(avgMonthlyIncome),
@@ -149,6 +310,55 @@ async function buildUserFinancialContext(userId: string) {
 }
 
 export const chatRouter = router({
+  // Get personalized welcome message with insights
+  getWelcomeInsights: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.user.id;
+    const financialContext = await buildUserFinancialContext(userId);
+    
+    const insights: string[] = [];
+    
+    // Analyze recent activity
+    if (financialContext.avgMonthlySavingsRaw > 0) {
+      insights.push(`💰 You're saving an average of ${financialContext.avgMonthlySavings}/month`);
+    }
+    
+    // Check goal progress
+    if (financialContext.activeGoal) {
+      const progress = financialContext.activeGoal.progress;
+      if (progress >= 90) {
+        insights.push(`🎉 You're ${progress}% there with your ${financialContext.activeGoal.name}!`);
+      } else if (progress >= 50) {
+        insights.push(`📈 Your ${financialContext.activeGoal.name} is ${progress}% complete`);
+      } else if (financialContext.activeGoal.monthsToGoal) {
+        insights.push(`🎯 ${financialContext.activeGoal.monthsToGoal} months to reach your ${financialContext.activeGoal.name}`);
+      }
+    }
+    
+    // Savings rate insights
+    if (financialContext.savingsRateRaw >= 40) {
+      insights.push(`⭐ Excellent ${financialContext.savingsRate} savings rate!`);
+    } else if (financialContext.savingsRateRaw < 10) {
+      insights.push(`⚠️ Your savings rate is low (${financialContext.savingsRate})`);
+    }
+    
+    // Top spending category
+    if (financialContext.topCategories.length > 0) {
+      const top = financialContext.topCategories[0];
+      insights.push(`📊 Top expense: ${top.emoji} ${top.name} (${formatMoney(top.avgMonthly)}/mo)`);
+    }
+    
+    return {
+      insights: insights.slice(0, 4), // Max 4 insights
+      userName: ctx.user.name || "there",
+    };
+    
+    function formatMoney(cents: number) {
+      const currency = financialContext.currency || "USD";
+      const symbol = currency === "BRL" ? "R$" : currency === "EUR" ? "€" : "$";
+      return `${symbol}${(cents / 100).toFixed(2)}`;
+    }
+  }),
+
   // Get suggested prompts based on user's financial situation
   getSuggestedPrompts: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
@@ -221,8 +431,67 @@ export const chatRouter = router({
       const history = await db.getChatMessagesByUserId(userId);
       const recentHistory = history.slice(-10);
 
+      // Check if user is in an active conversation flow
+      const lastUserMessage = recentHistory.filter(m => m.role === "user").slice(-1)[0];
+      const currentFlow = lastUserMessage?.conversationFlow as FlowType | null;
+      const currentStep = lastUserMessage?.flowStep || null;
+
+      // Detect if user wants to start a new flow
+      const detectedFlow = detectFlowIntent(input.message);
+
+      let conversationFlow: FlowType | null = null;
+      let flowStep: number | null = null;
+      let isFlowResponse = false;
+
+      // Handle conversation flows
+      if (detectedFlow && !currentFlow) {
+        // Start new flow
+        conversationFlow = detectedFlow;
+        flowStep = 1;
+        isFlowResponse = true;
+      } else if (currentFlow && currentStep) {
+        // Continue existing flow
+        conversationFlow = currentFlow;
+        const nextStep = getNextFlowStep(currentFlow, currentStep);
+        
+        if (nextStep) {
+          flowStep = nextStep.step;
+          isFlowResponse = true;
+        } else {
+          // Flow completed - no more steps
+          conversationFlow = null;
+          flowStep = null;
+        }
+      }
+
+      // Detect language from user's message
+      const detectedLanguage = detectLanguage(input.message);
+
       // Build system prompt with context
-      const systemPrompt = `You are a professional financial advisor AI assistant named "MoneyGoal Advisor". You have access to the user's complete financial profile and transaction history.
+      const baseSystemPrompt = getSystemPrompt(detectedLanguage);
+      
+      const languageInstructions = {
+        en: "Respond in English.",
+        pt: "Responda em Português.",
+        es: "Responde en Español."
+      };
+      
+      // Add flow context to system prompt if in a flow
+      let flowContext = "";
+      if (isFlowResponse && conversationFlow && flowStep) {
+        const flow = CONVERSATION_FLOWS[conversationFlow];
+        const stepData = flow.steps.find(s => s.step === flowStep);
+        
+        flowContext = `
+
+ACTIVE CONVERSATION FLOW: ${flow.name}
+Current Step: ${flowStep} of ${flow.steps.length}
+Next Question: ${stepData?.question}
+
+You are guiding the user through a multi-step conversation. Ask the next question clearly and wait for their response. Keep it brief and focused.`;
+      }
+      
+      const systemPrompt = `${baseSystemPrompt}
 
 YOUR ROLE:
 - Provide realistic, data-driven financial advice based on ACTUAL user data
@@ -231,18 +500,26 @@ YOUR ROLE:
 - Consider income, expenses, savings rate, and financial goals
 - Prioritize financial health and realistic planning
 - Use a friendly but professional tone
-- Respond in the same language as the user's question
+- ${languageInstructions[detectedLanguage]}
+${flowContext}
 
 CURRENT USER FINANCIAL PROFILE:
 ${JSON.stringify(financialContext, null, 2)}
 
 RESPONSE FORMAT:
 - Start with a brief analysis (1-2 sentences)
-- Provide key numbers and calculations
+- Use **markdown formatting** for better readability:
+  * **Bold** for important numbers
+  * Tables for comparisons
+  * Lists for action items
+  * Emojis for visual cues (📊 📈 💰 ✅ ⚠️ 🎯)
+- Include inline charts when helpful using this syntax:
+  * Line chart: [CHART:line_graph data={"values":[{"label":"Jan","value":800},{"label":"Feb","value":1000}]}]
+  * Pie chart: [CHART:pie_chart data=[{"label":"Food","value":500},{"label":"Transport","value":200}]]
+  * Progress bar: [CHART:progress_bar data={"label":"Goal Progress","percentage":65,"subtitle":"$3,250 of $5,000"}]
 - List 2-4 specific, actionable recommendations
 - End with encouragement or next steps
-- Use emojis sparingly for visual organization
-- Keep responses concise (max 300 words)
+- Keep responses concise (max 400 words)
 
 GUIDELINES:
 1. Always use the user's ACTUAL numbers from the profile above
@@ -279,19 +556,35 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
         throw new Error("Invalid response from AI");
       }
 
-      // Save user message
+      // Save user message with flow tracking
       await db.createChatMessage({
         userId,
         role: "user",
         content: input.message,
+        conversationFlow: conversationFlow || undefined,
+        flowStep: flowStep || undefined,
       });
 
-      // Save assistant response
+      // Save assistant response with flow tracking
       await db.createChatMessage({
         userId,
         role: "assistant",
         content: assistantMessage,
+        conversationFlow: conversationFlow || undefined,
+        flowStep: flowStep || undefined,
       });
+
+      // Extract and store memories
+      const newMemories = extractMemoriesFromMessage(input.message, assistantMessage);
+      if (newMemories.length > 0) {
+        const settings = await db.getUserSettings(userId);
+        const existingMemories: string[] = settings?.chatMemory ? JSON.parse(settings.chatMemory) : [];
+        const updatedMemories = [...existingMemories, ...newMemories].slice(-20); // Keep last 20 memories
+        
+        await db.updateUserSettings(userId, {
+          chatMemory: JSON.stringify(updatedMemories),
+        });
+      }
 
       return {
         message: assistantMessage,
