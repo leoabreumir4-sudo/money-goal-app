@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { ArrowDown, ArrowUp, TrendingUp, Target, Wallet } from "lucide-react";
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
@@ -396,30 +395,8 @@ export default function Analytics() {
                         <Target className="h-4 w-4 text-primary" />
                         <span>Goal: {formatCurrency(activeGoal.targetAmount, curr)}</span>
                         <span className="ml-auto text-xs text-muted-foreground">Current: <span className="font-bold">
-                          <AnimatePresence mode="wait">
-                            <motion.span
-                              key={initialAmount}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              transition={{ duration: 0.5 }}
-                            >
-                              {formatCurrency(initialAmount, curr)}
-                            </motion.span>
-                          </AnimatePresence>
-                        </span> ({
-                          <AnimatePresence mode="wait">
-                            <motion.span
-                              key={Math.round((initialAmount / activeGoal.targetAmount) * 100)}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              transition={{ duration: 0.5 }}
-                            >
-                              {Math.round((initialAmount / activeGoal.targetAmount) * 100)}%
-                            </motion.span>
-                          </AnimatePresence>
-                        })</span>
+                          {formatCurrency(initialAmount, curr)}
+                        </span> ({Math.round((initialAmount / activeGoal.targetAmount) * 100)}%)</span>
                       </div>
                       {wiseBalance > 0 && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
