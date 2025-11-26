@@ -265,44 +265,42 @@ async function buildUserFinancialContext(userId: string) {
   // Parse chat memories from settings
   const memories: string[] = settings?.chatMemory ? JSON.parse(settings.chatMemory) : [];
 
-  return {
+  // Create simplified context WITHOUT raw cent values to prevent AI confusion
+  const simplifiedContext = {
     // Overview
     currentDate: now.toISOString().split('T')[0],
     currency: settings?.currency || "USD",
     
     // Balances
     currentBalance: formatMoney(currentBalance),
-    currentBalanceCents: currentBalance,
     
     // Memories (context from previous conversations)
     memories,
     
-    // Income & Expenses (last 6 months average)
+    // Income & Expenses (last 6 months average) - FORMATTED VALUES ONLY
     avgMonthlyIncome: formatMoney(avgMonthlyIncome),
-    avgMonthlyIncomeRaw: avgMonthlyIncome,
     avgMonthlyExpenses: formatMoney(avgMonthlyExpenses),
-    avgMonthlyExpensesRaw: avgMonthlyExpenses,
     avgMonthlySavings: formatMoney(avgMonthlySavings),
-    avgMonthlySavingsRaw: avgMonthlySavings,
     savingsRate: `${savingsRate}%`,
-    savingsRateRaw: savingsRate,
     
     // Active Goal
     activeGoal: activeGoal ? {
       name: activeGoal.name,
       target: formatMoney(activeGoal.targetAmount),
-      targetRaw: activeGoal.targetAmount,
       current: formatMoney(activeGoal.currentAmount),
-      currentRaw: activeGoal.currentAmount,
       remaining: formatMoney(activeGoal.targetAmount - activeGoal.currentAmount),
-      remainingRaw: activeGoal.targetAmount - activeGoal.currentAmount,
       progress: Math.round((activeGoal.currentAmount / activeGoal.targetAmount) * 100),
       monthsToGoal: avgMonthlySavings > 0 ? 
         Math.ceil((activeGoal.targetAmount - activeGoal.currentAmount) / avgMonthlySavings) : null,
     } : null,
     
-    // Spending Patterns
-    topCategories,
+    // Spending Patterns - FORMATTED VALUES ONLY
+    topCategories: topCategories.map(cat => ({
+      name: cat.name,
+      emoji: cat.emoji,
+      avgMonthly: formatMoney(cat.avgMonthly),
+      total: formatMoney(cat.total),
+    })),
     
     // Recurring Commitments
     recurringExpenses: activeRecurring.map((e: any) => {
@@ -320,7 +318,6 @@ async function buildUserFinancialContext(userId: string) {
       };
     }),
     totalMonthlyRecurring: formatMoney(totalMonthlyRecurring),
-    totalMonthlyRecurringRaw: totalMonthlyRecurring,
     
     // Transaction count
     totalTransactions: transactions.length,
@@ -329,7 +326,6 @@ async function buildUserFinancialContext(userId: string) {
     // Salary information (Artix Entertainment LLC)
     hasSalary,
     avgMonthlySalary: hasSalary ? formatMoney(avgMonthlySalary) : null,
-    avgMonthlySalaryRaw: hasSalary ? avgMonthlySalary : null,
     salarySource: hasSalary ? "Artix Entertainment LLC" : null,
     salaryTransactionsCount: artixIncomeTransactions.length,
     
@@ -337,6 +333,8 @@ async function buildUserFinancialContext(userId: string) {
     currentMonth,
     currentYear,
   };
+
+  return simplifiedContext;
 }
 
 export const chatRouter = router({
@@ -545,9 +543,13 @@ These values are PRE-CALCULATED and VERIFIED. Copy them EXACTLY as shown:
 - Net Savings: ${financialContext.avgMonthlySavings}
 - Savings Rate: ${financialContext.savingsRate}
 
-⚠️ DO NOT recalculate these values! They are already correct.
-The financial profile JSON below contains "Raw" values in CENTS - ignore them for calculations.
-USE ONLY the formatted values shown above (with $ symbols).
+⚠️ **STRICT RULES - READ CAREFULLY:**
+1. DO NOT recalculate ANY values above - they are FINAL
+2. DO NOT parse numbers from strings - use them AS-IS for display
+3. ALL values in the JSON below are already in the correct currency format
+4. There are NO "raw" or "cent" values - everything is display-ready
+5. If you see a negative savings ($-2928), it means spending > income
+6. Copy and paste the values EXACTLY as they appear above
 
 SALARY & WORK INFORMATION:
 ${financialContext.hasSalary ? `✅ User has regular salary from ${financialContext.salarySource}
