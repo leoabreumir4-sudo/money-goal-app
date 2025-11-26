@@ -38,6 +38,13 @@ export default function Dashboard() {
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Edit transaction modal
+  const [isEditTransactionModalOpen, setIsEditTransactionModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
+  const [editTransactionAmount, setEditTransactionAmount] = useState("");
+  const [editTransactionReason, setEditTransactionReason] = useState("");
+  const [editTransactionCategory, setEditTransactionCategory] = useState<string>("");
 
   const utils = trpc.useUtils();
   const { data: activeGoal, isLoading: goalLoading } = trpc.goals.getActive.useQuery();
@@ -70,6 +77,29 @@ export default function Dashboard() {
       utils.goals.getActive.invalidate();
       setIsEditGoalModalOpen(false);
       toast.success(t("goalUpdatedSuccess", preferences.language));
+    },
+  });
+
+  const updateTransactionMutation = trpc.transactions.update.useMutation({
+    onSuccess: () => {
+      utils.transactions.getAll.invalidate();
+      utils.goals.getActive.invalidate();
+      setIsEditTransactionModalOpen(false);
+      setEditingTransaction(null);
+      setEditTransactionAmount("");
+      setEditTransactionReason("");
+      setEditTransactionCategory("");
+      toast.success("Transaction updated successfully!");
+    },
+  });
+
+  const deleteTransactionMutation = trpc.transactions.delete.useMutation({
+    onSuccess: () => {
+      utils.transactions.getAll.invalidate();
+      utils.goals.getActive.invalidate();
+      setIsEditTransactionModalOpen(false);
+      setEditingTransaction(null);
+      toast.success("Transaction deleted successfully!");
     },
   });
 
@@ -177,6 +207,44 @@ export default function Dashboard() {
       name: newGoalName,
       targetAmount,
     });
+  };
+
+  const handleEditTransaction = (transaction: any) => {
+    setEditingTransaction(transaction);
+    setEditTransactionAmount((transaction.amount / 100).toString());
+    setEditTransactionReason(transaction.reason);
+    setEditTransactionCategory(transaction.categoryId?.toString() || "");
+    setIsEditTransactionModalOpen(true);
+  };
+
+  const handleUpdateTransaction = () => {
+    if (!editingTransaction) return;
+
+    const amount = Math.round(parseFloat(editTransactionAmount) * 100);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    if (!editTransactionReason.trim()) {
+      toast.error("Please enter a reason");
+      return;
+    }
+
+    updateTransactionMutation.mutate({
+      id: editingTransaction.id,
+      amount,
+      reason: editTransactionReason,
+      categoryId: editTransactionCategory ? parseInt(editTransactionCategory) : undefined,
+    });
+  };
+
+  const handleDeleteTransaction = () => {
+    if (!editingTransaction) return;
+    
+    if (confirm("Are you sure you want to delete this transaction?")) {
+      deleteTransactionMutation.mutate({ id: editingTransaction.id });
+    }
   };
 
   const handleEditGoal = () => {
@@ -484,7 +552,8 @@ export default function Dashboard() {
                             {transactions.map((transaction) => (
                               <div
                                 key={transaction.id}
-                                className="flex items-center justify-between p-4 rounded-lg bg-secondary/50"
+                                className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 cursor-pointer transition-colors"
+                                onClick={() => handleEditTransaction(transaction)}
                               >
                                 <div className="flex items-center gap-3">
                                   <div
@@ -722,6 +791,72 @@ export default function Dashboard() {
             <DialogFooter>
               <Button onClick={() => setIsCongratulationsModalOpen(false)} className="w-full">
                 Create New Goal
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Transaction Modal */}
+        <Dialog open={isEditTransactionModalOpen} onOpenChange={setIsEditTransactionModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Transaction</DialogTitle>
+              <DialogDescription>Update transaction details or delete it.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-transaction-amount">Amount ({editingTransaction?.currency || preferences.currency})</Label>
+                <Input
+                  id="edit-transaction-amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={editTransactionAmount}
+                  onChange={(e) => setEditTransactionAmount(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-transaction-reason">Description</Label>
+                <Input
+                  id="edit-transaction-reason"
+                  placeholder="e.g., Shopping, Bills"
+                  value={editTransactionReason}
+                  onChange={(e) => setEditTransactionReason(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-transaction-category">Category</Label>
+                <Select value={editTransactionCategory} onValueChange={setEditTransactionCategory}>
+                  <SelectTrigger id="edit-transaction-category">
+                    <SelectValue placeholder="Select category..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id.toString()}>
+                        {cat.emoji} {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button 
+                variant="destructive" 
+                onClick={handleDeleteTransaction}
+                disabled={deleteTransactionMutation.isPending}
+              >
+                Delete
+              </Button>
+              <div className="flex-1" />
+              <Button variant="outline" onClick={() => setIsEditTransactionModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUpdateTransaction} 
+                disabled={updateTransactionMutation.isPending}
+              >
+                Update
               </Button>
             </DialogFooter>
           </DialogContent>
