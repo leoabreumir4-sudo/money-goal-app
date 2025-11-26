@@ -208,6 +208,17 @@ export default function Dashboard() {
     }
   };
 
+  // Filter categories to only show those with transactions
+  const categoriesWithTransactions = useMemo(() => {
+    if (!activeGoal) return [];
+    const categoryIds = new Set(
+      transactions
+        .filter(t => t.goalId === activeGoal.id && t.categoryId)
+        .map(t => t.categoryId)
+    );
+    return categories.filter(cat => categoryIds.has(cat.id));
+  }, [transactions, categories, activeGoal]);
+
   const recentTransactions = useMemo(() => {
     if (!activeGoal) return [];
     
@@ -426,7 +437,7 @@ export default function Dashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Categories</SelectItem>
-                      {categories.map(category => (
+                      {categoriesWithTransactions.map(category => (
                         <SelectItem key={category.id} value={category.id.toString()}>
                           {category.emoji} {category.name}
                         </SelectItem>
