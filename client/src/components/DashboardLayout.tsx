@@ -100,7 +100,10 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
-  const { preferences } = usePreferences();
+  const { preferences, isLoading } = usePreferences();
+  if (isLoading || !preferences) {
+    return <div className="flex items-center justify-center h-screen text-muted-foreground text-lg">Loading preferences...</div>;
+  }
 
   useEffect(() => {
     if (isCollapsed) {

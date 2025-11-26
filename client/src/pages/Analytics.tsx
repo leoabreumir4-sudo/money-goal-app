@@ -14,7 +14,10 @@ import { formatCurrency } from "@/lib/currency";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
 
 export default function Analytics() {
-  const { preferences } = usePreferences();
+  const { preferences, isLoading } = usePreferences();
+  if (isLoading || !preferences) {
+    return <div className="flex items-center justify-center h-screen text-muted-foreground text-lg">Loading preferences...</div>;
+  }
   const [savingTarget, setSavingTarget] = useState("");
   const [projectionPeriod, setProjectionPeriod] = useState<'3M' | '6M' | '12M' | 'GOAL'>('GOAL');
   
