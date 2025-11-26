@@ -535,21 +535,23 @@ CURRENT USER FINANCIAL PROFILE:
 ${JSON.stringify(financialContext, null, 2)}
 
 ⚠️ CRITICAL - USER'S CURRENT FINANCIAL SUMMARY:
-These values are PRE-CALCULATED and VERIFIED. Copy them EXACTLY as shown:
+You MUST start your response by confirming these exact values to verify you read them correctly:
 
 📊 **Monthly Averages (Last 6 months):**
 - Income: ${financialContext.avgMonthlyIncome}
-- Expenses: ${financialContext.avgMonthlyExpenses}
+- Expenses: ${financialContext.avgMonthlyExpenses}  
 - Net Savings: ${financialContext.avgMonthlySavings}
 - Savings Rate: ${financialContext.savingsRate}
 
-⚠️ **STRICT RULES - READ CAREFULLY:**
-1. DO NOT recalculate ANY values above - they are FINAL
-2. DO NOT parse numbers from strings - use them AS-IS for display
-3. ALL values in the JSON below are already in the correct currency format
-4. There are NO "raw" or "cent" values - everything is display-ready
-5. If you see a negative savings ($-2928), it means spending > income
-6. Copy and paste the values EXACTLY as they appear above
+🔴 **MANDATORY FIRST STEP:**
+Begin your response with "📊 Resumo Financeiro Mensal (Últimos 6 meses):" and list the 4 values above EXACTLY as shown.
+This proves you are using the correct data and not hallucinating numbers.
+
+⚠️ **STRICT RULES:**
+1. These values are FINAL - DO NOT recalculate or modify them
+2. DO NOT parse numbers from the strings - use them AS-IS
+3. ALL values are already formatted in the correct currency
+4. Copy and paste EXACTLY - any deviation means you failed
 
 SALARY & WORK INFORMATION:
 ${financialContext.hasSalary ? `✅ User has regular salary from ${financialContext.salarySource}
@@ -577,26 +579,17 @@ RESPONSE FORMAT:
 
 STRICT VALIDATION RULES (MUST FOLLOW):
 
-🔢 **MATH VALIDATION - USE PRE-CALCULATED VALUES**:
-⚠️ **NEVER recalculate financial metrics!** All values are pre-calculated above.
+🔢 **MATH VALIDATION - COPY VALUES EXACTLY**:
+⚠️ **FORBIDDEN:** Do NOT calculate anything! All math is already done.
 
-When presenting to user, COPY these values directly:
-   ✅ CORRECT Example:
-   "Sua renda mensal: ${financialContext.avgMonthlyIncome}
-    Seus gastos mensais: ${financialContext.avgMonthlyExpenses}
-    Poupança mensal: ${financialContext.avgMonthlySavings}
-    Taxa de poupança: ${financialContext.savingsRate} ✅"
-   
-   ❌ WRONG Example (NEVER DO THIS):
-   "Taxa de poupança: -272%" (You calculated wrong! Use ${financialContext.savingsRate} instead!)
-   "Poupança: $-2630" (You used Raw cents! Use ${financialContext.avgMonthlySavings} instead!)
-   
-CRITICAL RULES:
-1. Income = ${financialContext.avgMonthlyIncome} (NOT ${financialContext.avgMonthlyIncomeRaw / 100})
-2. Expenses = ${financialContext.avgMonthlyExpenses} (NOT ${financialContext.avgMonthlyExpensesRaw / 100})
-3. Savings = ${financialContext.avgMonthlySavings} (NOT income - expenses)
-4. Rate = ${financialContext.savingsRate} (NOT (savings/income)*100)
-5. If you see "Raw" in variable name → IGNORE IT (it's in cents, internal use only)
+**THE ONLY CORRECT VALUES ARE:**
+- Income: ${financialContext.avgMonthlyIncome}
+- Expenses: ${financialContext.avgMonthlyExpenses}
+- Savings: ${financialContext.avgMonthlySavings}
+- Rate: ${financialContext.savingsRate}
+
+If you show ANY different number (like -320%, $-2928, $914, $3842), you have FAILED.
+These are the ONLY valid answers. Memorize them and use them verbatim.
 
 📊 **DATA VALIDATION - USE ONLY PROVIDED DATA**:
 The user's ACTUAL spending categories are listed in topCategories array:
