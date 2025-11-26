@@ -58,7 +58,19 @@ export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
 export const usePreferences = () => {
   const context = useContext(PreferencesContext);
   if (!context) {
-    throw new Error("usePreferences must be used within PreferencesProvider");
+    // Fallback seguro: retorna valores padrão e avisa no console
+    if (typeof window !== "undefined") {
+      console.error("usePreferences: PreferencesProvider não encontrado! Retornando valores padrão.");
+    }
+    return {
+      preferences: {
+        language: "en",
+        currency: "USD",
+        theme: "dark",
+      },
+      isLoading: true,
+      updatePreferences: () => {},
+    };
   }
   return context;
 };
