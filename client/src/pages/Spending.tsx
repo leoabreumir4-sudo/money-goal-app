@@ -49,6 +49,7 @@ export default function Spending() {
   const [recurringFrequency, setRecurringFrequency] = useState<"monthly" | "daily" | "weekly" | "yearly">("monthly");
   const [recurringDayOfMonth, setRecurringDayOfMonth] = useState(1);
   const [recurringCategoryId, setRecurringCategoryId] = useState<number>(1);
+  const [recurringCurrency, setRecurringCurrency] = useState("USD");
   const [recurringIsActive, setRecurringIsActive] = useState(true);
   const [filterType, setFilterType] = useState("All");
   const [showOnlyRecurring, setShowOnlyRecurring] = useState(false);
@@ -87,6 +88,7 @@ export default function Spending() {
       setRecurringFrequency("monthly");
       setRecurringDayOfMonth(1);
       setRecurringCategoryId(categories[0]?.id || 1);
+      setRecurringCurrency("USD");
       setRecurringIsActive(true);
       toast.success(t("recurringExpenseAdded", preferences.language));
     },
@@ -102,6 +104,7 @@ export default function Spending() {
       setRecurringFrequency("monthly");
       setRecurringDayOfMonth(1);
       setRecurringCategoryId(categories[0]?.id || 1);
+      setRecurringCurrency("USD");
       setRecurringIsActive(true);
       toast.success("Recurring expense updated!");
     },
@@ -121,6 +124,7 @@ export default function Spending() {
     setRecurringFrequency(expense.frequency);
     setRecurringDayOfMonth(expense.dayOfMonth || 1);
     setRecurringCategoryId(expense.categoryId);
+    setRecurringCurrency(expense.currency || "USD");
     setRecurringIsActive(expense.isActive ?? true);
     setIsEditRecurringModalOpen(true);
   };
@@ -149,6 +153,7 @@ export default function Spending() {
       id: editingRecurring.id,
       name: recurringName,
       amount,
+      currency: recurringCurrency,
       frequency: recurringFrequency,
       dayOfMonth: recurringDayOfMonth,
       categoryId: recurringCategoryId,
@@ -172,6 +177,7 @@ export default function Spending() {
       categoryId: recurringCategoryId,
       name: recurringName,
       amount,
+      currency: recurringCurrency,
       frequency: recurringFrequency,
       dayOfMonth: recurringDayOfMonth,
       isActive: recurringIsActive,
@@ -241,9 +247,18 @@ export default function Spending() {
                             expense.frequency === 'yearly' ? expense.amount / 12 :
                             expense.frequency === 'weekly' ? expense.amount * 4.33 :
                             expense.frequency === 'daily' ? expense.amount * 30 : 0;
-        return sum + monthlyAmount;
+        
+        // Convert to user's preferred currency
+        const convertedAmount = convertToPreferredCurrency(
+          monthlyAmount,
+          expense.currency || "USD",
+          preferences.currency || "USD",
+          null
+        );
+        
+        return sum + convertedAmount;
       }, 0);
-  }, [recurringExpenses]);
+  }, [recurringExpenses, preferences.currency]);
 
   // Group expenses by category (using real categories from database)
   const expensesByCategory = useMemo(() => {
@@ -586,6 +601,7 @@ export default function Spending() {
                   
                   const isActive = expense.isActive !== false; // Default to true for backwards compatibility
                   const category = categories.find(c => c.id === expense.categoryId);
+                  const expenseCurrency = expense.currency || "USD";
                   
                   return (
                     <div 
@@ -611,7 +627,7 @@ export default function Spending() {
                           )}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">{formatCurrency(monthlyEquivalent, preferences.currency)}</span> per month
+                          <span className="font-medium text-foreground">{formatCurrency(monthlyEquivalent, expenseCurrency)}</span> per month
                           {expense.dayOfMonth && <span className="ml-2">• Day {expense.dayOfMonth}</span>}
                         </div>
                       </div>
@@ -696,6 +712,20 @@ export default function Spending() {
                   onChange={(e) => setRecurringAmount(e.target.value)}
                   placeholder="0.00"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="recurringCurrency">Currency</Label>
+                <Select value={recurringCurrency} onValueChange={setRecurringCurrency}>
+                  <SelectTrigger id="recurringCurrency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">🇺🇸 USD</SelectItem>
+                    <SelectItem value="BRL">🇧🇷 BRL</SelectItem>
+                    <SelectItem value="EUR">🇪🇺 EUR</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -795,6 +825,20 @@ export default function Spending() {
                   onChange={(e) => setRecurringAmount(e.target.value)}
                   placeholder="0.00"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editRecurringCurrency">Currency</Label>
+                <Select value={recurringCurrency} onValueChange={setRecurringCurrency}>
+                  <SelectTrigger id="editRecurringCurrency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">🇺🇸 USD</SelectItem>
+                    <SelectItem value="BRL">🇧🇷 BRL</SelectItem>
+                    <SelectItem value="EUR">🇪🇺 EUR</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

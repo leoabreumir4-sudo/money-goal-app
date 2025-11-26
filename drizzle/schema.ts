@@ -109,6 +109,7 @@ export const recurringExpenses = pgTable("recurringExpenses", {
   categoryId: integer("categoryId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   amount: integer("amount").notNull(), // Store as cents
+  currency: varchar("currency", { length: 3 }).default("USD"), // ISO currency code (USD, BRL, EUR, etc.)
   frequency: frequencyEnum("frequency").notNull(),
   isActive: boolean("isActive").notNull().default(true),
   dayOfMonth: integer("dayOfMonth").notNull().default(1), // Day of month when transaction should be created (1-31)
