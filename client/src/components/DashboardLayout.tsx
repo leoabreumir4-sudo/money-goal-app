@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, MessageSquare, PieChart, BarChart3, Archive, Settings as SettingsIcon } from "lucide-react";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
@@ -90,6 +91,9 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const { preferences, isLoading: preferencesLoading } = usePreferences();
+
+  // Restore scroll position when navigating
+  useScrollRestoration();
 
   useEffect(() => {
     if (isCollapsed) {

@@ -71,45 +71,12 @@ const CustomProjectionTooltip = ({
   const targetVal = data.target !== null ? data.target : activeGoal.targetAmount;
   const monthIdx = data.monthIndex;
 
-  if (data.avgReached || data.targetReached) {
-    return (
-      <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg">
-        <p className="font-semibold text-lg mb-3">{label} 🎉</p>
-        <div className="space-y-2 text-sm">
-          {data.targetReached && monthsToGoalTarget && (
-            <div className="flex items-start gap-2 bg-primary/10 p-2 rounded">
-              <div className="w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-primary">Expected Goal Reached!</p>
-                <p className="text-muted-foreground text-xs">Reached in {monthsToGoalTarget} months</p>
-              </div>
-            </div>
-          )}
-          {data.avgReached && monthsToGoalAvg && (
-            <div className="flex items-start gap-2 bg-blue-500/10 p-2 rounded">
-              <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-blue-500">Actual Goal Reached!</p>
-                <p className="text-muted-foreground text-xs">Reached in {monthsToGoalAvg} months</p>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Calculate which projection reaches goal first
-  const targetReachesFirst = monthsToGoalTarget && monthsToGoalAvg && monthsToGoalTarget < monthsToGoalAvg;
-  const fastestProjection = targetReachesFirst ? targetVal : avgVal;
-  const remaining = activeGoal.targetAmount - fastestProjection;
-  const monthsLeft = targetReachesFirst 
-    ? (monthsToGoalTarget || 0) - monthIdx 
-    : (monthsToGoalAvg || 0) - monthIdx;
+  // Check if at least one reached, but show progress of both
+  const anyReached = data.avgReached || data.targetReached;
 
   return (
     <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg min-w-[300px]">
-      <p className="font-semibold text-base mb-3">{label}</p>
+      <p className="font-semibold text-base mb-3">{label} {anyReached ? '🎉' : ''}</p>
       <p className="text-xs text-muted-foreground mb-3">
         {monthIdx === 0 ? 'Today (current month)' : `In ${monthIdx} ${monthIdx === 1 ? 'month' : 'months'} from now`}
       </p>
@@ -118,34 +85,65 @@ const CustomProjectionTooltip = ({
         <div className="flex items-center justify-between p-2 bg-primary/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-sm font-medium">Expected</span>
+            <span className="text-sm font-medium">Expected {data.targetReached && '✓'}</span>
           </div>
           <span className="font-semibold">{formatCurrency(targetVal, curr)}</span>
         </div>
         <div className="flex items-center justify-between p-2 bg-blue-500/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span className="text-sm font-medium">Actual</span>
+            <span className="text-sm font-medium">Actual {data.avgReached && '✓'}</span>
           </div>
           <span className="font-semibold">{formatCurrency(avgVal, curr)}</span>
         </div>
       </div>
 
-      {remaining > 0 && monthsLeft > 0 && (
-        <div className="border-t border-border pt-3 text-sm">
-          <div className="bg-muted/30 p-2 rounded space-y-1">
-            <p className="text-xs text-muted-foreground">
-              {targetReachesFirst ? '🎯 Target pace' : '📊 Average pace'} to reach goal:
-            </p>
-            <p className="font-medium">
-              {formatCurrency(remaining, curr)} remaining
-            </p>
-            <p className="text-xs text-muted-foreground">
-              ⏱️ About {monthsLeft} {monthsLeft === 1 ? 'month' : 'months'} left
-            </p>
-          </div>
+      {anyReached && (
+        <div className="border-t border-border pt-3 mb-3 space-y-2">
+          {data.targetReached && monthsToGoalTarget && (
+            <div className="flex items-start gap-2 bg-primary/10 p-2 rounded">
+              <div className="w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+              <div className="text-xs">
+                <p className="font-medium text-primary">Expected reached in {monthsToGoalTarget} months</p>
+              </div>
+            </div>
+          )}
+          {data.avgReached && monthsToGoalAvg && (
+            <div className="flex items-start gap-2 bg-blue-500/10 p-2 rounded">
+              <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+              <div className="text-xs">
+                <p className="font-medium text-blue-500">Actual reached in {monthsToGoalAvg} months</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
+
+      {!anyReached && (() => {
+        // Calculate which projection reaches goal first
+        const targetReachesFirst = monthsToGoalTarget && monthsToGoalAvg && monthsToGoalTarget < monthsToGoalAvg;
+        const fastestProjection = targetReachesFirst ? targetVal : avgVal;
+        const remaining = activeGoal.targetAmount - fastestProjection;
+        const monthsLeft = targetReachesFirst 
+          ? (monthsToGoalTarget || 0) - monthIdx 
+          : (monthsToGoalAvg || 0) - monthIdx;
+
+        return remaining > 0 && monthsLeft > 0 && (
+          <div className="border-t border-border pt-3 text-sm">
+            <div className="bg-muted/30 p-2 rounded space-y-1">
+              <p className="text-xs text-muted-foreground">
+                {targetReachesFirst ? '🎯 Target pace' : '📊 Average pace'} to reach goal:
+              </p>
+              <p className="font-medium">
+                {formatCurrency(remaining, curr)} remaining
+              </p>
+              <p className="text-xs text-muted-foreground">
+                ⏱️ About {monthsLeft} {monthsLeft === 1 ? 'month' : 'months'} left
+              </p>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -259,7 +257,7 @@ export default function Analytics() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/20">
+          <Card className="bg-primary/5 border-primary/20">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ArrowUp className="h-5 w-5 text-primary" />
@@ -267,12 +265,12 @@ export default function Analytics() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalIncome, curr)}</p>
+              <p className="text-3xl font-bold text-primary">{formatCurrency(totalIncome, curr)}</p>
               <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-destructive/20 to-destructive/5 border-destructive/20">
+          <Card className="bg-destructive/5 border-destructive/20">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <ArrowDown className="h-5 w-5 text-destructive" />
@@ -280,20 +278,20 @@ export default function Analytics() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-foreground">{formatCurrency(totalExpenses, curr)}</p>
+              <p className="text-3xl font-bold text-destructive">{formatCurrency(totalExpenses, curr)}</p>
               <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/20">
+          <Card className="bg-muted/30 border-border">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-accent" />
+                <TrendingUp className="h-5 w-5 text-green-500" />
                 <CardTitle className="text-sm text-muted-foreground">{t("netSavings", lang).toUpperCase()}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <p className={`text-3xl font-bold ${netFlow >= 0 ? 'text-primary' : 'text-destructive'}`}>
+              <p className={`text-3xl font-bold ${netFlow >= 0 ? 'text-green-500' : 'text-destructive'}`}>
                 {formatCurrency(netFlow, curr)}
               </p>
               <p className="text-sm text-muted-foreground">{t("positiveFlow", lang)}</p>
@@ -307,7 +305,7 @@ export default function Analytics() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
-              <AreaChart data={monthlyData}>
+              <AreaChart data={monthlyData} key={`monthly-${monthlyData.length}`}>
                 <defs>
                   <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
@@ -365,11 +363,11 @@ export default function Analytics() {
 
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">{t("monthlySavingTargetTitle", lang)}</CardTitle>
+            <CardTitle className="text-foreground">Set Your Monthly Savings Target</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="saving-target">Monthly Saving Goal</Label>
+              <Label htmlFor="saving-target">How much do you expect to save every month?</Label>
               <div className="flex gap-2 items-center">
                 <div className="relative max-w-xs">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
@@ -527,7 +525,7 @@ export default function Analytics() {
                   {/* Chart */}
                   <div className="mt-6">
                     <ResponsiveContainer width="100%" height={350}>
-                      <AreaChart data={projectionData}>
+                      <AreaChart data={projectionData} key={`projection-${projectionData.length}-${projectionPeriod}`}>
                         <defs>
                           <linearGradient id="colorAverage" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
