@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Trash, Edit } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from 'recharts';
@@ -19,6 +19,8 @@ const COLORS = ['#3b82f6', '#22c55e', '#14b8a6', '#ec4899', '#8b5cf6', '#f59e0b'
 export default function Spending() {
   const { preferences } = usePreferences();
   const [isAddRecurringModalOpen, setIsAddRecurringModalOpen] = useState(false);
+  const [isEditRecurringModalOpen, setIsEditRecurringModalOpen] = useState(false);
+  const [editingRecurring, setEditingRecurring] = useState<any>(null);
   const [recurringName, setRecurringName] = useState("");
   const [recurringAmount, setRecurringAmount] = useState("");
   const [recurringFrequency, setRecurringFrequency] = useState<"monthly" | "daily" | "weekly" | "yearly">("monthly");
@@ -41,6 +43,18 @@ export default function Spending() {
     },
   });
 
+  const updateRecurringMutation = trpc.recurringExpenses.update.useMutation({
+    onSuccess: () => {
+      utils.recurringExpenses.getAll.invalidate();
+      setIsEditRecurringModalOpen(false);
+      setEditingRecurring(null);
+      setRecurringName("");
+      setRecurringAmount("");
+      setRecurringFrequency("monthly");
+      toast.success("Recurring expense updated!");
+    },
+  });
+
   const deleteRecurringMutation = trpc.recurringExpenses.delete.useMutation({
     onSuccess: () => {
       utils.recurringExpenses.getAll.invalidate();
@@ -48,8 +62,36 @@ export default function Spending() {
     },
   });
 
+  const handleEditRecurring = (expense: any) => {
+    setEditingRecurring(expense);
+    setRecurringName(expense.name);
+    setRecurringAmount((expense.amount / 100).toString());
+    setRecurringFrequency(expense.frequency);
+    setIsEditRecurringModalOpen(true);
+  };
+
+  const handleUpdateRecurring = () => {
+    const amount = Math.round(parseFloat(recurringAmount) * 100);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error(t("pleaseEnterValidAmount", preferences.language));
+      return;
+    }
+    
+    if (!recurringName.trim()) {
+      toast.error(t("pleaseEnterName", preferences.language));
+      return;
+    }
+
+    updateRecurringMutation.mutate({
+      id: editingRecurring.id,
+      name: recurringName,
+      amount,
+      frequency: recurringFrequency,
+    });
+  };
+
   const handleAddRecurring = () => {
-    const amount = Math.round(parseFloat(recurringAmount));
+    const amount = Math.round(parseFloat(recurringAmount) * 100);
     if (isNaN(amount) || amount <= 0) {
       toast.error(t("pleaseEnterValidAmount", preferences.language));
       return;
@@ -66,7 +108,7 @@ export default function Spending() {
     createRecurringMutation.mutate({
       categoryId,
       name: recurringName,
-      amount,
+      amount: amount * 100,
       frequency: recurringFrequency,
     });
   };
@@ -150,23 +192,32 @@ export default function Spending() {
         {/* Recurring Expenses Summary Card */}
         {recurringExpenses.length > 0 && (
           <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">TOTAL MONTHLY RECURRING EXPENSES</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-purple-500">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
-              <p className="text-sm text-muted-foreground mt-2">
-                {recurringExpenses.length} {recurringExpenses.length === 1 ? 'recurring expense' : 'recurring expenses'} • Annual: {formatCurrency(totalMonthlyRecurring * 12, preferences.currency)}
-              </p>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Total Monthly Recurring Expenses
+                  </p>
+                  <div className="text-5xl font-bold text-purple-500">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">
+                    {recurringExpenses.length} {recurringExpenses.length === 1 ? 'expense' : 'expenses'}
+                  </p>
+                  <p className="text-lg font-semibold text-foreground mt-1">
+                    Annual: {formatCurrency(totalMonthlyRecurring * 12, preferences.currency)}
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
 
         {/* Filters */}
         <Card className="bg-card border-border">
-          <CardContent className="pt-6">
+          <CardContent className="py-4">
             <div className="flex flex-wrap gap-3 items-center">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Button
                   variant={filterType === "All" ? "default" : "outline"}
                   onClick={() => setFilterType("All")}
@@ -238,26 +289,37 @@ export default function Spending() {
                         fill="#8884d8"
                         dataKey="value"
                         strokeWidth={0}
+                        animationDuration={800}
+                        animationBegin={0}
                         activeShape={(props: any) => {
                           return (
-                            <Sector
-                              {...props}
-                              outerRadius={props.outerRadius + 8}
-                              innerRadius={props.innerRadius}
-                            />
+                            <g>
+                              <Sector
+                                {...props}
+                                outerRadius={props.outerRadius + 10}
+                                innerRadius={props.innerRadius}
+                                style={{ transition: 'all 0.3s ease-in-out' }}
+                              />
+                            </g>
                           );
                         }}
                       >
                         {pieChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={COLORS[index % COLORS.length]} 
+                            stroke="none"
+                            style={{ transition: 'all 0.3s ease-in-out' }}
+                          />
                         ))}
                       </Pie>
                       <Tooltip 
+                        wrapperStyle={{ zIndex: 10000 }}
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0];
                             return (
-                              <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-3 shadow-lg" style={{ zIndex: 9999 }}>
+                              <div className="bg-background border-2 border-border rounded-lg p-3 shadow-xl">
                                 <p className="font-semibold text-sm mb-1" style={{ color: data.payload.fill }}>
                                   {data.name}
                                 </p>
@@ -273,7 +335,7 @@ export default function Spending() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-center bg-background/80 backdrop-blur rounded-full p-6">
+                    <div className="text-center">
                       <div className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">{t("totalSpending", preferences.language)}</div>
                       <div className="text-3xl font-bold text-foreground">{formatCurrency(totalSpending, preferences.currency)}</div>
                     </div>
@@ -339,32 +401,57 @@ export default function Spending() {
               <CardTitle className="text-foreground">{t("recurringExpenses", preferences.language)}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {recurringExpenses.map(expense => (
-                  <div key={expense.id} className="flex justify-between items-center p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                    <div>
-                      <div className="font-medium text-foreground">{expense.name}</div>
-                      <div className="text-xs text-muted-foreground capitalize mt-0.5">{expense.frequency}</div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-lg font-bold text-destructive">
-                        {formatCurrency(expense.amount, preferences.currency)}
+              <div className="space-y-3">
+                {recurringExpenses.map(expense => {
+                  const monthlyEquivalent = expense.frequency === 'monthly' ? expense.amount :
+                                          expense.frequency === 'yearly' ? expense.amount / 12 :
+                                          expense.frequency === 'weekly' ? expense.amount * 4.33 :
+                                          expense.frequency === 'daily' ? expense.amount * 30 : expense.amount;
+                  
+                  return (
+                    <div key={expense.id} className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/50 transition-all hover:shadow-md bg-card">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <div className="font-semibold text-lg text-foreground">{expense.name}</div>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 font-medium capitalize">
+                            {expense.frequency}
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Monthly equivalent: <span className="font-medium text-foreground">{formatCurrency(monthlyEquivalent, preferences.currency)}</span>
+                        </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm(t("deleteRecurringConfirm", preferences.language))) {
-                            deleteRecurringMutation.mutate({ id: expense.id });
-                          }
-                        }}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Trash className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right mr-3">
+                          <div className="text-2xl font-bold text-destructive">
+                            {formatCurrency(expense.amount, preferences.currency)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">per {expense.frequency === 'monthly' ? 'month' : expense.frequency === 'yearly' ? 'year' : expense.frequency === 'weekly' ? 'week' : 'day'}</div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditRecurring(expense)}
+                          className="h-9 w-9 p-0"
+                        >
+                          <Edit className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm(t("deleteRecurringConfirm", preferences.language))) {
+                              deleteRecurringMutation.mutate({ id: expense.id });
+                            }
+                          }}
+                          className="h-9 w-9 p-0"
+                        >
+                          <Trash className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -445,6 +532,60 @@ export default function Spending() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddRecurringModalOpen(false)}>{t("cancel", preferences.language)}</Button>
               <Button onClick={handleAddRecurring}>{t("addExpense", preferences.language)}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Recurring Expense Modal */}
+        <Dialog open={isEditRecurringModalOpen} onOpenChange={setIsEditRecurringModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Recurring Expense</DialogTitle>
+              <DialogDescription>
+                Update the details of your recurring expense
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="editRecurringName">{t("name", preferences.language)}</Label>
+                <Input
+                  id="editRecurringName"
+                  value={recurringName}
+                  onChange={(e) => setRecurringName(e.target.value)}
+                  placeholder="e.g., Netflix, Gym Membership"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editRecurringAmount">{t("amount", preferences.language)}</Label>
+                <Input
+                  id="editRecurringAmount"
+                  type="number"
+                  step="0.01"
+                  value={recurringAmount}
+                  onChange={(e) => setRecurringAmount(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editRecurringFrequency">{t("frequency", preferences.language)}</Label>
+                <Select value={recurringFrequency} onValueChange={(v: any) => setRecurringFrequency(v)}>
+                  <SelectTrigger id="editRecurringFrequency">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">{t("daily", preferences.language)}</SelectItem>
+                    <SelectItem value="weekly">{t("weekly", preferences.language)}</SelectItem>
+                    <SelectItem value="monthly">{t("monthly", preferences.language)}</SelectItem>
+                    <SelectItem value="yearly">{t("yearly", preferences.language)}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditRecurringModalOpen(false)}>{t("cancel", preferences.language)}</Button>
+              <Button onClick={handleUpdateRecurring}>Update</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
