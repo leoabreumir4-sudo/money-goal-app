@@ -164,12 +164,14 @@ async function buildUserFinancialContext(userId: string) {
   if (!dbInstance) throw new Error("Database not available");
 
   // Get all user data in parallel
-  const [transactions, goals, recurringExpenses, categories, settings] = await Promise.all([
+  const [transactions, goals, recurringExpenses, categories, settings, projects, monthlyPayments] = await Promise.all([
     db.getAllTransactionsByUserId(userId),
     db.getGoalsByUserId(userId),
     db.getRecurringExpensesByUserId(userId),
     db.getCategoriesByUserId(userId),
     db.getUserSettings(userId),
+    db.getProjectsByUserId(userId),
+    db.getMonthlyPaymentsByUserId(userId),
   ]);
 
   const now = new Date();
@@ -253,6 +255,15 @@ async function buildUserFinancialContext(userId: string) {
 
   // Parse chat memories from settings
   const memories: string[] = settings?.chatMemory ? JSON.parse(settings.chatMemory) : [];
+
+  // AQWorlds work data (Artix Entertainment freelance projects)
+  const activeProjects = projects.filter((p: any) => p.status === 'active');
+  const currentMonthPayments = monthlyPayments.filter((p: any) => {
+    const paymentDate = new Date(p.month);
+    return paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear();
+  });
+  const totalProjectValue = activeProjects.reduce((sum: number, p: any) => sum + (p.monthlyValue || 0), 0);
+  const isPaidThisMonth = currentMonthPayments.some((p: any) => p.isPaid);
 
   return {
     // Overview
@@ -525,23 +536,20 @@ ${flowContext}
 CURRENT USER FINANCIAL PROFILE:
 ${JSON.stringify(financialContext, null, 2)}
 
-⚠️ CRITICAL - UNDERSTANDING THE DATA:
-The financial profile above contains TWO versions of each amount:
-1. **Formatted strings** (e.g., "avgMonthlyIncome": "$4,392.55") - Use THESE for display
-2. **Raw numbers** (e.g., "avgMonthlyIncomeRaw": 439255) - These are in CENTS, NOT dollars
+⚠️ CRITICAL - USER'S CURRENT FINANCIAL SUMMARY:
+These values are PRE-CALCULATED and VERIFIED. Copy them EXACTLY as shown:
 
-WHEN DOING CALCULATIONS:
-✅ ALWAYS use the FORMATTED string values (they're already in dollars/currency)
-❌ NEVER calculate with "Raw" values - they're in cents and will give wrong results
+📊 **Monthly Averages (Last 3 months):**
+- Income: ${financialContext.avgMonthlyIncome}
+- Expenses: ${financialContext.avgMonthlyExpenses}
+- Net Savings: ${financialContext.avgMonthlySavings}
+- Savings Rate: ${financialContext.savingsRate}
 
-Example:
-- avgMonthlyIncome = "$4,392.55" ✅ Use this
-- avgMonthlyIncomeRaw = 439255 ❌ This is 439,255 CENTS (internal storage)
+⚠️ DO NOT recalculate these values! They are already correct.
+The financial profile JSON below contains "Raw" values in CENTS - ignore them for calculations.
+USE ONLY the formatted values shown above (with $ symbols).
 
-The savingsRate is already calculated correctly: ${financialContext.savingsRate}
-Just use it directly - DO NOT recalculate!
-
-SALARY INFORMATION:
+SALARY & WORK INFORMATION:
 ${financialContext.hasSalary ? `✅ User has regular salary from ${financialContext.salarySource}
 - Average monthly salary: ${financialContext.avgMonthlySalary}
 - ${financialContext.salaryTransactionsCount} salary payments in last 3 months
@@ -549,6 +557,14 @@ ${financialContext.hasSalary ? `✅ User has regular salary from ${financialCont
 - Other income sources are SECONDARY (bonuses, side projects, etc.)` : `❌ No regular salary detected
 - All income appears to be from various sources
 - Treat income as variable/unstable`}
+
+🎮 AQWORLDS WORK CONTEXT:
+${financialContext.aqworlds.activeProjects > 0 ? `The user works as a freelance artist for Artix Entertainment (AQWorlds game):
+- Active Projects: ${financialContext.aqworlds.activeProjects} (${financialContext.aqworlds.projectNames})
+- Monthly Project Value: ${financialContext.aqworlds.totalMonthlyValue}
+- Payment Status: ${financialContext.aqworlds.paidThisMonth ? '✅ Paid this month' : '⏳ Awaiting payment'}
+- This is tracked separately in the AQWorlds Dashboard
+- Consider this work schedule when giving financial advice (project deadlines, event calendar)` : 'No active AQWorlds projects'}
 
 RESPONSE FORMAT:
 - Start with a brief analysis (1-2 sentences)
@@ -567,24 +583,26 @@ RESPONSE FORMAT:
 
 STRICT VALIDATION RULES (MUST FOLLOW):
 
-🔢 **MATH VALIDATION - SHOW YOUR WORK**:
-⚠️ CRITICAL: The savingsRate is ALREADY CALCULATED for you: ${financialContext.savingsRate}
-Just COPY this value directly - DO NOT recalculate it!
+🔢 **MATH VALIDATION - USE PRE-CALCULATED VALUES**:
+⚠️ **NEVER recalculate financial metrics!** All values are pre-calculated above.
 
-When showing calculations to the user, extract from formatted strings:
+When presenting to user, COPY these values directly:
    ✅ CORRECT Example:
-   "Your income: ${financialContext.avgMonthlyIncome}
-    Your expenses: ${financialContext.avgMonthlyExpenses}
-    Monthly savings: ${financialContext.avgMonthlySavings}
-    Savings rate: ${financialContext.savingsRate} ✅ (already calculated)"
+   "Sua renda mensal: ${financialContext.avgMonthlyIncome}
+    Seus gastos mensais: ${financialContext.avgMonthlyExpenses}
+    Poupança mensal: ${financialContext.avgMonthlySavings}
+    Taxa de poupança: ${financialContext.savingsRate} ✅"
    
    ❌ WRONG Example (NEVER DO THIS):
-   "I calculated your savings rate as -272%" (NEVER recalculate - use the provided value!)
+   "Taxa de poupança: -272%" (You calculated wrong! Use ${financialContext.savingsRate} instead!)
+   "Poupança: $-2630" (You used Raw cents! Use ${financialContext.avgMonthlySavings} instead!)
    
-   RULE: Use financialContext.savingsRate DIRECTLY
-         Use financialContext.avgMonthlySavings DIRECTLY
-         If avgMonthlySavings shows positive (e.g., "$79.99"), then savings is POSITIVE
-         If savingsRate shows positive (e.g., "1%"), then rate is POSITIVE
+CRITICAL RULES:
+1. Income = ${financialContext.avgMonthlyIncome} (NOT ${financialContext.avgMonthlyIncomeRaw / 100})
+2. Expenses = ${financialContext.avgMonthlyExpenses} (NOT ${financialContext.avgMonthlyExpensesRaw / 100})
+3. Savings = ${financialContext.avgMonthlySavings} (NOT income - expenses)
+4. Rate = ${financialContext.savingsRate} (NOT (savings/income)*100)
+5. If you see "Raw" in variable name → IGNORE IT (it's in cents, internal use only)
 
 📊 **DATA VALIDATION - USE ONLY PROVIDED DATA**:
 The user's ACTUAL spending categories are listed in topCategories array:
