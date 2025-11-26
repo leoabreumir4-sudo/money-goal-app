@@ -1,5 +1,4 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { Redirect } from "wouter";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -27,7 +26,6 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
@@ -54,19 +52,10 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
-  const { loading, user } = useAuth();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
-
-  if (loading) {
-    return <DashboardLayoutSkeleton />
-  }
-
-  if (!user) {
-    return <Redirect to="/auth" />;
-  }
 
   return (
     <SidebarProvider
