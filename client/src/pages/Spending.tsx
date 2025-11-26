@@ -9,7 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { Plus, Trash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from 'recharts';
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
@@ -232,14 +232,12 @@ export default function Spending() {
                         strokeWidth={0}
                         isAnimationActive={false}
                         activeShape={(props: any) => {
-                          const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
                           return (
-                            <g>
-                              <path
-                                d={`M ${cx},${cy} L ${cx + (outerRadius + 8) * Math.cos(-startAngle * Math.PI / 180)},${cy + (outerRadius + 8) * Math.sin(-startAngle * Math.PI / 180)} A ${outerRadius + 8},${outerRadius + 8} 0 ${endAngle - startAngle > 180 ? 1 : 0} 1 ${cx + (outerRadius + 8) * Math.cos(-endAngle * Math.PI / 180)},${cy + (outerRadius + 8) * Math.sin(-endAngle * Math.PI / 180)} L ${cx + innerRadius * Math.cos(-endAngle * Math.PI / 180)},${cy + innerRadius * Math.sin(-endAngle * Math.PI / 180)} A ${innerRadius},${innerRadius} 0 ${endAngle - startAngle > 180 ? 1 : 0} 0 ${cx + innerRadius * Math.cos(-startAngle * Math.PI / 180)},${cy + innerRadius * Math.sin(-startAngle * Math.PI / 180)} Z`}
-                                fill={fill}
-                              />
-                            </g>
+                            <Sector
+                              {...props}
+                              outerRadius={props.outerRadius + 8}
+                              innerRadius={props.innerRadius}
+                            />
                           );
                         }}
                       >
