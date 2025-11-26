@@ -180,6 +180,8 @@ async function buildUserFinancialContext(userId: string) {
   // Calculate financial metrics
   const recentTransactions = transactions.filter((t: any) => new Date(t.createdDate) >= threeMonthsAgo);
   
+  const monthsCount = Math.min(3, Math.ceil((now.getTime() - threeMonthsAgo.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+  
   // Detect salary from Artix Entertainment LLC income transactions
   const artixIncomeTransactions = recentTransactions.filter((t: any) => 
     t.type === "income" && 
@@ -199,7 +201,6 @@ async function buildUserFinancialContext(userId: string) {
     .filter((t: any) => t.type === "expense")
     .reduce((sum: number, t: any) => sum + t.amount, 0);
 
-  const monthsCount = Math.min(3, Math.ceil((now.getTime() - threeMonthsAgo.getTime()) / (1000 * 60 * 60 * 24 * 30)));
   const avgMonthlyIncome = monthsCount > 0 ? Math.round(income / monthsCount) : 0;
   const avgMonthlyExpenses = monthsCount > 0 ? Math.round(expenses / monthsCount) : 0;
   const avgMonthlySavings = avgMonthlyIncome - avgMonthlyExpenses;

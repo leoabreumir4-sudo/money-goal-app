@@ -111,15 +111,29 @@ export default function Chat() {
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
+    
+    // Show user message immediately (optimistic UI)
+    const optimisticUserMessage = {
+      id: Date.now(),
+      userId: "current",
+      role: "user" as const,
+      content: userMessage,
+      createdDate: new Date(),
+    };
+    
+    setMessages((prev) => [...prev, optimisticUserMessage]);
     setIsLoading(true);
 
     try {
       await chatMutation.mutateAsync({ message: userMessage });
       
-      // Refetch to get updated history
+      // Refetch to get updated history with AI response
       await refetch();
     } catch (error: any) {
       console.error("Chat error:", error);
+      
+      // Remove optimistic message on error
+      setMessages((prev) => prev.filter(m => m.id !== optimisticUserMessage.id));
       
       // Show specific error messages
       if (error.message?.includes("Rate limit")) {

@@ -181,36 +181,36 @@ export default function AIMessage({ content }: AIMessageProps) {
             remarkPlugins={[remarkGfm]}
             components={{
               // Custom styling for markdown elements
-              h1: ({ children }) => <h1 className="text-2xl font-bold mt-4 mb-2">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-xl font-bold mt-3 mb-2">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-lg font-semibold mt-2 mb-1">{children}</h3>,
-              p: ({ children }) => <p className="my-2 leading-relaxed">{children}</p>,
-              ul: ({ children }) => <ul className="list-disc list-inside my-2 space-y-1">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal list-inside my-2 space-y-1">{children}</ol>,
-              li: ({ children }) => <li className="ml-2">{children}</li>,
-              strong: ({ children }) => <strong className="font-bold text-primary">{children}</strong>,
-              em: ({ children }) => <em className="italic text-muted-foreground">{children}</em>,
+              h1: ({ children }) => <h1 className="text-xl font-semibold mt-4 mb-2">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-lg font-semibold mt-3 mb-2">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-base font-medium mt-2 mb-1">{children}</h3>,
+              p: ({ children }) => <p className="my-2 leading-relaxed font-normal">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc list-inside my-2 space-y-1 font-normal">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-inside my-2 space-y-1 font-normal">{children}</ol>,
+              li: ({ children }) => <li className="ml-2 font-normal">{children}</li>,
+              strong: ({ children }) => <strong className="font-semibold text-primary">{children}</strong>,
+              em: ({ children }) => <em className="italic text-muted-foreground font-normal">{children}</em>,
               code: ({ children }) => (
-                <code className="px-1.5 py-0.5 bg-secondary rounded text-sm font-mono">{children}</code>
+                <code className="px-1.5 py-0.5 bg-secondary rounded text-sm font-mono font-normal">{children}</code>
               ),
               pre: ({ children }) => (
-                <pre className="p-3 bg-secondary rounded-lg overflow-x-auto my-2">{children}</pre>
+                <pre className="p-3 bg-secondary rounded-lg overflow-x-auto my-2 font-normal">{children}</pre>
               ),
               blockquote: ({ children }) => (
-                <blockquote className="border-l-4 border-primary pl-4 italic my-2">{children}</blockquote>
+                <blockquote className="border-l-4 border-primary pl-4 italic my-2 font-normal">{children}</blockquote>
               ),
               table: ({ children }) => (
                 <div className="overflow-x-auto my-4">
-                  <table className="min-w-full border-collapse">{children}</table>
+                  <table className="min-w-full border-collapse font-normal">{children}</table>
                 </div>
               ),
               thead: ({ children }) => <thead className="bg-secondary">{children}</thead>,
               tbody: ({ children }) => <tbody className="divide-y divide-border">{children}</tbody>,
               tr: ({ children }) => <tr>{children}</tr>,
               th: ({ children }) => (
-                <th className="px-4 py-2 text-left font-semibold">{children}</th>
+                <th className="px-4 py-2 text-left font-medium text-sm">{children}</th>
               ),
-              td: ({ children }) => <td className="px-4 py-2">{children}</td>,
+              td: ({ children }) => <td className="px-4 py-2 text-sm font-normal">{children}</td>,
             }}
           >
             {part.content}
