@@ -7,6 +7,7 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  googleApiKey: process.env.GOOGLE_API_KEY ?? "AIzaSyDlzBesSH_l_Xj7ivU3YEzTjoCHvu3qc5Q",
   plaidClientId: process.env.PLAID_CLIENT_ID ?? "",
   plaidSecret: process.env.PLAID_SECRET ?? "",
   plaidEnv: process.env.PLAID_ENV ?? "sandbox",

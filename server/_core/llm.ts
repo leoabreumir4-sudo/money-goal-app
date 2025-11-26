@@ -209,14 +209,15 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+const resolveApiUrl = () => {
+  // Use Google AI Studio API instead of Forge
+  const apiKey = ENV.forgeApiKey || ENV.googleApiKey;
+  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+};
 
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+  if (!ENV.forgeApiKey && !ENV.googleApiKey) {
+    throw new Error("GOOGLE_API_KEY or FORGE_API_KEY is not configured");
   }
 };
 
@@ -268,55 +269,49 @@ const normalizeResponseFormat = ({
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   assertApiKey();
 
-  const {
-    messages,
-    tools,
-    toolChoice,
-    tool_choice,
-    outputSchema,
-    output_schema,
-    responseFormat,
-    response_format,
-  } = params;
+  const { messages } = params;
 
-  const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
-    messages: messages.map(normalizeMessage),
-  };
+  // Convert messages to Google Gemini format
+  const systemMessage = messages.find(m => m.role === "system");
+  const conversationMessages = messages.filter(m => m.role !== "system");
 
-  if (tools && tools.length > 0) {
-    payload.tools = tools;
-  }
-
-  const normalizedToolChoice = normalizeToolChoice(
-    toolChoice || tool_choice,
-    tools
-  );
-  if (normalizedToolChoice) {
-    payload.tool_choice = normalizedToolChoice;
-  }
-
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
-
-  const normalizedResponseFormat = normalizeResponseFormat({
-    responseFormat,
-    response_format,
-    outputSchema,
-    output_schema,
+  const contents = conversationMessages.map(msg => {
+    const role = msg.role === "assistant" ? "model" : "user";
+    const content = typeof msg.content === "string" 
+      ? msg.content 
+      : Array.isArray(msg.content) 
+        ? msg.content.map(c => typeof c === "string" ? c : c.type === "text" ? c.text : "").join("\n")
+        : "";
+    
+    return {
+      role,
+      parts: [{ text: content }]
+    };
   });
 
-  if (normalizedResponseFormat) {
-    payload.response_format = normalizedResponseFormat;
+  // Prepend system instruction as first user message if exists
+  if (systemMessage) {
+    const systemContent = typeof systemMessage.content === "string" 
+      ? systemMessage.content 
+      : "";
+    contents.unshift({
+      role: "user",
+      parts: [{ text: `SYSTEM INSTRUCTIONS:\n${systemContent}\n\n---\n\nNow respond to the following:` }]
+    });
   }
+
+  const payload = {
+    contents,
+    generationConfig: {
+      maxOutputTokens: 2048,
+      temperature: 0.7,
+    }
+  };
 
   const response = await fetch(resolveApiUrl(), {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
     },
     body: JSON.stringify(payload),
   });
@@ -328,5 +323,27 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     );
   }
 
-  return (await response.json()) as InvokeResult;
+  const data = await response.json();
+
+  // Convert Google Gemini response to OpenAI format
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  
+  return {
+    id: "gemini-" + Date.now(),
+    created: Math.floor(Date.now() / 1000),
+    model: "gemini-2.0-flash-exp",
+    choices: [{
+      index: 0,
+      message: {
+        role: "assistant",
+        content: text,
+      },
+      finish_reason: data.candidates?.[0]?.finishReason || "stop",
+    }],
+    usage: {
+      prompt_tokens: data.usageMetadata?.promptTokenCount || 0,
+      completion_tokens: data.usageMetadata?.candidatesTokenCount || 0,
+      total_tokens: data.usageMetadata?.totalTokenCount || 0,
+    }
+  } as InvokeResult;
 }
