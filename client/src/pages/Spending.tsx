@@ -135,10 +135,10 @@ export default function Spending() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="p-8 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">{t("spendingAnalysis", preferences.language)}</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t("spendingAnalysis", preferences.language)}</h1>
             <p className="text-muted-foreground">{t("seeWhereMoney", preferences.language)}</p>
           </div>
           <Button onClick={() => setIsAddRecurringModalOpen(true)} className="bg-purple-600 hover:bg-purple-700">
@@ -147,70 +147,78 @@ export default function Spending() {
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-4 items-center">
-          <div className="flex gap-2">
-            <Button
-              variant={filterType === "All" ? "default" : "outline"}
-              onClick={() => setFilterType("All")}
-            >
-              {t("all", preferences.language)}
-            </Button>
-            <Button
-              variant={filterType === "By Category" ? "default" : "outline"}
-              onClick={() => setFilterType("By Category")}
-            >
-              {t("byCategory", preferences.language)}
-            </Button>
-            <Button
-              variant={filterType === "Fixed vs Variable" ? "default" : "outline"}
-              onClick={() => setFilterType("Fixed vs Variable")}
-            >
-              {t("fixedVsVariable", preferences.language)}
-            </Button>
-          </div>
-
-          <Select defaultValue="This Month">
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="This Month">{t("thisMonth", preferences.language)}</SelectItem>
-              <SelectItem value="Last Month">{t("lastMonth", preferences.language)}</SelectItem>
-              <SelectItem value="Last 3 Months">{t("last3Months", preferences.language)}</SelectItem>
-              <SelectItem value="This Year">{t("thisYear", preferences.language)}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant={showOnlyRecurring ? "default" : "outline"}
-            onClick={() => setShowOnlyRecurring(!showOnlyRecurring)}
-          >
-            {t("showOnlyRecurring", preferences.language)}
-          </Button>
-        </div>
-
-        {/* Recurring Expenses Summary */}
+        {/* Recurring Expenses Summary Card */}
         {recurringExpenses.length > 0 && (
-          <Card className="bg-purple-500/10 border-purple-500/20">
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Monthly Recurring Expenses</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">TOTAL MONTHLY RECURRING EXPENSES</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-purple-500">{formatCurrency(totalMonthlyRecurring / 100, preferences.currency)}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {recurringExpenses.length} {recurringExpenses.length === 1 ? 'recurring expense' : 'recurring expenses'} • Annual: {formatCurrency(totalMonthlyRecurring * 12 / 100, preferences.currency)}
+              <div className="text-4xl font-bold text-purple-500">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
+              <p className="text-sm text-muted-foreground mt-2">
+                {recurringExpenses.length} {recurringExpenses.length === 1 ? 'recurring expense' : 'recurring expenses'} • Annual: {formatCurrency(totalMonthlyRecurring * 12, preferences.currency)}
               </p>
             </CardContent>
           </Card>
         )}
 
+        {/* Filters */}
+        <Card className="bg-card border-border">
+          <CardContent className="pt-6">
+            <div className="flex flex-wrap gap-3 items-center">
+              <div className="flex gap-2">
+                <Button
+                  variant={filterType === "All" ? "default" : "outline"}
+                  onClick={() => setFilterType("All")}
+                  size="sm"
+                >
+                  {t("all", preferences.language)}
+                </Button>
+                <Button
+                  variant={filterType === "By Category" ? "default" : "outline"}
+                  onClick={() => setFilterType("By Category")}
+                  size="sm"
+                >
+                  {t("byCategory", preferences.language)}
+                </Button>
+                <Button
+                  variant={filterType === "Fixed vs Variable" ? "default" : "outline"}
+                  onClick={() => setFilterType("Fixed vs Variable")}
+                  size="sm"
+                >
+                  {t("fixedVsVariable", preferences.language)}
+                </Button>
+              </div>
+
+              <Select defaultValue="This Month">
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="This Month">{t("thisMonth", preferences.language)}</SelectItem>
+                  <SelectItem value="Last Month">{t("lastMonth", preferences.language)}</SelectItem>
+                  <SelectItem value="Last 3 Months">{t("last3Months", preferences.language)}</SelectItem>
+                  <SelectItem value="This Year">{t("thisYear", preferences.language)}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant={showOnlyRecurring ? "default" : "outline"}
+                onClick={() => setShowOnlyRecurring(!showOnlyRecurring)}
+                size="sm"
+              >
+                {t("showOnlyRecurring", preferences.language)}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Spending Distribution (Pie Chart) */}
-          <Card>
+          <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle>{t("spendingDistribution", preferences.language)}</CardTitle>
+              <CardTitle className="text-foreground">{t("spendingDistribution", preferences.language)}</CardTitle>
             </CardHeader>
             <CardContent>
               {pieChartData.length === 0 ? (
@@ -230,7 +238,6 @@ export default function Spending() {
                         fill="#8884d8"
                         dataKey="value"
                         strokeWidth={0}
-                        isAnimationActive={false}
                         activeShape={(props: any) => {
                           return (
                             <Sector
@@ -250,17 +257,11 @@ export default function Spending() {
                           if (active && payload && payload.length) {
                             const data = payload[0];
                             return (
-                              <div style={{
-                                backgroundColor: '#1f2937',
-                                border: '1px solid #374151',
-                                borderRadius: '8px',
-                                padding: '8px 12px',
-                                zIndex: 9999
-                              }}>
-                                <p style={{ color: data.payload.fill, fontWeight: 'bold', margin: 0 }}>
+                              <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-3 shadow-lg" style={{ zIndex: 9999 }}>
+                                <p className="font-semibold text-sm mb-1" style={{ color: data.payload.fill }}>
                                   {data.name}
                                 </p>
-                                <p style={{ color: '#f3f4f6', margin: '4px 0 0 0' }}>
+                                <p className="text-lg font-bold text-foreground">
                                   {formatCurrency(data.value as number, preferences.currency)}
                                 </p>
                               </div>
@@ -271,10 +272,10 @@ export default function Spending() {
                       />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
-                    <div className="text-center">
-                      <div className="text-sm text-muted-foreground mb-1">{t("totalSpending", preferences.language)}</div>
-                      <div className="text-2xl font-bold">{formatCurrency(totalSpending, preferences.currency)}</div>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center bg-background/80 backdrop-blur rounded-full p-6">
+                      <div className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">{t("totalSpending", preferences.language)}</div>
+                      <div className="text-3xl font-bold text-foreground">{formatCurrency(totalSpending, preferences.currency)}</div>
                     </div>
                   </div>
                 </div>
@@ -283,12 +284,12 @@ export default function Spending() {
           </Card>
 
           {/* By Category */}
-          <Card>
+          <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle>{t("byCategory", preferences.language)}</CardTitle>
+              <CardTitle className="text-foreground">{t("byCategory", preferences.language)}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {expensesByCategory.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
                     {t("noExpensesYet", preferences.language)}
@@ -303,16 +304,17 @@ export default function Spending() {
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <div 
-                              className="w-3 h-3 rounded-full" 
+                              className="w-3 h-3 rounded-full flex-shrink-0" 
                               style={{ backgroundColor: color }}
                             />
-                            <span className="font-medium">{item.name}</span>
+                            <span className="font-medium text-sm">{item.name}</span>
                           </div>
-                          <div className="text-right">
-                            <div className="font-bold">{formatCurrency(item.value, preferences.currency)} • {percentage.toFixed(1)}%</div>
+                          <div className="text-right flex items-center gap-2">
+                            <span className="font-bold text-foreground">{formatCurrency(item.value, preferences.currency)}</span>
+                            <span className="text-xs text-muted-foreground">• {percentage.toFixed(1)}%</span>
                           </div>
                         </div>
-                        <div className="w-full bg-secondary rounded-full h-2">
+                        <div className="w-full bg-secondary/50 rounded-full h-2">
                           <div
                             className="h-2 rounded-full transition-all"
                             style={{ 
@@ -331,23 +333,21 @@ export default function Spending() {
         </div>
 
         {/* Recurring Expenses */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("recurringExpenses", preferences.language)}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recurringExpenses.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">{t("noRecurringExpenses", preferences.language)}</p>
-              ) : (
-                recurringExpenses.map(expense => (
-                  <div key={expense.id} className="flex justify-between items-center p-4 rounded-lg border">
+        {recurringExpenses.length > 0 && (
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-foreground">{t("recurringExpenses", preferences.language)}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {recurringExpenses.map(expense => (
+                  <div key={expense.id} className="flex justify-between items-center p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
                     <div>
-                      <div className="font-medium">{expense.name}</div>
-                      <div className="text-sm text-muted-foreground capitalize">{expense.frequency}</div>
+                      <div className="font-medium text-foreground">{expense.name}</div>
+                      <div className="text-xs text-muted-foreground capitalize mt-0.5">{expense.frequency}</div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-lg font-bold text-red-500">
+                    <div className="flex items-center gap-3">
+                      <div className="text-lg font-bold text-destructive">
                         {formatCurrency(expense.amount, preferences.currency)}
                       </div>
                       <Button
@@ -358,16 +358,17 @@ export default function Spending() {
                             deleteRecurringMutation.mutate({ id: expense.id });
                           }
                         }}
+                        className="h-8 w-8 p-0"
                       >
-                        <Trash className="h-4 w-4" />
+                        <Trash className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </Button>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Insights */}
         <Card>

@@ -428,7 +428,7 @@ export default function AQWorlds() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="p-8 space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
