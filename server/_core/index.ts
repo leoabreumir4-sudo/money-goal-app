@@ -10,6 +10,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { startRecurringExpenseScheduler } from "./scheduler";
 
 /**
  * Utility: check if a TCP port is available on this machine.
@@ -152,6 +153,9 @@ async function startServer() {
   const server = createServer(app);
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${port}/`);
+    
+    // Start the recurring expense scheduler
+    startRecurringExpenseScheduler();
   });
 }
 

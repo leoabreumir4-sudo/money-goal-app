@@ -43,6 +43,13 @@
       "when": 1764107307359,
       "tag": "0005_classy_exodus",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1764168428400,
+      "tag": "0006_demonic_donald_blake",
+      "breakpoints": true
     }
   ]
 }

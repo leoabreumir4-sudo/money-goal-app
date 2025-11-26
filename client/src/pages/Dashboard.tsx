@@ -33,6 +33,11 @@ export default function Dashboard() {
   const [newGoalTarget, setNewGoalTarget] = useState("");
   const [editGoalName, setEditGoalName] = useState("");
   const [editGoalTarget, setEditGoalTarget] = useState("");
+  
+  // Transaction filters
+  const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const utils = trpc.useUtils();
   const { data: activeGoal, isLoading: goalLoading } = trpc.goals.getActive.useQuery();
@@ -205,9 +210,43 @@ export default function Dashboard() {
 
   const recentTransactions = useMemo(() => {
     if (!activeGoal) return [];
-    return transactions
-      .filter(t => t.goalId === activeGoal.id);
-  }, [transactions, activeGoal]);
+    
+    let filtered = transactions.filter(t => t.goalId === activeGoal.id);
+    
+    // Filter by month
+    if (filterMonth !== "all") {
+      const now = new Date();
+      filtered = filtered.filter(t => {
+        const txDate = new Date(t.createdDate);
+        
+        switch (filterMonth) {
+          case "this-month":
+            return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+          case "last-month":
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            return txDate.getMonth() === lastMonth.getMonth() && txDate.getFullYear() === lastMonth.getFullYear();
+          case "last-3-months":
+            const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+            return txDate >= threeMonthsAgo;
+          default:
+            return true;
+        }
+      });
+    }
+    
+    // Filter by category
+    if (filterCategory !== "all") {
+      filtered = filtered.filter(t => t.categoryId?.toString() === filterCategory);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(t => t.reason.toLowerCase().includes(query));
+    }
+    
+    return filtered;
+  }, [transactions, activeGoal, filterMonth, filterCategory, searchQuery]);
 
   const progressPercentage = activeGoal 
     ? Math.min(Math.round((activeGoal.currentAmount / activeGoal.targetAmount) * 100), 100)
@@ -363,6 +402,38 @@ export default function Dashboard() {
             <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="text-foreground">{t('recentTransactions', preferences.language)}</CardTitle>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Input
+                    placeholder="Search transactions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <Select value={filterMonth} onValueChange={setFilterMonth}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="this-month">This Month</SelectItem>
+                      <SelectItem value="last-month">Last Month</SelectItem>
+                      <SelectItem value="last-3-months">Last 3 Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map(category => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.emoji} {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 {recentTransactions.length === 0 ? (

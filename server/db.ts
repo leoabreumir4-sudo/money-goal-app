@@ -105,6 +105,25 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 }
 
 // ---------- CORREÇÃO: Selecionar explicitamente campos essenciais para evitar erro de mapeamento do Drizzle ORM ----------
+export async function getAllUsers() {
+  const db = getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get all users: database not available");
+    return [];
+  }
+
+  const result = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      email: users.email,
+      name: users.name,
+    })
+    .from(users);
+
+  return result;
+}
+
 export async function getUserByEmail(email: string) {
   const db = getDb();
   if (!db) {

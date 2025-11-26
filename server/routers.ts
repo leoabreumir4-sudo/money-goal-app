@@ -294,6 +294,7 @@ export const appRouter = router({
         amount: z.number(),
         frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
         isActive: z.boolean().optional(),
+        dayOfMonth: z.number().min(1).max(31).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         await db.createRecurringExpense({
@@ -311,6 +312,7 @@ export const appRouter = router({
         amount: z.number().optional(),
         frequency: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
         isActive: z.boolean().optional(),
+        dayOfMonth: z.number().min(1).max(31).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;

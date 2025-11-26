@@ -43,7 +43,7 @@ VALUES
   (NULL, 'Education', '📚', '#a855f7', ARRAY['udemy', 'coursera', 'skillshare', 'linkedin learning', 'masterclass', 'pluralsight', 'books', 'livro', 'school', 'university', 'course', 'tutorial', 'education'], TRUE, NOW()),
   
   -- Income
-  (NULL, 'Income', '💰', '#22c55e', ARRAY['salary', 'salario', 'payment', 'pagamento', 'freelance', 'bonus', 'refund', 'cashback', 'dividend', 'interest', 'reward'], TRUE, NOW()),
+  (NULL, 'Income', '💰', '#22c55e', ARRAY['salary', 'salario', 'payment', 'pagamento', 'freelance', 'bonus', 'refund', 'cashback', 'dividend', 'interest', 'reward', 'artix'], TRUE, NOW()),
   
   -- Transfer
   (NULL, 'Transfer', '↔️', '#64748b', ARRAY['transfer', 'transferencia', 'transferred', 'bank transfer', 'wire', 'p2p', 'pix'], TRUE, NOW()),

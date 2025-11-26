@@ -111,6 +111,7 @@ export const recurringExpenses = pgTable("recurringExpenses", {
   amount: integer("amount").notNull(), // Store as cents
   frequency: frequencyEnum("frequency").notNull(),
   isActive: boolean("isActive").notNull().default(true),
+  dayOfMonth: integer("dayOfMonth").notNull().default(1), // Day of month when transaction should be created (1-31)
   createdDate: timestamp("createdDate").defaultNow().notNull(),
 });
 

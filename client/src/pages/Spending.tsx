@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import { Plus, Trash, Edit, TrendingDown, DollarSign, Calendar, BarChart3 } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -46,6 +47,9 @@ export default function Spending() {
   const [recurringName, setRecurringName] = useState("");
   const [recurringAmount, setRecurringAmount] = useState("");
   const [recurringFrequency, setRecurringFrequency] = useState<"monthly" | "daily" | "weekly" | "yearly">("monthly");
+  const [recurringDayOfMonth, setRecurringDayOfMonth] = useState(1);
+  const [recurringCategoryId, setRecurringCategoryId] = useState<number>(1);
+  const [recurringIsActive, setRecurringIsActive] = useState(true);
   const [filterType, setFilterType] = useState("All");
   const [showOnlyRecurring, setShowOnlyRecurring] = useState(false);
 
@@ -71,6 +75,9 @@ export default function Spending() {
       setRecurringName("");
       setRecurringAmount("");
       setRecurringFrequency("monthly");
+      setRecurringDayOfMonth(1);
+      setRecurringCategoryId(categories[0]?.id || 1);
+      setRecurringIsActive(true);
       toast.success(t("recurringExpenseAdded", preferences.language));
     },
   });
@@ -83,6 +90,9 @@ export default function Spending() {
       setRecurringName("");
       setRecurringAmount("");
       setRecurringFrequency("monthly");
+      setRecurringDayOfMonth(1);
+      setRecurringCategoryId(categories[0]?.id || 1);
+      setRecurringIsActive(true);
       toast.success("Recurring expense updated!");
     },
   });
@@ -99,6 +109,9 @@ export default function Spending() {
     setRecurringName(expense.name);
     setRecurringAmount((expense.amount / 100).toString());
     setRecurringFrequency(expense.frequency);
+    setRecurringDayOfMonth(expense.dayOfMonth || 1);
+    setRecurringCategoryId(expense.categoryId);
+    setRecurringIsActive(expense.isActive ?? true);
     setIsEditRecurringModalOpen(true);
   };
 
@@ -127,6 +140,9 @@ export default function Spending() {
       name: recurringName,
       amount,
       frequency: recurringFrequency,
+      dayOfMonth: recurringDayOfMonth,
+      categoryId: recurringCategoryId,
+      isActive: recurringIsActive,
     });
   };
 
@@ -142,20 +158,43 @@ export default function Spending() {
       return;
     }
 
-    // Use first category or create a default one
-    const categoryId = categories[0]?.id || 1;
-
     createRecurringMutation.mutate({
-      categoryId,
+      categoryId: recurringCategoryId,
       name: recurringName,
-      amount: amount * 100,
+      amount,
       frequency: recurringFrequency,
+      dayOfMonth: recurringDayOfMonth,
+      isActive: recurringIsActive,
     });
   };
 
   const expenseTransactions = useMemo(() => {
-    return transactions.filter(t => t.type === "expense");
-  }, [transactions]);
+    const now = new Date();
+    const expenses = transactions.filter(t => t.type === "expense");
+    
+    if (selectedPeriod === "All Time") {
+      return expenses;
+    }
+    
+    return expenses.filter(t => {
+      const txDate = new Date(t.createdDate);
+      
+      switch (selectedPeriod) {
+        case "This Month":
+          return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+        case "Last Month":
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          return txDate.getMonth() === lastMonth.getMonth() && txDate.getFullYear() === lastMonth.getFullYear();
+        case "Last 3 Months":
+          const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+          return txDate >= threeMonthsAgo;
+        case "This Year":
+          return txDate.getFullYear() === now.getFullYear();
+        default:
+          return true;
+      }
+    });
+  }, [transactions, selectedPeriod]);
 
   const totalSpending = useMemo(() => {
     // Convert all transactions to user's preferred currency
@@ -169,27 +208,31 @@ export default function Spending() {
       return sum + convertedAmount;
     }, 0);
     
-    // Add monthly recurring to total (already in user's preferred currency)
-    const recurringTotal = recurringExpenses.reduce((sum, expense) => {
-      const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
-                          expense.frequency === 'yearly' ? expense.amount / 12 :
-                          expense.frequency === 'weekly' ? expense.amount * 4.33 :
-                          expense.frequency === 'daily' ? expense.amount * 30 : 0;
-      return sum + monthlyAmount;
-    }, 0);
+    // Add monthly recurring to total (only active ones, already in user's preferred currency)
+    const recurringTotal = recurringExpenses
+      .filter(expense => expense.isActive !== false)
+      .reduce((sum, expense) => {
+        const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
+                            expense.frequency === 'yearly' ? expense.amount / 12 :
+                            expense.frequency === 'weekly' ? expense.amount * 4.33 :
+                            expense.frequency === 'daily' ? expense.amount * 30 : 0;
+        return sum + monthlyAmount;
+      }, 0);
     return transactionsTotal + recurringTotal;
   }, [expenseTransactions, recurringExpenses, preferences.currency]);
 
-  // Calculate total monthly recurring expenses
+  // Calculate total monthly recurring expenses (only active ones)
   const totalMonthlyRecurring = useMemo(() => {
-    return recurringExpenses.reduce((sum, expense) => {
-      // Convert all to monthly amount
-      const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
-                          expense.frequency === 'yearly' ? expense.amount / 12 :
-                          expense.frequency === 'weekly' ? expense.amount * 4.33 :
-                          expense.frequency === 'daily' ? expense.amount * 30 : 0;
-      return sum + monthlyAmount;
-    }, 0);
+    return recurringExpenses
+      .filter(expense => expense.isActive !== false) // Include active expenses (undefined counts as active for backwards compatibility)
+      .reduce((sum, expense) => {
+        // Convert all to monthly amount
+        const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
+                            expense.frequency === 'yearly' ? expense.amount / 12 :
+                            expense.frequency === 'weekly' ? expense.amount * 4.33 :
+                            expense.frequency === 'daily' ? expense.amount * 30 : 0;
+        return sum + monthlyAmount;
+      }, 0);
   }, [recurringExpenses]);
 
   // Group expenses by category (using real categories from database)
@@ -221,24 +264,26 @@ export default function Spending() {
       });
     }
     
-    // Add recurring expenses (converted to monthly)
-    recurringExpenses.forEach(expense => {
-      const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
-                          expense.frequency === 'yearly' ? expense.amount / 12 :
-                          expense.frequency === 'weekly' ? expense.amount * 4.33 :
-                          expense.frequency === 'daily' ? expense.amount * 30 : 0;
-      
-      const category = categories.find(c => c.id === expense.categoryId);
-      const categoryId = expense.categoryId;
-      const categoryName = category?.name || "Other";
-      const categoryEmoji = category?.emoji || "📦";
-      const categoryColor = category?.color || "#94a3b8";
-      
-      if (!grouped[categoryId]) {
-        grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
-      }
-      grouped[categoryId].value += monthlyAmount;
-    });
+    // Add recurring expenses (converted to monthly, only active ones)
+    recurringExpenses
+      .filter(expense => expense.isActive !== false)
+      .forEach(expense => {
+        const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
+                            expense.frequency === 'yearly' ? expense.amount / 12 :
+                            expense.frequency === 'weekly' ? expense.amount * 4.33 :
+                            expense.frequency === 'daily' ? expense.amount * 30 : 0;
+        
+        const category = categories.find(c => c.id === expense.categoryId);
+        const categoryId = expense.categoryId;
+        const categoryName = category?.name || "Other";
+        const categoryEmoji = category?.emoji || "📦";
+        const categoryColor = category?.color || "#94a3b8";
+        
+        if (!grouped[categoryId]) {
+          grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
+        }
+        grouped[categoryId].value += monthlyAmount;
+      });
     
     return Object.values(grouped)
       .sort((a, b) => b.value - a.value);
@@ -332,6 +377,7 @@ export default function Spending() {
                   <SelectItem value="Last Month">{t("lastMonth", preferences.language)}</SelectItem>
                   <SelectItem value="Last 3 Months">{t("last3Months", preferences.language)}</SelectItem>
                   <SelectItem value="This Year">{t("thisYear", preferences.language)}</SelectItem>
+                  <SelectItem value="All Time">All Time</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -493,21 +539,35 @@ export default function Spending() {
                                           expense.frequency === 'weekly' ? expense.amount * 4.33 :
                                           expense.frequency === 'daily' ? expense.amount * 30 : expense.amount;
                   
+                  const isActive = expense.isActive !== false; // Default to true for backwards compatibility
+                  const category = categories.find(c => c.id === expense.categoryId);
+                  
                   return (
                     <div 
                       key={expense.id} 
                       onClick={() => handleEditRecurring(expense)}
-                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-destructive/50 transition-all hover:shadow-md bg-card cursor-pointer"
+                      className={`flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-md bg-card cursor-pointer ${
+                        isActive 
+                          ? 'border-border hover:border-destructive/50' 
+                          : 'border-muted opacity-60 hover:opacity-100'
+                      }`}
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
+                          {category && <span className="text-lg">{category.emoji}</span>}
                           <div className="font-semibold text-lg text-foreground">{expense.name}</div>
                           <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium capitalize">
                             {expense.frequency}
                           </span>
+                          {!isActive && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">
+                              Inactive
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           <span className="font-medium text-foreground">{formatCurrency(monthlyEquivalent, preferences.currency)}</span> per month
+                          {expense.dayOfMonth && <span className="ml-2">• Day {expense.dayOfMonth}</span>}
                         </div>
                       </div>
                     </div>
@@ -564,6 +624,25 @@ export default function Spending() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="recurringCategory">Category</Label>
+                <Select 
+                  value={recurringCategoryId.toString()} 
+                  onValueChange={(v) => setRecurringCategoryId(parseInt(v))}
+                >
+                  <SelectTrigger id="recurringCategory">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.emoji} {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="recurringAmount">{t("amount", preferences.language)}</Label>
                 <Input
                   id="recurringAmount"
@@ -587,6 +666,33 @@ export default function Spending() {
                     <SelectItem value="yearly">{t("yearly", preferences.language)}</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="recurringDayOfMonth">Day of Month (1-31)</Label>
+                <Input
+                  id="recurringDayOfMonth"
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={recurringDayOfMonth}
+                  onChange={(e) => setRecurringDayOfMonth(parseInt(e.target.value) || 1)}
+                  placeholder="1"
+                />
+              </div>
+
+              <div className="flex items-center justify-between space-x-2 py-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="recurringActive">Active</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically create transactions on the specified day
+                  </p>
+                </div>
+                <Switch
+                  id="recurringActive"
+                  checked={recurringIsActive}
+                  onCheckedChange={setRecurringIsActive}
+                />
               </div>
             </div>
             <DialogFooter>
@@ -617,6 +723,25 @@ export default function Spending() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="editRecurringCategory">Category</Label>
+                <Select 
+                  value={recurringCategoryId.toString()} 
+                  onValueChange={(v) => setRecurringCategoryId(parseInt(v))}
+                >
+                  <SelectTrigger id="editRecurringCategory">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.emoji} {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="editRecurringAmount">{t("amount", preferences.language)}</Label>
                 <Input
                   id="editRecurringAmount"
@@ -640,6 +765,33 @@ export default function Spending() {
                     <SelectItem value="yearly">{t("yearly", preferences.language)}</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editRecurringDayOfMonth">Day of Month (1-31)</Label>
+                <Input
+                  id="editRecurringDayOfMonth"
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={recurringDayOfMonth}
+                  onChange={(e) => setRecurringDayOfMonth(parseInt(e.target.value) || 1)}
+                  placeholder="1"
+                />
+              </div>
+
+              <div className="flex items-center justify-between space-x-2 py-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="editRecurringActive">Active</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically create transactions on the specified day
+                  </p>
+                </div>
+                <Switch
+                  id="editRecurringActive"
+                  checked={recurringIsActive}
+                  onCheckedChange={setRecurringIsActive}
+                />
               </div>
             </div>
             <DialogFooter className="flex justify-between">
