@@ -14,7 +14,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 
-const COLORS = ['#22c55e', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+const COLORS = ['#3b82f6', '#22c55e', '#14b8a6', '#ec4899', '#8b5cf6', '#f59e0b', '#06b6d4', '#f97316'];
 
 export default function Spending() {
   const { preferences } = usePreferences();
@@ -218,29 +218,41 @@ export default function Spending() {
                   {t("noSpendingData", preferences.language)}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <ResponsiveContainer width="100%" height={300}>
+                <div className="relative">
+                  <ResponsiveContainer width="100%" height={350}>
                     <PieChart>
                       <Pie
                         data={pieChartData}
                         cx="50%"
                         cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
+                        innerRadius={90}
+                        outerRadius={130}
                         fill="#8884d8"
                         dataKey="value"
+                        paddingAngle={3}
+                        strokeWidth={0}
                         isAnimationActive={false}
                       >
                         {pieChartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                      <Tooltip 
+                        formatter={(value: number) => formatCurrency(value, preferences.currency)}
+                        contentStyle={{ 
+                          backgroundColor: '#1f2937', 
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          padding: '8px 12px'
+                        }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="text-center">
-                    <div className="text-sm text-muted-foreground">{t("totalSpending", preferences.language)}</div>
-                    <div className="text-3xl font-bold">{formatCurrency(totalSpending / 100, preferences.currency)}</div>
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center">
+                      <div className="text-sm text-muted-foreground mb-1">{t("totalSpending", preferences.language)}</div>
+                      <div className="text-2xl font-bold">{formatCurrency(totalSpending / 100, preferences.currency)}</div>
+                    </div>
                   </div>
                 </div>
               )}
