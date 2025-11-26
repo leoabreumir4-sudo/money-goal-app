@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { formatNumber } from "@/lib/currency";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 const months = [
   "January", "February", "March", "April", "May", "June",
@@ -428,14 +427,13 @@ export default function AQWorlds() {
   }, [calcAvgValue, calcNumProjects]);
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
-              <p className="text-muted-foreground">{user?.name || 'Artist'} - Artist Projects</p>
-            </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
+            <p className="text-muted-foreground">{user?.name || 'Artist'} - Artist Projects</p>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsCalculatorModalOpen(true)}>
               <Calculator className="mr-2 h-4 w-4" />
@@ -747,24 +745,14 @@ export default function AQWorlds() {
               ) : monthEvents.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">No events for this month</div>
               ) : (
-                <Droppable droppableId="events">
-                  {(provided) => (
-                    <div 
-                      {...provided.droppableProps} 
-                      ref={provided.innerRef}
-                      className="space-y-2 max-h-[400px] overflow-y-auto pr-2"
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                  {monthEvents.filter(event => event && event.id).map((event) => (
+                    <div
+                      key={event.id}
+                      className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors group"
+                      onMouseEnter={() => setHoveredEventId(event.id)}
+                      onMouseLeave={() => setHoveredEventId(null)}
                     >
-                      {monthEvents.filter(event => event && event.id).map((event, index) => (
-                        <Draggable key={event.id} draggableId={String(event.id)} index={index}>
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/50 transition-colors group"
-                              onMouseEnter={() => setHoveredEventId(event.id)}
-                              onMouseLeave={() => setHoveredEventId(null)}
-                            >
                               <Checkbox
                                 checked={event.isSelected === 1}
                                 onCheckedChange={() => handleToggleEvent(event.id)}
@@ -818,14 +806,9 @@ export default function AQWorlds() {
                                 </div>
                               )}
                             </div>
-                          )}
-                        </Draggable>
-                      ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                )}
+                        ))}
+                </div>
+              )}
 
                 {/* Add Custom Event */}
                 <div className="border-t pt-4 space-y-3">
@@ -985,6 +968,5 @@ export default function AQWorlds() {
         </Dialog>
       </div>
     </DashboardLayout>
-    </DragDropContext>
   );
 }
