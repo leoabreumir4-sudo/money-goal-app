@@ -68,7 +68,9 @@ const CustomProjectionTooltip = ({
   return (
     <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg min-w-[300px]">
       <p className="font-semibold text-base mb-3">{label}</p>
-      <p className="text-xs text-muted-foreground mb-3">In {monthIdx} {monthIdx === 1 ? 'month' : 'months'} from now</p>
+      <p className="text-xs text-muted-foreground mb-3">
+        {monthIdx === 0 ? 'Today (current month)' : `In ${monthIdx} ${monthIdx === 1 ? 'month' : 'months'} from now`}
+      </p>
       
       <div className="space-y-2 mb-3">
         <div className="flex items-center justify-between p-2 bg-primary/5 rounded">
