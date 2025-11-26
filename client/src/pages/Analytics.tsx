@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { ArrowDown, ArrowUp, TrendingUp, Target, Wallet } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
@@ -111,9 +111,8 @@ export default function Analytics() {
   const { data: activeGoal } = trpc.goals.getActive.useQuery();
 
   const updateSettingsMutation = trpc.settings.update.useMutation({
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       utils.settings.get.invalidate();
-      setSavingTarget((variables.monthlySavingTarget / 100).toString()); // Mantém valor salvo
       toast.success(t("savingTargetUpdated", lang));
     },
   });
@@ -185,6 +184,13 @@ export default function Analytics() {
   }, [monthlyData]);
 
   const currentTarget = settings?.monthlySavingTarget || 0;
+
+  // Initialize savingTarget when settings load
+  useEffect(() => {
+    if (settings?.monthlySavingTarget) {
+      setSavingTarget((settings.monthlySavingTarget / 100).toString());
+    }
+  }, [settings?.monthlySavingTarget]);
 
   return (
     <DashboardLayout>
@@ -348,7 +354,8 @@ export default function Analytics() {
               // Inclui saldo Wise no valor inicial
               const wiseBalance = activeGoal.wiseBalance || 0;
               const avgSaving = averageMonthlySaving;
-              const targetSaving = currentTarget;
+              // Use currentTarget if available, otherwise use avgSaving as fallback
+              const targetSaving = currentTarget > 0 ? currentTarget : avgSaving;
               const initialAmount = activeGoal.currentAmount + wiseBalance;
               const remaining = activeGoal.targetAmount - initialAmount;
 
