@@ -10,7 +10,7 @@ import { Calculator, Plus, Pencil, Trash2, Check, Edit } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatNumber } from "@/lib/currency";
 
 const months = [

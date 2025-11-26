@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Redirect } from "wouter";
 import FullPageLoader from "./FullPageLoader";
 import { ComponentType } from "react";
