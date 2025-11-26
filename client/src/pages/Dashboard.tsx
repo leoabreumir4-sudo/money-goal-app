@@ -208,8 +208,7 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="p-8 space-y-6">
         {/* Header with Action Buttons */}
-        <div className="flex justify-between items-center gap-4">
-          <h1 className="text-3xl font-bold text-foreground">{t('dashboard', preferences.language)}</h1>
+        <div className="flex justify-end items-center gap-4">
           <div className="flex gap-3">
             <Dialog open={isIncomeModalOpen} onOpenChange={setIsIncomeModalOpen}>
               <DialogTrigger asChild>
