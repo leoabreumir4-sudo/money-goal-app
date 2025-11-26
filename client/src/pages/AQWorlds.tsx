@@ -191,8 +191,8 @@ export default function AQWorlds() {
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
       utils.events.getAll.invalidate();
-      setNewEventName("");
-      toast.success("Event added successfully!");
+      setEventName("");
+      toast.success(t("eventAddedSuccess", preferences.language));
     },
   });
 

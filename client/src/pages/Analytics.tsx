@@ -28,10 +28,10 @@ export default function Analytics() {
     },
   });
 
-  const handleSaveTarget = () => {
+  const handleSaveSavingTarget = () => {
     const target = Math.round(parseFloat(savingTarget) * 100);
-    if (isNaN(target) || target < 0) {
-      toast.error("Please enter a valid amount");
+    if (isNaN(target) || target <= 0) {
+      toast.error(t("pleaseEnterValidAmount", preferences.language));
       return;
     }
 

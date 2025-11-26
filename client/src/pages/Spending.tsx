@@ -51,12 +51,12 @@ export default function Spending() {
   const handleAddRecurring = () => {
     const amount = Math.round(parseFloat(recurringAmount) * 100);
     if (isNaN(amount) || amount <= 0) {
-      toast.error("Please enter a valid amount");
+      toast.error(t("pleaseEnterValidAmount", preferences.language));
       return;
     }
     
     if (!recurringName.trim()) {
-      toast.error("Please enter a name");
+      toast.error(t("pleaseEnterName", preferences.language));
       return;
     }
 

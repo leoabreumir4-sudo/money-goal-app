@@ -201,7 +201,7 @@ function DashboardLayoutContent({
                       <item.icon
                         className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
                       />
-                      <span>{label}</span>
+                      <span className={isActive ? "text-primary" : ""}>{label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -234,7 +234,7 @@ function DashboardLayoutContent({
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>{t("signOut", preferences.language)}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

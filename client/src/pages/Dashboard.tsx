@@ -49,7 +49,7 @@ export default function Dashboard() {
     onSuccess: () => {
       utils.goals.getActive.invalidate();
       setIsEditGoalModalOpen(false);
-      toast.success("Goal updated successfully!");
+      toast.success(t("goalUpdatedSuccess", preferences.language));
     },
   });
 
@@ -138,14 +138,14 @@ export default function Dashboard() {
   };
 
   const handleCreateGoal = () => {
-    const targetAmount = Math.round(parseFloat(newGoalTarget) * 100);
+    const targetAmount = Math.round(parseFloat(goalTarget) * 100);
     if (isNaN(targetAmount) || targetAmount <= 0) {
-      toast.error("Please enter a valid target amount");
+      toast.error(t("pleaseEnterValidTarget", preferences.language));
       return;
     }
     
-    if (!newGoalName.trim()) {
-      toast.error("Please enter a goal name");
+    if (!goalName.trim()) {
+      toast.error(t("pleaseEnterGoalName", preferences.language));
       return;
     }
 
