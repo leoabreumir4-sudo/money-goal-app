@@ -180,6 +180,17 @@ async function buildUserFinancialContext(userId: string) {
   // Calculate financial metrics
   const recentTransactions = transactions.filter((t: any) => new Date(t.createdDate) >= threeMonthsAgo);
   
+  // Detect salary from Artix Entertainment LLC income transactions
+  const artixIncomeTransactions = recentTransactions.filter((t: any) => 
+    t.type === "income" && 
+    t.reason && 
+    t.reason.toLowerCase().includes("artix entertainment")
+  );
+  
+  const hasSalary = artixIncomeTransactions.length > 0;
+  const totalSalaryIncome = artixIncomeTransactions.reduce((sum: number, t: any) => sum + t.amount, 0);
+  const avgMonthlySalary = hasSalary && monthsCount > 0 ? Math.round(totalSalaryIncome / monthsCount) : 0;
+  
   const income = recentTransactions
     .filter((t: any) => t.type === "income")
     .reduce((sum: number, t: any) => sum + t.amount, 0);
@@ -302,6 +313,13 @@ async function buildUserFinancialContext(userId: string) {
     // Transaction count
     totalTransactions: transactions.length,
     recentTransactionsCount: recentTransactions.length,
+    
+    // Salary information (Artix Entertainment LLC)
+    hasSalary,
+    avgMonthlySalary: hasSalary ? formatMoney(avgMonthlySalary) : null,
+    avgMonthlySalaryRaw: hasSalary ? avgMonthlySalary : null,
+    salarySource: hasSalary ? "Artix Entertainment LLC" : null,
+    salaryTransactionsCount: artixIncomeTransactions.length,
     
     // Date context
     currentMonth,
@@ -505,6 +523,15 @@ ${flowContext}
 
 CURRENT USER FINANCIAL PROFILE:
 ${JSON.stringify(financialContext, null, 2)}
+
+SALARY INFORMATION:
+${financialContext.hasSalary ? `✅ User has regular salary from ${financialContext.salarySource}
+- Average monthly salary: ${financialContext.avgMonthlySalary}
+- ${financialContext.salaryTransactionsCount} salary payments in last 3 months
+- This is the user's PRIMARY income source - treat it as stable recurring income
+- Other income sources are SECONDARY (bonuses, side projects, etc.)` : `❌ No regular salary detected
+- All income appears to be from various sources
+- Treat income as variable/unstable`}
 
 RESPONSE FORMAT:
 - Start with a brief analysis (1-2 sentences)
