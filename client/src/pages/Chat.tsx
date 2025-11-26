@@ -76,7 +76,9 @@ export default function Chat() {
   
   const { data: chatHistory = [], refetch } = trpc.chat.getHistory.useQuery();
   const { data: suggestedPrompts = [] } = trpc.chat.getSuggestedPrompts.useQuery();
-  const { data: welcomeData } = trpc.chat.getWelcomeInsights.useQuery();
+  // Temporarily disabled to avoid quota issues
+  // const { data: welcomeData } = trpc.chat.getWelcomeInsights.useQuery();
+  const welcomeData = null;
   const chatMutation = trpc.chat.sendMessage.useMutation();
   const clearHistoryMutation = trpc.chat.clearHistory.useMutation();
 
