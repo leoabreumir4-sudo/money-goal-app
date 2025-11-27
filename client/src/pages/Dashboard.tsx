@@ -375,7 +375,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </DialogHeader>
-                <div className="space-y-4 pt-2">
+                <div className="space-y-4 px-6 pb-2">
                   <div className="space-y-2">
                     <Label htmlFor="income-amount">Amount ({preferences.currency})</Label>
                     <Input
@@ -450,7 +450,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </DialogHeader>
-                <div className="space-y-4 pt-2">
+                <div className="space-y-4 px-6 pb-2">
                   <div className="space-y-2">
                     <Label htmlFor="expense-amount">Amount ({preferences.currency})</Label>
                     <Input
@@ -994,7 +994,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </DialogHeader>
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4 px-6 pb-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-transaction-amount">Amount ({editingTransaction?.currency || preferences.currency})</Label>
                 <Input

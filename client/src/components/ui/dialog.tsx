@@ -124,7 +124,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-top-[2%] data-[state=open]:slide-in-from-top-[2%] fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-border/50 shadow-2xl p-0 duration-300 sm:max-w-lg overflow-hidden",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-top-[2%] data-[state=open]:slide-in-from-top-[2%] fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-border/50 shadow-2xl p-0 duration-150 sm:max-w-lg overflow-hidden",
           className
         )}
         onEscapeKeyDown={handleEscapeKeyDown}
@@ -149,7 +149,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2.5 text-center sm:text-left px-6 pt-6 pb-2", className)}
+      className={cn("flex flex-col gap-2.5 text-center sm:text-left px-6 pt-6 pb-4", className)}
       {...props}
     />
   );
@@ -160,7 +160,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-3 sm:flex-row sm:justify-end px-6 pb-6 pt-2 bg-muted/30 border-t border-border/50",
+        "flex flex-col-reverse gap-3 sm:flex-row sm:justify-end px-6 pb-6 pt-4 bg-muted/30 border-t border-border/50",
         className
       )}
       {...props}

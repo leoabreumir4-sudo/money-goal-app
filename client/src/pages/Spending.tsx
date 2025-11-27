@@ -695,7 +695,7 @@ export default function Spending() {
                 {t("addRecurringExpenseDesc", preferences.language)}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 px-6 pb-2">
               <div className="space-y-2">
                 <Label htmlFor="recurringName">{t("name", preferences.language)}</Label>
                 <Input
@@ -809,7 +809,7 @@ export default function Spending() {
                 Update the details of your recurring expense or delete it
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 px-6 pb-2">
               <div className="space-y-2">
                 <Label htmlFor="editRecurringName">{t("name", preferences.language)}</Label>
                 <Input
@@ -937,7 +937,7 @@ export default function Spending() {
                 </div>
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 mt-4">
+            <div className="space-y-3 px-6 pb-4">
               {categoryTransactions.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">No transactions in this category</p>
               ) : (
