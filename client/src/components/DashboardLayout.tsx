@@ -179,29 +179,7 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-2 relative">
-              {/* Active indicator background with smooth transition */}
-              <div 
-                className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg transition-all duration-300 ease-out pointer-events-none"
-                style={{
-                  top: (() => {
-                    const activeIndex = menuItems.findIndex(item => location === item.path);
-                    if (activeIndex === -1) return '8px';
-                    
-                    // Calculate position considering dividers
-                    let position = 8; // Initial padding
-                    for (let i = 0; i < activeIndex; i++) {
-                      position += 48; // Item height (h-11 = 44px + mb-1 = 4px)
-                      // Add divider height after items 1 and 4 (AQWorlds and Analytics)
-                      if (i === 1 || i === 4) {
-                        position += 20; // Divider height (my-2 = 8px top + 8px bottom + 1px height + spacing)
-                      }
-                    }
-                    return `${position}px`;
-                  })(),
-                  opacity: menuItems.some(item => location === item.path) ? 1 : 0
-                }}
-              />
+            <SidebarMenu className="px-2 py-2">
               {menuItems.map((item, index) => {
                 const isActive = location === item.path;
                 const label = 'labelKey' in item ? t(item.labelKey, preferences?.language || 'en') : item.label;
@@ -211,7 +189,9 @@ function DashboardLayoutContent({
                     <SidebarMenuItem>
                       <button
                         onClick={() => setLocation(item.path)}
-                        className="h-11 mb-1 w-full transition-all duration-200 font-medium rounded-lg group relative z-10 flex items-center gap-2 px-3"
+                        className={`h-11 mb-1 w-full transition-all duration-300 font-medium rounded-lg group relative flex items-center gap-2 px-3 ${
+                          isActive ? 'bg-primary/10' : ''
+                        }`}
                       >
                         {isActive && (
                           <div className="absolute left-0 w-0.5 h-6 bg-primary rounded-full" />
