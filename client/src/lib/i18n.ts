@@ -274,6 +274,11 @@ export const translations = {
     wiseSyncFailed: "Failed to sync Wise transactions",
     csvImportSuccess: "Imported {0} transactions ({1} duplicates skipped)",
     csvImportFailed: "Failed to import CSV",
+    balances: "balances",
+    clearWise: "Clear Wise",
+    wiseTransactionsRemoved: "Wise transactions removed successfully",
+    errorRemovingWiseTransactions: "Error removing Wise transactions",
+    warningZeroBalance: "Warning: {0} balance is 0. Synchronization may fail if there are no transactions in this period.",
     
     // Settings descriptions
     customizeExperience: "Customize your MoneyGoal experience",
@@ -555,6 +560,11 @@ export const translations = {
     wiseSyncFailed: "Falha ao sincronizar transações Wise",
     csvImportSuccess: "Importadas {0} transações ({1} duplicadas ignoradas)",
     csvImportFailed: "Falha ao importar CSV",
+    balances: "saldos",
+    clearWise: "Limpar Wise",
+    wiseTransactionsRemoved: "Transações Wise removidas com sucesso",
+    errorRemovingWiseTransactions: "Erro ao remover transações Wise",
+    warningZeroBalance: "Aviso: saldo de {0} é 0. A sincronização pode falhar se não houver transações neste período.",
     
     // Settings descriptions
     customizeExperience: "Personalize sua experiência MoneyGoal",
@@ -845,6 +855,11 @@ export const translations = {
     wiseSyncFailed: "Fallo al sincronizar transacciones Wise",
     csvImportSuccess: "Importadas {0} transacciones ({1} duplicadas omitidas)",
     csvImportFailed: "Fallo al importar CSV",
+    balances: "saldos",
+    clearWise: "Limpiar Wise",
+    wiseTransactionsRemoved: "Transacciones Wise eliminadas exitosamente",
+    errorRemovingWiseTransactions: "Error al eliminar transacciones Wise",
+    warningZeroBalance: "Advertencia: saldo de {0} es 0. La sincronización puede fallar si no hay transacciones en este período.",
     
     // Settings descriptions
     customizeExperience: "Personaliza tu experiencia MoneyGoal",

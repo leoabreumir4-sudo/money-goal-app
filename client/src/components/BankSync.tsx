@@ -87,12 +87,12 @@ export function BankSync({ goalId }: BankSyncProps) {
   // Clear Wise transactions mutation
   const clearWiseMutation = trpc.csv.clearWiseTransactions.useMutation({
     onSuccess: () => {
-      toast.success('Transações Wise removidas com sucesso');
+      toast.success(t('wiseTransactionsRemoved', preferences.language));
       utils.transactions.getAll.invalidate();
       utils.goals.getActive.invalidate();
     },
     onError: (error) => {
-      toast.error(error.message || 'Erro ao remover transações Wise');
+      toast.error(error.message || t('errorRemovingWiseTransactions', preferences.language));
     },
   });
 
@@ -134,7 +134,7 @@ export function BankSync({ goalId }: BankSyncProps) {
     // Check if selected currency has balance
     const selectedBalance = balances.find((b: any) => b.currency === currency);
     if (selectedBalance && selectedBalance.amount === 0) {
-      toast.warning(`Warning: ${currency} balance is 0. Synchronization may fail if there are no transactions in this period.`);
+      toast.warning(t('warningZeroBalance', preferences.language).replace('{0}', currency));
     }
     
     wiseSyncMutation.mutate({
@@ -193,7 +193,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                 <div className="flex items-center gap-2">
                   {!isWiseNotConfigured && convertedBalances.length > 0 && (
                     <div className="text-right mr-2">
-                      <div className="text-xs text-muted-foreground">{balances.filter((b: any) => b.amount > 0).length} balances</div>
+                      <div className="text-xs text-muted-foreground">{balances.filter((b: any) => b.amount > 0).length} {t('balances', preferences.language)}</div>
                     </div>
                   )}
                   {isOpen ? (
@@ -288,7 +288,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                       disabled={clearWiseMutation.isPending}
                       className="gap-2"
                     >
-                      {preferences.language === 'pt' ? 'Limpar Wise' : 'Clear Wise'}
+                      {t('clearWise', preferences.language)}
                     </Button>
                     <Button
                       onClick={() => fileInputRef.current?.click()}
