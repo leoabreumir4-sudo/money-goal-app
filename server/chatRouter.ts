@@ -3,6 +3,7 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { convertCurrency } from "./_core/currency";
+import { getProfiles, getBalances } from "./_core/wise";
 
 /**
  * Detect language from user message using simple keyword matching and character patterns
@@ -310,8 +311,31 @@ async function buildUserFinancialContext(userId: string) {
   // Get user's monthly savings target
   const monthlySavingTarget = settings?.monthlySavingTarget || 0;
 
-  // Wise balance would come from API (not implemented yet)
-  const wiseBalance = 0; // TODO: Implement Wise API integration
+  // Get Wise balance if API token is available
+  let wiseBalance = 0;
+  if (settings?.wiseApiToken) {
+    try {
+      const profiles = await getProfiles(settings.wiseApiToken);
+      if (profiles.length > 0) {
+        const balances = await getBalances(settings.wiseApiToken, profiles[0].id);
+        // Sum all balances, converting to preferred currency
+        for (const balance of balances) {
+          if (balance.balanceType === 'STANDARD') {
+            const amountInCents = Math.round(balance.amount.value * 100);
+            const converted = await convertCurrency(
+              amountInCents,
+              balance.currency,
+              preferredCurrency
+            );
+            wiseBalance += converted;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[Wise API] Failed to fetch balance:', error);
+      // Continue without Wise balance if API fails
+    }
+  }
 
   // Create simplified context WITHOUT raw cent values to prevent AI confusion
   const simplifiedContext = {
