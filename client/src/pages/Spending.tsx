@@ -377,15 +377,15 @@ export default function Spending() {
             <CardContent className="py-4">
               <div className="flex items-center justify-between h-full">
                 <div className="flex items-center gap-4">
-                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <Skeleton className="h-14 w-14 rounded-full" />
                   <div className="space-y-2">
-                    <Skeleton className="h-3 w-48" />
-                    <Skeleton className="h-10 w-32" />
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-28" />
                   </div>
                 </div>
                 <div className="text-right space-y-2">
-                  <Skeleton className="h-4 w-24 ml-auto" />
-                  <Skeleton className="h-5 w-32 ml-auto" />
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-28" />
                 </div>
               </div>
             </CardContent>

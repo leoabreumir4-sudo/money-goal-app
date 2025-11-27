@@ -174,6 +174,7 @@ export default function Analytics() {
   const { preferences } = usePreferences();
   const lang = preferences?.language || 'en';
   const curr = preferences?.currency || 'USD';
+  const numberFormat = preferences?.numberFormat || 'en-US';
   
   const [savingTarget, setSavingTarget] = useState("");
   const [projectionPeriod, setProjectionPeriod] = useState<'3M' | '6M' | '12M' | 'GOAL'>('GOAL');
@@ -304,14 +305,14 @@ export default function Analytics() {
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="bg-muted/30 border-border">
                   <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-5 w-5 rounded" />
-                      <Skeleton className="h-4 w-24" />
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-lg" />
+                      <Skeleton className="h-5 w-28" />
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-9 w-32 mb-2" />
-                    <Skeleton className="h-4 w-24" />
+                  <CardContent className="space-y-2">
+                    <Skeleton className="h-8 w-28" />
+                    <Skeleton className="h-3 w-20" />
                   </CardContent>
                 </Card>
               ))}
@@ -319,10 +320,10 @@ export default function Analytics() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-6 w-52" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-[300px] w-full" />
+                  <Skeleton className="h-[300px] w-full rounded-lg" />
                 </CardContent>
               </Card>
               <Card className="bg-card border-border">
@@ -330,7 +331,7 @@ export default function Analytics() {
                   <Skeleton className="h-6 w-48" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-[300px] w-full" />
+                  <Skeleton className="h-[300px] w-full rounded-lg" />
                 </CardContent>
               </Card>
             </div>
@@ -470,7 +471,7 @@ export default function Analytics() {
                         return;
                       }
                       const numericValue = parseInt(rawValue, 10);
-                      const formatted = (numericValue / 100).toLocaleString('en-US', {
+                      const formatted = (numericValue / 100).toLocaleString(numberFormat, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       });

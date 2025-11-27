@@ -2,6 +2,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Graphik Font Family */
 @font-face {
   font-family: 'Graphik';

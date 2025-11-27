@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatNumber } from "@/lib/currency";
 import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import { t } from "@/lib/i18n";
 
 const months = [
   "January", "February", "March", "April", "May", "June",
@@ -33,9 +34,6 @@ function MonthlyStatusButtonComponent({ month, year, totalAmount }: { month: num
       enabled: !loading && !!user,
       retry: false,
       refetchOnWindowFocus: false,
-      onError: (err) => {
-        console.error('[MonthlyStatusButton] Query error:', err.message);
-      },
     }
   );
   
@@ -95,14 +93,14 @@ export default function AQWorlds() {
   
   const [projectName, setProjectName] = useState("");
   const { preferences } = usePreferences();
-  const projectAmountInput = useCurrencyInput('', preferences.numberFormat);
+  const projectAmountInput = useCurrencyInput('', (preferences.numberFormat || 'en-US') as "en-US" | "pt-BR");
   const [projectMonth, setProjectMonth] = useState<number | undefined>(undefined);
   const [projectYear, setProjectYear] = useState(new Date().getFullYear());
   
   const [newEventName, setNewEventName] = useState("");
-  const calcAvgValueInput = useCurrencyInput('', preferences.numberFormat);
-  const calcNumProjectsInput = useCurrencyInput('', preferences.numberFormat);
-  const editProjectAmountInput = useCurrencyInput('', preferences.numberFormat);
+  const calcAvgValueInput = useCurrencyInput('', (preferences.numberFormat || 'en-US') as "en-US" | "pt-BR");
+  const calcNumProjectsInput = useCurrencyInput('', (preferences.numberFormat || 'en-US') as "en-US" | "pt-BR");
+  const editProjectAmountInput = useCurrencyInput('', (preferences.numberFormat || 'en-US') as "en-US" | "pt-BR");
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [monthlyStatusYear, setMonthlyStatusYear] = useState(new Date().getFullYear());
@@ -121,27 +119,13 @@ export default function AQWorlds() {
   const { data: projects = [], isLoading: projectsLoading, error: projectsError } = trpc.projects.getAll.useQuery(undefined, {
     enabled: !!user && !loading,
     retry: false,
-    onError: (err) => {
-      console.error('[AQWorlds] Projects query error:', err.message);
-      if (err.message.includes('UNAUTHORIZED')) {
-        // Token is invalid, clear it and redirect
-        localStorage.removeItem('sessionToken');
-        window.location.href = '/auth';
-      }
-    },
   });
   const { data: events = [], isLoading: eventsLoading, error: eventsError } = trpc.events.getAll.useQuery(undefined, {
     enabled: !!user && !loading,
     retry: false,
-    onError: (err) => {
-      console.error('[AQWorlds] Events query error:', err.message);
-      if (err.message.includes('UNAUTHORIZED')) {
-        // Token is invalid, clear it and redirect
-        localStorage.removeItem('sessionToken');
-        window.location.href = '/auth';
-      }
-    },
   });
+  
+  const isLoading = projectsLoading || eventsLoading;
   
   // Don't render content until auth is loaded
   if (loading) {
@@ -196,7 +180,7 @@ export default function AQWorlds() {
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
       utils.events.getAll.invalidate();
-      setEventName("");
+      setNewEventName("");
       toast.success(t("eventAddedSuccess", preferences.language));
     },
   });
@@ -458,10 +442,11 @@ export default function AQWorlds() {
             {[1, 2, 3, 4].map((i) => (
               <Card key={i} className="bg-muted/30 border-border">
                 <CardHeader className="pb-3">
-                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-36" />
                 </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-9 w-24" />
+                <CardContent className="space-y-2">
+                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-3 w-24" />
                 </CardContent>
               </Card>
             ))}
@@ -510,15 +495,15 @@ export default function AQWorlds() {
         {isLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i}>
+              <Card key={i} className="bg-muted/20 border-border">
                 <CardHeader>
-                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-6 w-40" />
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-4 w-3/5" />
                   </div>
                 </CardContent>
               </Card>
@@ -620,19 +605,20 @@ export default function AQWorlds() {
         {isLoading ? (
           <Card>
             <CardHeader>
-              <Skeleton className="h-6 w-64" />
+              <Skeleton className="h-7 w-72" />
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 12 }).map((_, i) => (
-                  <Card key={i}>
-                    <CardHeader className="pb-2">
-                      <Skeleton className="h-5 w-24" />
+                  <Card key={i} className="bg-muted/20 border-border">
+                    <CardHeader className="pb-3">
+                      <Skeleton className="h-5 w-28" />
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-2">
                         <Skeleton className="h-3 w-full" />
-                        <Skeleton className="h-3 w-3/4" />
+                        <Skeleton className="h-3 w-4/5" />
+                        <Skeleton className="h-3 w-3/5" />
                       </div>
                     </CardContent>
                   </Card>
@@ -697,17 +683,17 @@ export default function AQWorlds() {
         {isLoading ? (
           <Card>
             <CardHeader>
-              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-7 w-40" />
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex justify-between items-center p-3 rounded-lg border">
+                  <div key={i} className="flex justify-between items-center p-4 rounded-lg border border-border bg-muted/20">
                     <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-4 w-36" />
+                      <Skeleton className="h-3 w-28" />
                     </div>
-                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-8 w-24 rounded-lg" />
                   </div>
                 ))}
               </div>

@@ -558,16 +558,14 @@ export default function Dashboard() {
                   <div className="space-y-4">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div key={i} className="space-y-2">
-                        <Skeleton className="h-4 w-20" />
-                        <div className="flex items-center justify-between p-4 rounded-lg">
-                          <div className="flex items-center gap-3 flex-1">
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <div className="space-y-2 flex-1">
-                              <Skeleton className="h-4 w-48" />
-                              <Skeleton className="h-3 w-24" />
-                            </div>
+                        <Skeleton className="h-4 w-24" />
+                        <div className="flex items-center gap-4 p-4 rounded-lg hover:bg-muted/20 transition-colors">
+                          <Skeleton className="h-11 w-11 rounded-full" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-44" />
+                            <Skeleton className="h-3 w-28" />
                           </div>
-                          <Skeleton className="h-5 w-24" />
+                          <Skeleton className="h-5 w-20" />
                         </div>
                       </div>
                     ))}
@@ -686,26 +684,26 @@ export default function Dashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-6">
                     <div className="flex-1 space-y-2">
-                      <Skeleton className="h-8 w-48" />
+                      <Skeleton className="h-7 w-44" />
                       <Skeleton className="h-4 w-32" />
                     </div>
-                    <Skeleton className="h-9 w-9 rounded-xl" />
+                    <Skeleton className="h-9 w-9 rounded-lg" />
                   </div>
                   <div className="flex items-center justify-center mb-6">
-                    <Skeleton className="w-40 h-40 rounded-full" />
+                    <Skeleton className="w-44 h-44 rounded-full" />
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-6 w-28" />
                     </div>
                     <div className="flex items-center justify-between">
                       <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-6 w-28" />
                     </div>
-                    <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
                       <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-6 w-28" />
                     </div>
                   </div>
                 </CardContent>
