@@ -340,7 +340,7 @@ async function buildUserFinancialContext(userId: string) {
     // Balances
     currentBalance: formatMoney(currentBalance),
     wiseBalance: wiseBalance > 0 ? formatMoney(wiseBalance) : null,
-    totalSavings: wiseBalance > 0 ? formatMoney(currentBalance + wiseBalance) : formatMoney(currentBalance),
+    totalSavingsInGoalAndWise: wiseBalance > 0 ? formatMoney(currentBalance + wiseBalance) : formatMoney(currentBalance),
     
     // Memories (context from previous conversations)
     memories,
@@ -348,7 +348,7 @@ async function buildUserFinancialContext(userId: string) {
     // Financial Summary (last 6 months)
     totalIncome: formatMoney(income),
     totalExpenses: formatMoney(expenses),
-    totalSavings: formatMoney(avgMonthlySavings * monthsCount),
+    totalSavingsLast6Months: formatMoney(avgMonthlySavings * monthsCount),
     avgMonthlyIncome: formatMoney(avgMonthlyIncome),
     avgMonthlyExpenses: formatMoney(avgMonthlyExpenses),
     avgMonthlySavings: formatMoney(avgMonthlySavings),
