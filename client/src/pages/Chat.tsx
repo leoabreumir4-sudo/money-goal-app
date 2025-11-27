@@ -73,7 +73,9 @@ export default function Chat() {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   const { data: chatHistory = [], refetch } = trpc.chat.getHistory.useQuery();
   const { data: suggestedPrompts = [] } = trpc.chat.getSuggestedPrompts.useQuery();
@@ -191,6 +193,32 @@ export default function Chat() {
     }
   };
 
+  // Scroll to bottom automatically when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current && !showScrollButton) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatHistory, optimisticMessages, showScrollButton]);
+
+  // Handle scroll to detect if user scrolled up
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const suggestedQuestions = [
     "Can I travel to Orlando in 2026?",
     "How are my spending habits?",
@@ -210,8 +238,8 @@ export default function Chat() {
               <Sparkles className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">MoneyGoal Advisor</h1>
-              <p className="text-sm text-muted-foreground">Your AI Financial Advisor</p>
+              <h1 className="text-2xl font-bold text-foreground">Moni</h1>
+              <p className="text-sm text-muted-foreground">Sua Consultora Financeira Inteligente</p>
             </div>
           </div>
           {messages.length > 0 && (
@@ -228,7 +256,7 @@ export default function Chat() {
 
         {/* Chat Messages */}
         <Card className="flex-1 flex flex-col overflow-hidden bg-card border-border">
-          <CardContent className="flex-1 overflow-y-auto p-6 space-y-4">
+          <CardContent className="flex-1 overflow-y-auto p-6 space-y-4 relative" ref={messagesContainerRef}>
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
                 <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center">
@@ -308,6 +336,29 @@ export default function Chat() {
                 )}
                 <div ref={messagesEndRef} />
               </>
+            )}
+            
+            {/* Scroll to bottom button */}
+            {showScrollButton && (
+              <button
+                onClick={scrollToBottom}
+                className="fixed bottom-24 right-8 bg-primary/80 hover:bg-primary text-primary-foreground rounded-full p-3 shadow-lg transition-all duration-200 z-10"
+                aria-label="Scroll to bottom"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
             )}
           </CardContent>
 

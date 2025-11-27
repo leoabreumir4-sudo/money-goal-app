@@ -302,6 +302,9 @@ async function buildUserFinancialContext(userId: string) {
   // Parse chat memories from settings
   const memories: string[] = settings?.chatMemory ? JSON.parse(settings.chatMemory) : [];
 
+  // Get user's monthly savings target
+  const monthlySavingTarget = settings?.monthlySavingTarget || 0;
+
   // Create simplified context WITHOUT raw cent values to prevent AI confusion
   const simplifiedContext = {
     // Overview
@@ -314,11 +317,24 @@ async function buildUserFinancialContext(userId: string) {
     // Memories (context from previous conversations)
     memories,
     
-    // Income & Expenses (last 6 months average) - FORMATTED VALUES ONLY
+    // Financial Summary (last 6 months)
+    totalIncome: formatMoney(income),
+    totalExpenses: formatMoney(expenses),
+    totalSavings: formatMoney(avgMonthlySavings * monthsCount),
     avgMonthlyIncome: formatMoney(avgMonthlyIncome),
     avgMonthlyExpenses: formatMoney(avgMonthlyExpenses),
     avgMonthlySavings: formatMoney(avgMonthlySavings),
     savingsRate: `${savingsRate}%`,
+    
+    // User's Savings Goal
+    monthlySavingTarget: monthlySavingTarget > 0 ? formatMoney(monthlySavingTarget) : null,
+    savingsTargetSet: monthlySavingTarget > 0,
+    currentVsTarget: monthlySavingTarget > 0 ? {
+      target: formatMoney(monthlySavingTarget),
+      actual: formatMoney(avgMonthlySavings),
+      difference: formatMoney(avgMonthlySavings - monthlySavingTarget),
+      percentageOfTarget: Math.round((avgMonthlySavings / monthlySavingTarget) * 100),
+    } : null,
     
     // Active Goal
     activeGoal: activeGoal ? {
@@ -580,24 +596,41 @@ Otherwise, maintain the detected language throughout your ENTIRE response.
 
 You MUST start your response by confirming these exact values to verify you read them correctly:
 
-📊 **Monthly Averages (Last 6 months):**
-- Income: ${financialContext.avgMonthlyIncome}
-- Expenses: ${financialContext.avgMonthlyExpenses}  
-- Net Savings: ${financialContext.avgMonthlySavings}
-- Savings Rate: ${financialContext.savingsRate}
+📊 **${detectedLanguage === 'pt' ? 'Resumo Financeiro (Últimos 6 meses)' : detectedLanguage === 'es' ? 'Resumen Financiero (Últimos 6 meses)' : 'Financial Summary (Last 6 months)'}:**
 
-🔴 **MANDATORY FIRST STEP:**
-Begin your response with "${detectedLanguage === 'pt' ? '📊 Resumo Financeiro Mensal (Últimos 6 meses):' : detectedLanguage === 'es' ? '📊 Resumen Financiero Mensual (Últimos 6 meses):' : '📊 Monthly Financial Summary (Last 6 months):'}" and list the 4 values above EXACTLY as shown.
-This proves you are using the correct data and not hallucinating numbers.
+**${detectedLanguage === 'pt' ? 'TOTAIS' : detectedLanguage === 'es' ? 'TOTALES' : 'TOTALS'} (${detectedLanguage === 'pt' ? 'últimos 6 meses' : detectedLanguage === 'es' ? 'últimos 6 meses' : 'last 6 months'}):**
+- ${detectedLanguage === 'pt' ? 'Receita Total' : detectedLanguage === 'es' ? 'Ingresos Totales' : 'Total Income'}: ${financialContext.totalIncome}
+- ${detectedLanguage === 'pt' ? 'Despesas Totais' : detectedLanguage === 'es' ? 'Gastos Totales' : 'Total Expenses'}: ${financialContext.totalExpenses}
+- ${detectedLanguage === 'pt' ? 'Poupança Total' : detectedLanguage === 'es' ? 'Ahorros Totales' : 'Total Savings'}: ${financialContext.totalSavings}
+
+**${detectedLanguage === 'pt' ? 'MÉDIAS MENSAIS' : detectedLanguage === 'es' ? 'PROMEDIOS MENSUALES' : 'MONTHLY AVERAGES'}:**
+- ${detectedLanguage === 'pt' ? 'Receita Média' : detectedLanguage === 'es' ? 'Ingreso Promedio' : 'Avg Income'}: ${financialContext.avgMonthlyIncome}
+- ${detectedLanguage === 'pt' ? 'Despesas Médias' : detectedLanguage === 'es' ? 'Gastos Promedio' : 'Avg Expenses'}: ${financialContext.avgMonthlyExpenses}
+- ${detectedLanguage === 'pt' ? 'Poupança Média' : detectedLanguage === 'es' ? 'Ahorros Promedio' : 'Avg Savings'}: ${financialContext.avgMonthlySavings}
+- ${detectedLanguage === 'pt' ? 'Taxa de Poupança' : detectedLanguage === 'es' ? 'Tasa de Ahorro' : 'Savings Rate'}: ${financialContext.savingsRate}
+
+${financialContext.savingsTargetSet ? `
+**${detectedLanguage === 'pt' ? '🎯 META DE POUPANÇA MENSAL' : detectedLanguage === 'es' ? '🎯 META DE AHORRO MENSUAL' : '🎯 MONTHLY SAVINGS TARGET'}:**
+- ${detectedLanguage === 'pt' ? 'Meta' : detectedLanguage === 'es' ? 'Meta' : 'Target'}: ${financialContext.currentVsTarget.target}
+- ${detectedLanguage === 'pt' ? 'Atual' : detectedLanguage === 'es' ? 'Actual' : 'Actual'}: ${financialContext.currentVsTarget.actual}
+- ${detectedLanguage === 'pt' ? 'Diferença' : detectedLanguage === 'es' ? 'Diferencia' : 'Difference'}: ${financialContext.currentVsTarget.difference}
+- ${detectedLanguage === 'pt' ? 'Progresso' : detectedLanguage === 'es' ? 'Progreso' : 'Progress'}: ${financialContext.currentVsTarget.percentageOfTarget}%
+
+⚠️ **IMPORTANT**: ${detectedLanguage === 'pt' ? 'O usuário definiu uma meta de poupar' : detectedLanguage === 'es' ? 'El usuario estableció una meta de ahorrar' : 'User set a goal to save'} ${financialContext.monthlySavingTarget} ${detectedLanguage === 'pt' ? 'por mês. SEMPRE mencione e compare com esta meta!' : detectedLanguage === 'es' ? 'por mes. ¡Menciona SIEMPRE y compara con esta meta!' : 'per month. ALWAYS mention and compare against this target!'}
+` : ''}
+
+🔴 **MANDATORY STRUCTURE:**
+1. Start with the summary above showing BOTH totals and monthly averages
+2. Clearly label "TOTAIS" vs "MÉDIAS MENSAIS" so user understands the difference
+3. ${financialContext.savingsTargetSet ? 'ALWAYS reference the savings target and compare current performance' : ''}
+4. ${financialContext.hasSalary ? `Mention the Artix Entertainment salary (${financialContext.avgMonthlySalary}/month) as stable income` : ''}
 
 ⚠️ **STRICT RULES:**
-1. These values are FINAL - DO NOT recalculate or modify them
-2. DO NOT parse numbers from the strings - use them AS-IS
-3. ALL values are already formatted in the correct currency
-4. Copy and paste EXACTLY - any deviation means you failed
+1. Show BOTH total (6 months) AND monthly average values clearly labeled
+2. These values are FINAL - DO NOT recalculate or modify them
+3. DO NOT parse numbers from the strings - use them AS-IS
+4. ALL values are already formatted in the correct currency
 5. Maintain consistent language based on user's detected language (${detectedLanguage})
-4. Copy and paste EXACTLY - any deviation means you failed
-5. Write EVERYTHING in ${detectedLanguage === 'pt' ? 'Portuguese' : detectedLanguage === 'es' ? 'Spanish' : 'English'} - NO exceptions!
 
 SALARY & WORK INFORMATION:
 ${financialContext.hasSalary ? `✅ User has regular salary from ${financialContext.salarySource}
@@ -680,6 +713,17 @@ Before sending response, verify:
 □ Savings rate matches sign of avgMonthlySavings (both + or both -)
 □ Goal timeline calculations are realistic and shown with work
 □ No invented data (categories, amounts, or percentages not in profile)
+
+🎯 **ENDING YOUR RESPONSE**:
+ALWAYS end your response by:
+- Offering to help further or suggesting a next step
+- Asking if the user has questions
+- Providing actionable advice they can implement today
+
+Examples:
+- "Como posso ajudar você a melhorar suas finanças hoje?"
+- "Gostaria de analisar alguma categoria específica?"
+- "Quer que eu crie um plano para atingir sua meta de poupança?"
 
 IMPORTANT: Base ALL calculations and advice on the financial data provided above. Do not make assumptions beyond what's in the profile.`;
 
