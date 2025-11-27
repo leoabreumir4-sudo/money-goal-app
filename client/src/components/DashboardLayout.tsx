@@ -209,10 +209,9 @@ function DashboardLayoutContent({
                 return (
                   <div key={item.path}>
                     <SidebarMenuItem>
-                      <SidebarMenuButton
+                      <button
                         onClick={() => setLocation(item.path)}
-                        tooltip={label}
-                        className="h-11 mb-1 transition-all duration-200 font-medium rounded-lg group relative z-10 hover:bg-transparent"
+                        className="h-11 mb-1 w-full transition-all duration-200 font-medium rounded-lg group relative z-10 flex items-center gap-2 px-3"
                       >
                         {isActive && (
                           <div className="absolute left-0 w-0.5 h-6 bg-primary rounded-full" />
@@ -229,7 +228,7 @@ function DashboardLayoutContent({
                             ? "text-primary font-semibold" 
                             : "text-muted-foreground group-hover:text-white"
                         }`}>{label}</span>
-                      </SidebarMenuButton>
+                      </button>
                     </SidebarMenuItem>
                     {showDivider && (
                       <div className="my-2 mx-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
