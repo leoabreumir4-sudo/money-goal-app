@@ -30,16 +30,16 @@ export default function Settings() {
   const { data: whatsappStatus } = trpc.whatsapp.getPhoneStatus.useQuery();
   const linkPhoneMutation = trpc.whatsapp.linkPhone.useMutation({
     onSuccess: () => {
-      toast.success("WhatsApp vinculado com sucesso!");
+      toast.success(t('whatsappLinkedSuccess', preferences.language));
       utils.whatsapp.getPhoneStatus.invalidate();
     },
     onError: (error) => {
-      toast.error(error.message || "Erro ao vincular WhatsApp");
+      toast.error(error.message || t('errorLinkingWhatsApp', preferences.language));
     },
   });
   const unlinkPhoneMutation = trpc.whatsapp.unlinkPhone.useMutation({
     onSuccess: () => {
-      toast.success("WhatsApp desvinculado");
+      toast.success(t('whatsappUnlinked', preferences.language));
       setPhoneNumber("");
       utils.whatsapp.getPhoneStatus.invalidate();
     },
@@ -143,9 +143,9 @@ export default function Settings() {
             <div className="space-y-3 p-4 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🔢</span>
-                <Label htmlFor="numberFormat" className="text-base font-semibold">Formato de Números</Label>
+                <Label htmlFor="numberFormat" className="text-base font-semibold">{t('numberFormat', preferences.language)}</Label>
               </div>
-              <p className="text-sm text-muted-foreground pl-7">Como você quer visualizar valores monetários</p>
+              <p className="text-sm text-muted-foreground pl-7">{t('numberFormatDescription', preferences.language)}</p>
               <Select value={numberFormat} onValueChange={(v: "en-US" | "pt-BR") => setNumberFormat(v)}>
                 <SelectTrigger id="numberFormat" className="bg-background">
                   <SelectValue />
@@ -153,13 +153,13 @@ export default function Settings() {
                 <SelectContent>
                   <SelectItem value="pt-BR">
                     <div className="flex flex-col items-start py-1">
-                      <span className="font-medium">🇧🇷 Brasileiro</span>
+                      <span className="font-medium">🇧🇷 {t('brazilian', preferences.language)}</span>
                       <span className="text-xs text-muted-foreground">R$ 1.550,50</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="en-US">
                     <div className="flex flex-col items-start py-1">
-                      <span className="font-medium">🇺🇸 Americano</span>
+                      <span className="font-medium">🇺🇸 {t('american', preferences.language)}</span>
                       <span className="text-xs text-muted-foreground">$ 1,550.50</span>
                     </div>
                   </SelectItem>
@@ -191,7 +191,7 @@ export default function Settings() {
               disabled={updateSettingsMutation.isPending}
               className="w-full h-11 text-base font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all"
             >
-              {updateSettingsMutation.isPending ? "Salvando..." : t('saveChanges', preferences.language)}
+              {updateSettingsMutation.isPending ? t('saving', preferences.language) : t('saveChanges', preferences.language)}
             </Button>
           </CardContent>
         </Card>
@@ -230,14 +230,14 @@ export default function Settings() {
             
             {/* Webhook Secret */}
             <div className="space-y-2">
-              <Label htmlFor="webhookSecret">Webhook Secret (opcional)</Label>
+              <Label htmlFor="webhookSecret">{t('webhookSecret', preferences.language)}</Label>
               <p className="text-sm text-muted-foreground">
-                Para sincronização automática via webhooks. Configure o webhook na Wise com a URL abaixo.
+                {t('webhookSecretDescription', preferences.language)}
               </p>
               <Input
                 id="webhookSecret"
                 type="password"
-                placeholder="Digite o secret gerado pela Wise"
+                placeholder={t('enterWiseSecret', preferences.language)}
                 value={webhookSecret}
                 onChange={(e) => setWebhookSecret(e.target.value)}
               />
@@ -246,7 +246,7 @@ export default function Settings() {
                   {window.location.origin}/api/webhooks/wise/{settings?.userId}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Cole esta URL na Wise (Settings → Webhooks). Selecione "Account deposit events".
+                  {t('pasteUrlInWise', preferences.language)}
                 </p>
               </div>
             </div>
@@ -302,7 +302,7 @@ export default function Settings() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-foreground text-xl flex items-center gap-2">
                 <span className="text-2xl">💬</span>
-                WhatsApp Integration
+                {t('whatsappIntegration', preferences.language)}
               </CardTitle>
               <Dialog open={isWhatsAppModalOpen} onOpenChange={setIsWhatsAppModalOpen}>
                 <DialogTrigger asChild>
@@ -316,10 +316,10 @@ export default function Settings() {
                       <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-xl">
                         <MessageSquare className="w-6 h-6 text-white" />
                       </div>
-                      Como funciona o WhatsApp
+                      {t('howWhatsAppWorks', preferences.language)}
                     </DialogTitle>
                     <DialogDescription className="text-base mt-2">
-                      Gerencie suas finanças de forma rápida e natural, sem precisar abrir o app!
+                      {t('manageFinances', preferences.language)}
                     </DialogDescription>
                   </DialogHeader>
                   
@@ -327,28 +327,28 @@ export default function Settings() {
                     {/* Quick Start */}
                     <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-xl border border-primary/20">
                       <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
-                        🚀 Início Rápido
+                        🚀 {t('quickStart', preferences.language)}
                       </h4>
                       <div className="grid gap-4">
                         <div className="flex gap-3">
                           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-sm">1</div>
                           <div>
-                            <p className="font-medium">Digite seu número</p>
-                            <p className="text-sm text-muted-foreground">Com DDD, ex: 5511999999999</p>
+                            <p className="font-medium">{t('enterYourNumber', preferences.language)}</p>
+                            <p className="text-sm text-muted-foreground">{t('withDDD', preferences.language)}</p>
                           </div>
                         </div>
                         <div className="flex gap-3">
                           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-sm">2</div>
                           <div>
-                            <p className="font-medium">Clique em "Conectar"</p>
-                            <p className="text-sm text-muted-foreground">O WhatsApp abrirá automaticamente</p>
+                            <p className="font-medium">{t('clickConnect', preferences.language)}</p>
+                            <p className="text-sm text-muted-foreground">{t('whatsappWillOpen', preferences.language)}</p>
                           </div>
                         </div>
                         <div className="flex gap-3">
                           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-sm">3</div>
                           <div>
-                            <p className="font-medium">Envie a mensagem pronta</p>
-                            <p className="text-sm text-muted-foreground">Aperte "Enviar" e pronto! ✅</p>
+                            <p className="font-medium">{t('sendReadyMessage', preferences.language)}</p>
+                            <p className="text-sm text-muted-foreground">{t('pressSendDone', preferences.language)}</p>
                           </div>
                         </div>
                       </div>
@@ -356,7 +356,7 @@ export default function Settings() {
 
                     {/* Examples Grid */}
                     <div>
-                      <h4 className="font-bold text-lg mb-4">💬 Exemplos de uso</h4>
+                      <h4 className="font-bold text-lg mb-4">💬 {t('usageExamples', preferences.language)}</h4>
                       <div className="grid md:grid-cols-2 gap-3">
                         <div className="bg-secondary/30 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
                           <p className="font-mono text-sm mb-2 text-primary">"Mercado 350 reais"</p>
@@ -398,13 +398,13 @@ export default function Settings() {
 
                     {/* Commands */}
                     <div>
-                      <h4 className="font-bold text-lg mb-4">⚡ Comandos úteis</h4>
+                      <h4 className="font-bold text-lg mb-4">⚡ {t('usefulCommands', preferences.language)}</h4>
                       <div className="space-y-3">
                         <div className="flex items-start gap-3 p-3 bg-secondary/30 rounded-lg">
                           <div className="text-2xl">📊</div>
                           <div className="flex-1">
                             <p className="font-mono text-sm font-medium">"hoje"</p>
-                            <p className="text-sm text-muted-foreground">Ver todos os gastos de hoje</p>
+                            <p className="text-sm text-muted-foreground">{t('viewAllExpensesToday', preferences.language)}</p>
                           </div>
                         </div>
                         
@@ -412,7 +412,7 @@ export default function Settings() {
                           <div className="text-2xl">❓</div>
                           <div className="flex-1">
                             <p className="font-mono text-sm font-medium">"ajuda"</p>
-                            <p className="text-sm text-muted-foreground">Ver lista completa de comandos</p>
+                            <p className="text-sm text-muted-foreground">{t('viewCompleteCommandList', preferences.language)}</p>
                           </div>
                         </div>
                       </div>
@@ -420,18 +420,18 @@ export default function Settings() {
 
                     {/* Response Example */}
                     <div>
-                      <h4 className="font-bold text-lg mb-4">✅ Resposta automática</h4>
+                      <h4 className="font-bold text-lg mb-4">✅ {t('automaticResponse', preferences.language)}</h4>
                       <div className="bg-green-500/10 border-2 border-green-500/30 p-5 rounded-xl space-y-2">
                         <p className="font-bold flex items-center gap-2 text-green-600 dark:text-green-400">
                           <CheckCircle className="w-5 h-5" />
-                          Gasto registrado!
+                          {t('expenseRegistered', preferences.language)}
                         </p>
                         <div className="pl-7 space-y-1 text-sm">
                           <p>📝 <span className="font-medium">Mercado</span></p>
                           <p>💰 <span className="font-medium">R$ 350,00</span></p>
                           <p>🏷️ <span className="font-medium">Alimentação</span></p>
                           <p className="text-muted-foreground mt-3 pt-3 border-t border-green-500/20">
-                            💎 Economias totais: R$ 1.253,00
+                            💎 {t('totalSavings', preferences.language)}: R$ 1.253,00
                           </p>
                         </div>
                       </div>
@@ -441,20 +441,20 @@ export default function Settings() {
                     <div className="grid md:grid-cols-3 gap-4">
                       <div className="text-center p-4 bg-secondary/20 rounded-lg">
                         <div className="text-3xl mb-2">⚡</div>
-                        <p className="font-semibold text-sm">Instantâneo</p>
-                        <p className="text-xs text-muted-foreground mt-1">Aparece no app na hora</p>
+                        <p className="font-semibold text-sm">{t('instantaneous', preferences.language)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{t('appearsInAppImmediately', preferences.language)}</p>
                       </div>
                       
                       <div className="text-center p-4 bg-secondary/20 rounded-lg">
                         <div className="text-3xl mb-2">🔓</div>
-                        <p className="font-semibold text-sm">100% Gratuito</p>
-                        <p className="text-xs text-muted-foreground mt-1">Sem limites de uso</p>
+                        <p className="font-semibold text-sm">{t('freeHundredPercent', preferences.language)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{t('noUsageLimits', preferences.language)}</p>
                       </div>
                       
                       <div className="text-center p-4 bg-secondary/20 rounded-lg">
                         <div className="text-3xl mb-2">🤖</div>
-                        <p className="font-semibold text-sm">IA Inteligente</p>
-                        <p className="text-xs text-muted-foreground mt-1">Entende linguagem natural</p>
+                        <p className="font-semibold text-sm">{t('intelligentAI', preferences.language)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{t('understandsNaturalLanguage', preferences.language)}</p>
                       </div>
                     </div>
                   </div>
@@ -466,11 +466,11 @@ export default function Settings() {
             {!whatsappStatus?.phoneNumber ? (
               <>
                 <p className="text-sm text-muted-foreground">
-                  Registre gastos pelo WhatsApp de forma rápida e prática
+                  {t('registerExpensesViaWhatsApp', preferences.language)}
                 </p>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Número de telefone</Label>
+                  <Label htmlFor="phoneNumber">{t('phoneNumber', preferences.language)}</Label>
                   <Input
                     id="phoneNumber"
                     type="tel"
@@ -483,7 +483,7 @@ export default function Settings() {
                 <Button
                   onClick={() => {
                     if (!phoneNumber) {
-                      toast.error("Digite seu número de telefone");
+                      toast.error(t('enterPhoneNumber', preferences.language));
                       return;
                     }
                     
@@ -499,11 +499,11 @@ export default function Settings() {
                   className="w-full h-12 text-base font-semibold bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg hover:shadow-xl transition-all"
                 >
                   <MessageCircle className="w-5 h-5 mr-2" />
-                  {linkPhoneMutation.isPending ? "Conectando..." : "Conectar via WhatsApp"}
+                  {linkPhoneMutation.isPending ? t('connecting', preferences.language) : t('connectViaWhatsApp', preferences.language)}
                 </Button>
                 
                 <p className="text-xs text-muted-foreground">
-                  Ao clicar, o WhatsApp abrirá automaticamente com a mensagem pronta para enviar
+                  {t('whatsappWillOpenWithMessage', preferences.language)}
                 </p>
               </>
             ) : (
@@ -511,15 +511,15 @@ export default function Settings() {
                 <div className="flex items-center gap-2 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
                   <CheckCircle className="text-green-500 w-5 h-5" />
                   <div>
-                    <p className="font-semibold">WhatsApp conectado</p>
+                    <p className="font-semibold">{t('whatsappConnected', preferences.language)}</p>
                     <p className="text-sm text-muted-foreground">{whatsappStatus.phoneNumber}</p>
                   </div>
                 </div>
                 
                 <div className="bg-secondary/50 p-4 rounded-lg space-y-2">
-                  <p className="text-sm font-semibold">✅ Tudo pronto!</p>
+                  <p className="text-sm font-semibold">✅ {t('allReady', preferences.language)}</p>
                   <p className="text-xs text-muted-foreground">
-                    Envie mensagens como:
+                    {t('sendMessagesLike', preferences.language)}
                   </p>
                   <p className="text-xs font-mono">• Mercado 350 reais</p>
                   <p className="text-xs font-mono">• Uber 25</p>
@@ -532,7 +532,7 @@ export default function Settings() {
                   disabled={unlinkPhoneMutation.isPending}
                   className="w-full"
                 >
-                  Desvincular WhatsApp
+                  {t('unlinkWhatsApp', preferences.language)}
                 </Button>
               </div>
             )}
