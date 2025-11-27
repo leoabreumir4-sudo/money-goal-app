@@ -3,6 +3,8 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { convertCurrency } from "./_core/currency";
+import { sql } from "drizzle-orm";
+import { bankAccounts } from "../drizzle/schema";
 
 /**
  * Detect language from user message using simple keyword matching and character patterns
@@ -164,10 +166,6 @@ async function buildUserFinancialContext(userId: string) {
   const dbInstance = await db.getDb();
   if (!dbInstance) throw new Error("Database not available");
 
-  // Import schema and sql for Wise query
-  const schema = await import("../drizzle/schema");
-  const { sql } = await import("drizzle-orm");
-
   // Get all user data in parallel
   const [transactions, goals, recurringExpenses, categories, settings] = await Promise.all([
     db.getAllTransactionsByUserId(userId),
@@ -315,13 +313,12 @@ async function buildUserFinancialContext(userId: string) {
   const monthlySavingTarget = settings?.monthlySavingTarget || 0;
 
   // Get Wise account balance if available
-  const dbInstance2 = await db.getDb();
   let wiseBalance = 0;
-  if (dbInstance2) {
-    const wiseAccounts = await dbInstance2
+  if (dbInstance) {
+    const wiseAccounts = await dbInstance
       .select()
-      .from(schema.bankAccounts)
-      .where(sql`${schema.bankAccounts.userId} = ${userId} AND ${schema.bankAccounts.provider} = 'wise'`);
+      .from(bankAccounts)
+      .where(sql`${bankAccounts.userId} = ${userId} AND ${bankAccounts.provider} = 'wise'`);
     
     if (wiseAccounts.length > 0) {
       wiseBalance = wiseAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
