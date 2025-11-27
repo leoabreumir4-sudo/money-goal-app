@@ -81,7 +81,6 @@ export default function Settings() {
       numberFormat,
       theme: theme as "dark" | "light",
     });
-  };});
   };
 
   return (
