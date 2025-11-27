@@ -92,6 +92,7 @@ export const userSettings = pgTable("userSettings", {
   userId: uuid("userId").notNull().unique(),
   language: varchar("language", { length: 10 }).notNull().default("en"),
   currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+  numberFormat: varchar("number_format", { length: 10 }).notNull().default("en-US"), // "en-US" (1,000.00) or "pt-BR" (1.000,00)
   theme: themeEnum("theme").default("dark").notNull(),
   monthlySavingTarget: integer("monthlySavingTarget").notNull().default(0), // Store as cents
   hasUnreadArchived: boolean("hasUnreadArchived").notNull().default(false),

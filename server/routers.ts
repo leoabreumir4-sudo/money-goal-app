@@ -244,6 +244,7 @@ export const appRouter = router({
       .input(z.object({
         language: z.string().optional(),
         currency: z.string().optional(),
+        numberFormat: z.enum(["en-US", "pt-BR"]).optional(),
         theme: z.enum(["dark", "light"]).optional(),
         monthlySavingTarget: z.number().optional(),
       }))
@@ -259,6 +260,7 @@ export const appRouter = router({
       .input(z.object({
         language: z.string().optional(),
         currency: z.string().optional(),
+        numberFormat: z.enum(["en-US", "pt-BR"]).optional(),
         theme: z.enum(["dark", "light"]).optional(),
         monthlySavingTarget: z.number().optional(),
         hasUnreadArchived: z.boolean().optional(),
@@ -277,6 +279,7 @@ export const appRouter = router({
             userId: ctx.user.id,
             language: input.language || "en",
             currency: input.currency || "USD",
+            numberFormat: input.numberFormat || "pt-BR",
             theme: input.theme || "dark",
             monthlySavingTarget: input.monthlySavingTarget || 0,
           });

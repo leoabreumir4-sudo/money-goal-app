@@ -1,0 +1,1 @@
+ALTER TABLE "userSettings" ADD COLUMN "number_format" varchar(10) DEFAULT 'en-US' NOT NULL;

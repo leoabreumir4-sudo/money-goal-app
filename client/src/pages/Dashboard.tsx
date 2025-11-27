@@ -25,11 +25,11 @@ export default function Dashboard() {
   const [isCongratulationsModalOpen, setIsCongratulationsModalOpen] = useState(false);
   
   // Currency inputs
-  const incomeAmountInput = useCurrencyInput();
-  const expenseAmountInput = useCurrencyInput();
-  const newGoalTargetInput = useCurrencyInput();
-  const editGoalTargetInput = useCurrencyInput();
-  const editTransactionAmountInput = useCurrencyInput();
+  const incomeAmountInput = useCurrencyInput('', preferences.numberFormat);
+  const expenseAmountInput = useCurrencyInput('', preferences.numberFormat);
+  const newGoalTargetInput = useCurrencyInput('', preferences.numberFormat);
+  const editGoalTargetInput = useCurrencyInput('', preferences.numberFormat);
+  const editTransactionAmountInput = useCurrencyInput('', preferences.numberFormat);
   
   const [incomeReason, setIncomeReason] = useState("");
   const [incomeCategory, setIncomeCategory] = useState<string>("");

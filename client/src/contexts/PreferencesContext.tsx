@@ -5,6 +5,7 @@ import { Language } from "@/lib/i18n";
 interface UserPreferences {
   language: Language;
   currency: string;
+  numberFormat: "en-US" | "pt-BR";
   theme: "dark" | "light";
 }
 
@@ -24,6 +25,7 @@ export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
   const [preferences, setPreferences] = useState<UserPreferences>({
     language: "en",
     currency: "USD",
+    numberFormat: "pt-BR",
     theme: "dark",
   });
 
@@ -32,6 +34,7 @@ export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
       setPreferences({
         language: settings.language as Language,
         currency: settings.currency,
+        numberFormat: (settings.numberFormat as "en-US" | "pt-BR") || "pt-BR",
         theme: settings.theme,
       });
       
@@ -64,12 +67,13 @@ export const usePreferences = () => {
     // Fallback seguro: retorna valores padrão e avisa no console
     if (typeof window !== "undefined") {
       console.error("usePreferences: PreferencesProvider não encontrado! Retornando valores padrão.");
-    }
     return {
       preferences: {
         language: "en",
         currency: "USD",
+        numberFormat: "pt-BR",
         theme: "dark",
+      },theme: "dark",
       },
       isLoading: true,
       updatePreferences: () => {},

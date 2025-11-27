@@ -2,42 +2,71 @@ import { useState, useCallback } from 'react';
 
 /**
  * Hook for currency input formatting
- * - Allows typing with comma or dot as decimal separator
+ * - Supports Brazilian (1.000,00) and US (1,000.00) formats
  * - Auto-formats with thousand separators as user types
  * - Returns formatted display value and raw numeric value
  */
-export function useCurrencyInput(initialValue: string = '') {
+export function useCurrencyInput(initialValue: string = '', format: "en-US" | "pt-BR" = "pt-BR") {
   const [displayValue, setDisplayValue] = useState(initialValue);
 
   const formatCurrency = useCallback((value: string): string => {
     // Remove all non-digit characters except comma and dot
     let cleaned = value.replace(/[^\d,.]/g, '');
     
-    // Replace comma with dot for internal processing
-    cleaned = cleaned.replace(',', '.');
-    
-    // Ensure only one decimal separator
-    const parts = cleaned.split('.');
-    if (parts.length > 2) {
-      cleaned = parts[0] + '.' + parts.slice(1).join('');
+    if (format === "pt-BR") {
+      // Brazilian format: 1.000,00
+      // Replace dot with temporary marker, comma with dot, marker with comma
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+      
+      // Ensure only one decimal separator
+      const parts = cleaned.split('.');
+      if (parts.length > 2) {
+        cleaned = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      // Limit to 2 decimal places
+      if (parts.length === 2 && parts[1].length > 2) {
+        cleaned = parts[0] + '.' + parts[1].slice(0, 2);
+      }
+      
+      // Format with thousand separators (dots) and decimal comma
+      const [integerPart, decimalPart] = cleaned.split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      
+      // Return formatted value
+      if (decimalPart !== undefined) {
+        return formattedInteger + ',' + decimalPart;
+      }
+      
+      return formattedInteger;
+    } else {
+      // US format: 1,000.00
+      // Replace comma with dot for internal processing
+      cleaned = cleaned.replace(',', '.');
+      
+      // Ensure only one decimal separator
+      const parts = cleaned.split('.');
+      if (parts.length > 2) {
+        cleaned = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      // Limit to 2 decimal places
+      if (parts.length === 2 && parts[1].length > 2) {
+        cleaned = parts[0] + '.' + parts[1].slice(0, 2);
+      }
+      
+      // Format with thousand separators (commas)
+      const [integerPart, decimalPart] = cleaned.split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      
+      // Return formatted value
+      if (decimalPart !== undefined) {
+        return formattedInteger + '.' + decimalPart;
+      }
+      
+      return formattedInteger;
     }
-    
-    // Limit to 2 decimal places
-    if (parts.length === 2 && parts[1].length > 2) {
-      cleaned = parts[0] + '.' + parts[1].slice(0, 2);
-    }
-    
-    // Format with thousand separators
-    const [integerPart, decimalPart] = cleaned.split('.');
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
-    // Return formatted value
-    if (decimalPart !== undefined) {
-      return formattedInteger + '.' + decimalPart;
-    }
-    
-    return formattedInteger;
-  }, []);
+  }, [format]);
 
   const handleChange = useCallback((inputValue: string) => {
     const formatted = formatCurrency(inputValue);
@@ -46,10 +75,12 @@ export function useCurrencyInput(initialValue: string = '') {
 
   const getNumericValue = useCallback((): number => {
     // Remove thousand separators and convert to number
-    const cleaned = displayValue.replace(/,/g, '');
+    const cleaned = format === "pt-BR" 
+      ? displayValue.replace(/\./g, '').replace(',', '.')
+      : displayValue.replace(/,/g, '');
     const numeric = parseFloat(cleaned);
     return isNaN(numeric) ? 0 : numeric;
-  }, [displayValue]);
+  }, [displayValue, format]);
 
   const setValue = useCallback((value: string | number) => {
     if (typeof value === 'number') {

@@ -78,6 +78,13 @@
       "when": 1764229908836,
       "tag": "0010_lowly_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1764248405942,
+      "tag": "0011_short_psylocke",
+      "breakpoints": true
     }
   ]
 }

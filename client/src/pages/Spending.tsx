@@ -44,9 +44,10 @@ export default function Spending() {
   const [isAddRecurringModalOpen, setIsAddRecurringModalOpen] = useState(false);
   const [isEditRecurringModalOpen, setIsEditRecurringModalOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<any>(null);
+  const { preferences } = usePreferences();
   const [selectedPeriod, setSelectedPeriod] = useState("This Month");
   const [recurringName, setRecurringName] = useState("");
-  const recurringAmountInput = useCurrencyInput();
+  const recurringAmountInput = useCurrencyInput('', preferences.numberFormat);
   const [recurringFrequency, setRecurringFrequency] = useState<"monthly" | "daily" | "weekly" | "yearly">("monthly");
   const [recurringDayOfMonth, setRecurringDayOfMonth] = useState(1);
   const [recurringCategoryId, setRecurringCategoryId] = useState<number>(1);

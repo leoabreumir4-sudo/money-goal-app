@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatNumber } from "@/lib/currency";
 import { useCurrencyInput } from "@/hooks/useCurrencyInput";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
 const months = [
   "January", "February", "March", "April", "May", "June",
@@ -92,14 +93,16 @@ export default function AQWorlds() {
   const [selectedMonthForEvents, setSelectedMonthForEvents] = useState<number | null>(null);
   
   const [projectName, setProjectName] = useState("");
-  const projectAmountInput = useCurrencyInput();
+  const { preferences } = usePreferences();
+  const projectAmountInput = useCurrencyInput('', preferences.numberFormat);
   const [projectMonth, setProjectMonth] = useState<number | undefined>(undefined);
   const [projectYear, setProjectYear] = useState(new Date().getFullYear());
   
   const [newEventName, setNewEventName] = useState("");
-  const calcAvgValueInput = useCurrencyInput();
-  const calcNumProjectsInput = useCurrencyInput();
-  const editProjectAmountInput = useCurrencyInput();
+  const { preferences } = usePreferences();
+  const calcAvgValueInput = useCurrencyInput('', preferences.numberFormat);
+  const calcNumProjectsInput = useCurrencyInput('', preferences.numberFormat);
+  const editProjectAmountInput = useCurrencyInput('', preferences.numberFormat);
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [monthlyStatusYear, setMonthlyStatusYear] = useState(new Date().getFullYear());

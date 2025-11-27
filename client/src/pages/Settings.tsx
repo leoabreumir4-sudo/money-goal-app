@@ -19,6 +19,7 @@ export default function Settings() {
   
   const [language, setLanguage] = useState("en");
   const [currency, setCurrency] = useState("USD");
+  const [numberFormat, setNumberFormat] = useState<"en-US" | "pt-BR">("pt-BR");
   const [theme, setTheme] = useState("dark");
   const [wiseToken, setWiseToken] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
@@ -49,6 +50,7 @@ export default function Settings() {
     if (settings) {
       setLanguage(settings.language);
       setCurrency(settings.currency);
+      setNumberFormat((settings.numberFormat as "en-US" | "pt-BR") || "pt-BR");
       setTheme(settings.theme);
       setWiseToken(settings.wiseApiToken || "");
       setWebhookSecret(settings.wiseWebhookSecret || "");
@@ -62,6 +64,7 @@ export default function Settings() {
       updatePreferences({
         language: language as any,
         currency,
+        numberFormat,
         theme: theme as "dark" | "light",
       });
       toast.success(t('saveChanges', preferences.language) + '!');
@@ -71,13 +74,14 @@ export default function Settings() {
       toast.error(error.message || 'Failed to save settings');
     },
   });
-
   const handleSaveChanges = () => {
     updateSettingsMutation.mutate({
       language,
       currency,
+      numberFormat,
       theme: theme as "dark" | "light",
     });
+  };});
   };
 
   return (
@@ -110,7 +114,6 @@ export default function Settings() {
                 </SelectContent>
               </Select>
             </div>
-
             {/* Currency */}
             <div className="space-y-2">
               <Label htmlFor="currency">{t('currency', preferences.language)}</Label>
@@ -128,6 +131,32 @@ export default function Settings() {
               </Select>
             </div>
 
+            {/* Number Format */}
+            <div className="space-y-2">
+              <Label htmlFor="numberFormat">Formato de Números</Label>
+              <p className="text-sm text-muted-foreground">Como você quer visualizar valores monetários</p>
+              <Select value={numberFormat} onValueChange={(v: "en-US" | "pt-BR") => setNumberFormat(v)}>
+                <SelectTrigger id="numberFormat">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pt-BR">
+                    <div className="flex flex-col items-start">
+                      <span>🇧🇷 Brasileiro</span>
+                      <span className="text-xs text-muted-foreground">R$ 1.550,50</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="en-US">
+                    <div className="flex flex-col items-start">
+                      <span>🇺🇸 Americano</span>
+                      <span className="text-xs text-muted-foreground">$ 1,550.50</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Theme */}
             {/* Theme */}
             <div className="space-y-2">
               <Label htmlFor="theme">{t('theme', preferences.language)}</Label>
