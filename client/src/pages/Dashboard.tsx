@@ -26,11 +26,11 @@ export default function Dashboard() {
   const [isCongratulationsModalOpen, setIsCongratulationsModalOpen] = useState(false);
   
   // Currency inputs
-  const incomeAmountInput = useCurrencyInput('', preferences.numberFormat);
-  const expenseAmountInput = useCurrencyInput('', preferences.numberFormat);
-  const newGoalTargetInput = useCurrencyInput('', preferences.numberFormat);
-  const editGoalTargetInput = useCurrencyInput('', preferences.numberFormat);
-  const editTransactionAmountInput = useCurrencyInput('', preferences.numberFormat);
+  const incomeAmountInput = useCurrencyInput('', preferences.numberFormat as "en-US" | "pt-BR");
+  const expenseAmountInput = useCurrencyInput('', preferences.numberFormat as "en-US" | "pt-BR");
+  const newGoalTargetInput = useCurrencyInput('', preferences.numberFormat as "en-US" | "pt-BR");
+  const editGoalTargetInput = useCurrencyInput('', preferences.numberFormat as "en-US" | "pt-BR");
+  const editTransactionAmountInput = useCurrencyInput('', preferences.numberFormat as "en-US" | "pt-BR");
   
   const [incomeReason, setIncomeReason] = useState("");
   const [incomeCategory, setIncomeCategory] = useState<string>("");
@@ -73,7 +73,7 @@ export default function Dashboard() {
       utils.goals.getActive.invalidate();
       setIsNewGoalModalOpen(false);
       setNewGoalName("");
-      setNewGoalTarget("");
+      newGoalTargetInput.reset();
       toast.success("Goal created successfully!");
     },
   });
@@ -82,7 +82,7 @@ export default function Dashboard() {
     onSuccess: () => {
       utils.goals.getActive.invalidate();
       setIsEditGoalModalOpen(false);
-      toast.success(t("goalUpdatedSuccess", preferences.language));
+      toast.success(t("goalUpdatedSuccess", preferences.language as "en" | "pt" | "es"));
     },
   });
 
@@ -200,12 +200,12 @@ export default function Dashboard() {
   const handleCreateGoal = () => {
     const targetAmount = Math.round(newGoalTargetInput.getNumericValue() * 100);
     if (isNaN(targetAmount) || targetAmount <= 0) {
-      toast.error(t("pleaseEnterValidTarget", preferences.language));
+      toast.error(t("pleaseEnterValidTarget", preferences.language as "en" | "pt" | "es"));
       return;
     }
     
     if (!newGoalName.trim()) {
-      toast.error(t("pleaseEnterGoalName", preferences.language));
+      toast.error(t("pleaseEnterGoalName", preferences.language as "en" | "pt" | "es"));
       return;
     }
 
@@ -352,17 +352,10 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 space-y-6">
-        {/* Header with Action Buttons */}
-        <div className="flex justify-end items-center gap-4">
-          <div className="flex flex-wrap gap-3">
-            <Dialog open={isIncomeModalOpen} onOpenChange={setIsIncomeModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-green-600 hover:bg-green-700 text-white font-medium">
-                  <ArrowUp className="mr-2 h-4 w-4" />
-                  {t('addIncome', preferences.language)}
-                </Button>
-              </DialogTrigger>
+      <div className="p-6 space-y-6">
+        {/* Modals for Income and Expense */}
+        <div className="hidden">
+          <Dialog open={isIncomeModalOpen} onOpenChange={setIsIncomeModalOpen}>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader className="space-y-3">
                   <div className="flex items-center gap-3">
@@ -432,12 +425,6 @@ export default function Dashboard() {
             </Dialog>
 
             <Dialog open={isExpenseModalOpen} onOpenChange={setIsExpenseModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-red-600 hover:bg-red-700 text-white font-medium">
-                  <ArrowDown className="mr-2 h-4 w-4" />
-                  {t('addExpense', preferences.language)}
-                </Button>
-              </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader className="space-y-3">
                   <div className="flex items-center gap-3">
@@ -506,7 +493,6 @@ export default function Dashboard() {
               </DialogContent>
             </Dialog>
           </div>
-        </div>
 
         {/* Bank Synchronization Section */}
         {activeGoal && (
@@ -519,7 +505,7 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-foreground">{t('recentTransactions', preferences.language)}</CardTitle>
+                <CardTitle className="text-foreground">{t('recentTransactions', preferences.language as "en" | "pt" | "es")}</CardTitle>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Input
                     placeholder="Search transactions..."
@@ -571,7 +557,7 @@ export default function Dashboard() {
                     ))}
                   </div>
                 ) : recentTransactions.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language)}</p>
+                  <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language as "en" | "pt" | "es")}</p>
                 ) : (
                   <div className="space-y-3 max-h-[calc(20*4rem)] overflow-y-auto pr-2">
                     {(() => {
@@ -840,6 +826,24 @@ export default function Dashboard() {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Button 
+                    onClick={() => setIsIncomeModalOpen(true)}
+                    className="bg-gradient-to-r from-green-600 to-green-700 hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-white font-medium"
+                  >
+                    <ArrowUp className="mr-2 h-4 w-4" />
+                    Add Income
+                  </Button>
+                  <Button 
+                    onClick={() => setIsExpenseModalOpen(true)}
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300 text-white font-medium"
+                  >
+                    <ArrowDown className="mr-2 h-4 w-4" />
+                    Add Expense
+                  </Button>
+                </div>
               </>
             ) : (
               <Card className="bg-card border-border">

@@ -35,7 +35,7 @@ export default function Archived() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 space-y-8 max-w-7xl mx-auto">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="space-y-1">
           <div className="flex items-center gap-3">

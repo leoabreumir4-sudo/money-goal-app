@@ -293,7 +293,7 @@ export default function Analytics() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 space-y-6">
+      <div className="p-6 space-y-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-lg">

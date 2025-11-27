@@ -359,7 +359,7 @@ export default function Spending() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 space-y-6">
+      <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-destructive to-destructive/80 rounded-xl shadow-lg">

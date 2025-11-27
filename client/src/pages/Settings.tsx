@@ -85,7 +85,7 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 space-y-8 max-w-4xl mx-auto">
+      <div className="p-6 space-y-6 max-w-4xl mx-auto">
         {/* Header */}
         <div className="space-y-1">
           <h1 className="text-4xl font-bold text-foreground">{t('settings', preferences.language)}</h1>
