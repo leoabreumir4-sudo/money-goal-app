@@ -66,6 +66,7 @@ export type InvokeParams = {
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
+  useGrounding?: boolean; // Enable Google Search grounding
 };
 
 export type ToolCall = {
@@ -300,13 +301,25 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     });
   }
 
-  const payload = {
+  const payload: any = {
     contents,
     generationConfig: {
-      maxOutputTokens: 2048,
+      maxOutputTokens: params.maxTokens || params.max_tokens || 2048,
       temperature: 0.7,
     }
   };
+
+  // Add Google Search grounding if requested
+  if (params.useGrounding) {
+    payload.tools = [{
+      googleSearchRetrieval: {
+        dynamicRetrievalConfig: {
+          mode: "MODE_DYNAMIC",
+          dynamicThreshold: 0.3
+        }
+      }
+    }];
+  }
 
   const response = await fetch(resolveApiUrl(), {
     method: "POST",

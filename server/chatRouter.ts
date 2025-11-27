@@ -786,6 +786,20 @@ Examples:
 - "Gostaria de analisar alguma categoria específica?"
 - "Quer que eu crie um plano para atingir sua meta de poupança?"
 
+🌐 **WEB SEARCH FOR CURRENT PRICES**:
+When user asks about:
+- Travel costs (flights, hotels, attractions)
+- Current prices of products/services
+- Budget estimates for events/trips
+- Cost of living in specific locations
+- Any question requiring up-to-date pricing information
+
+YOU MUST use web search to get CURRENT, ACCURATE information. Example:
+User: "Quanto custa uma viagem para Ohio?"
+You: [Search web for "average cost trip to Ohio ${new Date().getFullYear()}" and "Ohio hotel prices ${new Date().getFullYear()}"]
+
+DO NOT guess or use outdated information. Always search for current prices and cite your sources.
+
 IMPORTANT: Base ALL calculations and advice on the financial data provided above. Do not make assumptions beyond what's in the profile.`;
 
       // Build messages array
@@ -798,10 +812,15 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
         { role: "user" as const, content: input.message },
       ];
 
-      // Call LLM
+      // Detect if user is asking for prices/budgets that need web search
+      const needsWebSearch = /\b(quanto custa|custo|pre[çc]o|or[çc]amento|viagem|hotel|passagem|voo|flight|price|cost|budget|how much)\b/i.test(input.message);
+
+      // Call LLM with optional web search grounding
       const response = await invokeLLM({
         messages,
         maxTokens: 1000,
+        // Enable Google Search grounding for price/budget queries
+        useGrounding: needsWebSearch,
       });
 
       const assistantMessage = response.choices[0]?.message?.content;

@@ -193,14 +193,14 @@ export default function AIMessage({ content }: AIMessageProps) {
             key={index}
             remarkPlugins={[remarkGfm]}
             components={{
-              // Custom styling for markdown elements
-              h1: ({ children }) => <h1 className="text-xl font-semibold mt-4 mb-2 text-white tracking-wide">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-lg font-semibold mt-3 mb-2 text-white tracking-wide">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-base font-medium mt-2 mb-1 text-white tracking-wide">{children}</h3>,
-              p: ({ children }) => <p className="my-2 leading-relaxed font-light text-gray-200 tracking-wide">{children}</p>,
-              ul: ({ children }) => <ul className="list-disc ml-6 my-2 space-y-1 font-light text-gray-200 tracking-wide">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal ml-6 my-2 space-y-1 font-light text-gray-200 tracking-wide">{children}</ol>,
-              li: ({ children }) => <li className="pl-2 font-light text-gray-200 tracking-wide">{children}</li>,
+              // Custom styling for markdown elements - lighter weight, more spacing
+              h1: ({ children }) => <h1 className="text-xl font-normal mt-4 mb-2 text-white tracking-wider leading-loose">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-lg font-normal mt-3 mb-2 text-white tracking-wider leading-loose">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-base font-normal mt-2 mb-1 text-white tracking-wider leading-relaxed">{children}</h3>,
+              p: ({ children }) => <p className="my-2 leading-loose font-extralight text-gray-200 tracking-wider">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc ml-6 my-2 space-y-2 font-extralight text-gray-200 tracking-wider leading-loose">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal ml-6 my-2 space-y-2 font-extralight text-gray-200 tracking-wider leading-loose">{children}</ol>,
+              li: ({ children }) => <li className="pl-2 font-extralight text-gray-200 tracking-wider leading-loose">{children}</li>,
               strong: ({ children }) => {
                 // Check if content contains money values or percentages
                 const content = String(children);
