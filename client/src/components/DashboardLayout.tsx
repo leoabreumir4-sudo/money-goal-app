@@ -184,7 +184,21 @@ function DashboardLayoutContent({
               <div 
                 className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg transition-all duration-300 ease-out pointer-events-none"
                 style={{
-                  top: `${menuItems.findIndex(item => location === item.path) * 48 + 8}px`,
+                  top: (() => {
+                    const activeIndex = menuItems.findIndex(item => location === item.path);
+                    if (activeIndex === -1) return '8px';
+                    
+                    // Calculate position considering dividers
+                    let position = 8; // Initial padding
+                    for (let i = 0; i < activeIndex; i++) {
+                      position += 48; // Item height (h-11 = 44px + mb-1 = 4px)
+                      // Add divider height after items 1 and 4 (AQWorlds and Analytics)
+                      if (i === 1 || i === 4) {
+                        position += 20; // Divider height (my-2 = 8px top + 8px bottom + 1px height + spacing)
+                      }
+                    }
+                    return `${position}px`;
+                  })(),
                   opacity: menuItems.some(item => location === item.path) ? 1 : 0
                 }}
               />
