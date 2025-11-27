@@ -530,9 +530,9 @@ export const chatRouter = router({
       const baseSystemPrompt = getSystemPrompt(detectedLanguage);
       
       const languageInstructions = {
-        en: "Respond ENTIRELY in English. Every single word must be in English.",
-        pt: "Responda COMPLETAMENTE em Português. Cada palavra da resposta DEVE estar em Português do Brasil. NÃO misture inglês.",
-        es: "Responde COMPLETAMENTE en Español. Cada palabra debe estar en Español. NO mezcles inglés."
+        en: "You MUST respond ENTIRELY in English. Every single word must be in English. Do not mix languages.",
+        pt: "Você DEVE responder COMPLETAMENTE em Português do Brasil. Cada palavra da resposta DEVE estar em Português. NÃO misture inglês.",
+        es: "Debes responder COMPLETAMENTE en Español. Cada palabra debe estar en Español. NO mezcles inglés."
       };
       
       // Add flow context to system prompt if in a flow
@@ -559,16 +559,18 @@ YOUR ROLE:
 - Consider income, expenses, savings rate, and financial goals
 - Prioritize financial health and realistic planning
 - Use a friendly but professional tone
-- **CRITICAL**: ${languageInstructions[detectedLanguage]}
+- **CRITICAL LANGUAGE RULE**: The user wrote to you in ${detectedLanguage === 'pt' ? 'Portuguese' : detectedLanguage === 'es' ? 'Spanish' : 'English'}
+- ${languageInstructions[detectedLanguage]}
 - **NEVER switch languages mid-response** - maintain consistency throughout
+- If user asks you to switch languages (e.g., "responda em inglês"), honor that request
 ${flowContext}
 
 CURRENT USER FINANCIAL PROFILE:
-${JSON.stringify(financialContext, null, 2)}
-
 ⚠️ CRITICAL - USER'S CURRENT FINANCIAL SUMMARY:
-**LANGUAGE**: User is writing in ${detectedLanguage === 'pt' ? 'Portuguese (PT-BR)' : detectedLanguage === 'es' ? 'Spanish' : 'English'}.
-You MUST respond in the SAME language throughout the ENTIRE response. No mixing languages!
+**DETECTED LANGUAGE**: User is communicating in ${detectedLanguage === 'pt' ? 'Portuguese (PT-BR)' : detectedLanguage === 'es' ? 'Spanish (ES)' : 'English (EN)'}.
+**YOUR RESPONSE LANGUAGE**: Match the user's language. Respond in ${detectedLanguage === 'pt' ? 'Portuguese' : detectedLanguage === 'es' ? 'Spanish' : 'English'}.
+If the user explicitly asks to switch languages (e.g., "answer in English"), switch to that language.
+Otherwise, maintain the detected language throughout your ENTIRE response.
 
 You MUST start your response by confirming these exact values to verify you read them correctly:
 
@@ -586,6 +588,8 @@ This proves you are using the correct data and not hallucinating numbers.
 1. These values are FINAL - DO NOT recalculate or modify them
 2. DO NOT parse numbers from the strings - use them AS-IS
 3. ALL values are already formatted in the correct currency
+4. Copy and paste EXACTLY - any deviation means you failed
+5. Maintain consistent language based on user's detected language (${detectedLanguage})
 4. Copy and paste EXACTLY - any deviation means you failed
 5. Write EVERYTHING in ${detectedLanguage === 'pt' ? 'Portuguese' : detectedLanguage === 'es' ? 'Spanish' : 'English'} - NO exceptions!
 
