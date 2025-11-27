@@ -105,13 +105,13 @@ const AuthPage = () => {
   const isLoading = loginMutation.isLoading || registerMutation.isLoading;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      <Card className="w-[420px] bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl text-white border-gray-700/50 shadow-2xl">
+    <div className="flex items-center justify-center min-h-screen bg-gray-900">
+      <Card className="w-[420px] bg-gray-800 text-white border-gray-700">
         <CardHeader className="space-y-3 pb-6">
-          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-16 h-16 mx-auto bg-primary rounded-2xl flex items-center justify-center">
             {isLogin ? <LogIn className="w-8 h-8 text-white" /> : <UserPlus className="w-8 h-8 text-white" />}
           </div>
-          <CardTitle className="text-3xl text-center font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          <CardTitle className="text-3xl text-center font-bold text-white">
             {isLogin ? "Welcome Back" : "Create Account"}
           </CardTitle>
           <CardDescription className="text-center text-gray-400 text-base">
@@ -162,7 +162,7 @@ const AuthPage = () => {
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all" 
+                className="w-full bg-primary hover:bg-primary/90 h-11 text-base font-semibold transition-all" 
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -215,7 +215,7 @@ const AuthPage = () => {
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all" 
+                className="w-full bg-primary hover:bg-primary/90 h-11 text-base font-semibold transition-all" 
                 disabled={isLoading}
               >
                 {isLoading ? (

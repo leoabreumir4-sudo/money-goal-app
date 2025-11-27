@@ -174,18 +174,25 @@ async function startServer() {
         return res.status(200).send("");
       }
 
-      // Parse expense with LLM
-      console.log("[WhatsApp] Parsing expense...");
+      // Parse transaction with LLM
+      console.log("[WhatsApp] Parsing transaction...");
       const llmResponse = await invokeLLM({
         messages: [
           {
             role: "system",
-            content: `Extract expense data from Portuguese text. Return ONLY valid JSON:
-{"description": "string", "amount": number (in cents), "category": "Alimentação|Transporte|Saúde|Lazer|Moradia|Educação|Outros"}
+            content: `Extract transaction data from Portuguese text. Return ONLY valid JSON:
+{"description": "string", "amount": number (in cents), "category": "Alimentação|Transporte|Saúde|Lazer|Moradia|Educação|Outros", "type": "expense or income", "currency": "BRL|USD|EUR"}
+
+Currency detection:
+- "reais", "R$" or no currency → "BRL"
+- "dólares", "dollars", "$", "USD" → "USD"
+- "euros", "EUR", "€" → "EUR"
 
 Examples:
-"Mercado 350 reais" → {"description":"Mercado","amount":35000,"category":"Alimentação"}
-"Uber 25" → {"description":"Uber","amount":2500,"category":"Transporte"}
+"Mercado 350 reais" → {"description":"Mercado","amount":35000,"category":"Alimentação","type":"expense","currency":"BRL"}
+"Uber 25" → {"description":"Uber","amount":2500,"category":"Transporte","type":"expense","currency":"BRL"}
+"Recebi 1000 dólares" → {"description":"Freelance","amount":100000,"category":"Outros","type":"income","currency":"USD"}
+"Comprei iPhone por 300 dólares" → {"description":"iPhone","amount":30000,"category":"Outros","type":"expense","currency":"USD"}
 
 If invalid, return: {"error": "invalid"}`
           },
@@ -228,44 +235,97 @@ If invalid, return: {"error": "invalid"}`
         return res.status(200).send("");
       }
 
-      // Map category name to ID
-      const categories = await db.getAllCategories(user.id);
-      const categoryMap: Record<string, number> = {
-        'Alimentação': categories.find(c => c.name === 'Alimentação')?.id || 1,
-        'Transporte': categories.find(c => c.name === 'Transporte')?.id || 2,
-        'Saúde': categories.find(c => c.name === 'Saúde')?.id || 3,
-        'Lazer': categories.find(c => c.name === 'Lazer')?.id || 4,
-        'Moradia': categories.find(c => c.name === 'Moradia')?.id || 5,
-        'Educação': categories.find(c => c.name === 'Educação')?.id || 6,
-        'Outros': categories.find(c => c.name === 'Outros')?.id || 7,
-      };
+      // Get user settings for currency fallback
+      const settings = await db.getUserSettings(user.openId);
+      const defaultCurrency = settings?.currency || "BRL";
+      const currency = parsed.currency || defaultCurrency;
+      const transactionType = parsed.type || "expense";
+
+      // Find or create category
+      const categories = await db.getAllCategories(user.openId);
+      let category = categories.find(c => c.name === parsed.category);
       
-      const categoryId = categoryMap[parsed.category] || categoryMap['Outros'];
+      if (!category) {
+        const categoryEmojis: Record<string, string> = {
+          "Alimentação": "🍔",
+          "Transporte": "🚗",
+          "Saúde": "💊",
+          "Lazer": "🎮",
+          "Moradia": "🏠",
+          "Educação": "📚",
+          "Outros": "📦",
+        };
+        
+        const categoryColors: Record<string, string> = {
+          "Alimentação": "#10b981",
+          "Transporte": "#3b82f6",
+          "Saúde": "#ef4444",
+          "Lazer": "#8b5cf6",
+          "Moradia": "#f59e0b",
+          "Educação": "#06b6d4",
+          "Outros": "#6b7280",
+        };
+        
+        category = await db.createCategory({
+          userId: user.openId,
+          name: parsed.category,
+          emoji: categoryEmojis[parsed.category] || "📦",
+          color: categoryColors[parsed.category] || "#6b7280",
+        });
+      }
+      
+      const categoryId = category.id;
+      const description = `${parsed.description} [WhatsApp]`;
 
       await db.createTransaction({
-        userId: user.id,
+        userId: user.openId,
         goalId: activeGoal.id,
-        reason: parsed.description,
+        reason: description,
         amount: parsed.amount,
         categoryId: categoryId,
-        type: "expense",
-        source: "whatsapp"
+        type: transactionType,
+        source: "whatsapp",
+        currency: currency,
       });
 
-      console.log("[WhatsApp] Transaction created successfully");
+      console.log("[WhatsApp] Transaction created:", {
+        description,
+        amount: parsed.amount,
+        category: parsed.category,
+        type: transactionType,
+        currency,
+        detectedCurrency: parsed.currency,
+        defaultCurrency,
+      });
 
       // Send confirmation
       if (twilioClient && ENV.twilioWhatsappNumber) {
-        const goals = await db.getActiveGoals(user.id);
+        const goals = await db.getActiveGoals(user.openId);
         const totalSaved = goals.reduce((sum: number, g: any) => sum + g.currentAmount, 0);
 
+        const emoji = transactionType === "income" ? "💰" : "💸";
+        const actionText = transactionType === "income" ? "Receita registrada" : "Gasto registrado";
+        const currencySymbol = currency === "BRL" ? "R$" : currency === "USD" ? "$" : currency === "EUR" ? "€" : currency;
+
+        const confirmationMessage = `✅ *${actionText}!*\n\n📝 ${parsed.description}\n${emoji} ${currencySymbol} ${(parsed.amount / 100).toFixed(2)}\n🏷️ ${parsed.category}\n\n💎 Economias totais: R$ ${(totalSaved / 100).toFixed(2)}`;
+
         console.log("[WhatsApp] Sending confirmation message...");
-        await twilioClient.messages.create({
-          from: `whatsapp:${ENV.twilioWhatsappNumber}`,
-          to: From,
-          body: `✅ *Gasto registrado!*\n\n📝 ${parsed.description}\n💰 R$ ${(parsed.amount / 100).toFixed(2)}\n🏷️ ${parsed.category}\n\n💎 Economias: R$ ${(totalSaved / 100).toFixed(2)}`
-        });
-        console.log("[WhatsApp] Confirmation sent");
+        console.log("[WhatsApp] Message content:", confirmationMessage);
+        
+        try {
+          const msgResult = await twilioClient.messages.create({
+            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
+            to: From,
+            body: confirmationMessage
+          });
+          console.log("[WhatsApp] Confirmation sent successfully! SID:", msgResult.sid);
+        } catch (sendError: any) {
+          console.error("[WhatsApp] Failed to send confirmation:", {
+            error: sendError.message,
+            code: sendError.code,
+            status: sendError.status,
+          });
+        }
       }
 
       res.status(200).send("");

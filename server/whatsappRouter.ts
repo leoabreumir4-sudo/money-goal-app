@@ -21,19 +21,31 @@ initTwilio().catch((error) => {
 
 // Helper: Send WhatsApp message
 async function sendWhatsApp(to: string, message: string) {
+  console.log("[WhatsApp] Attempting to send message to:", to);
+  console.log("[WhatsApp] Message:", message);
+  
   if (!twilioClient || !ENV.twilioWhatsappNumber) {
-    console.warn("Twilio not configured - cannot send WhatsApp message");
+    console.warn("[WhatsApp] Twilio not configured:", {
+      hasClient: !!twilioClient,
+      hasNumber: !!ENV.twilioWhatsappNumber,
+      number: ENV.twilioWhatsappNumber,
+    });
     return;
   }
 
   try {
-    await twilioClient.messages.create({
+    const result = await twilioClient.messages.create({
       from: `whatsapp:${ENV.twilioWhatsappNumber}`,
       to: `whatsapp:${to}`,
       body: message,
     });
-  } catch (error) {
-    console.error("Error sending WhatsApp message:", error);
+    console.log("[WhatsApp] Message sent successfully:", result.sid);
+  } catch (error: any) {
+    console.error("[WhatsApp] Error sending message:", {
+      error: error.message,
+      code: error.code,
+      status: error.status,
+    });
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "Failed to send WhatsApp message",
@@ -46,28 +58,39 @@ async function parseExpense(message: string): Promise<{
   description: string;
   amount: number;
   category: string;
+  type: string;
+  currency: string;
 } | null> {
   try {
     const response = await invokeLLM({
       messages: [
         {
           role: "system",
-          content: `You are a financial assistant that extracts expense data from Portuguese text.
+          content: `You are a financial assistant that extracts transaction data from Portuguese text.
 Return ONLY valid JSON with this exact structure:
 {
   "description": "string (brief description)",
-  "amount": number (in cents - multiply reais by 100),
-  "category": "one of: Alimentação, Transporte, Saúde, Lazer, Moradia, Educação, Outros"
+  "amount": number (in cents - multiply by 100),
+  "category": "one of: Alimentação, Transporte, Saúde, Lazer, Moradia, Educação, Outros",
+  "type": "expense or income",
+  "currency": "BRL, USD, EUR, or other ISO code if mentioned"
 }
 
-Examples:
-"Mercado 350 reais" → {"description":"Mercado","amount":35000,"category":"Alimentação"}
-"Uber 25" → {"description":"Uber","amount":2500,"category":"Transporte"}
-"25 garrafas de água por 1 real cada" → {"description":"Água (25 garrafas)","amount":2500,"category":"Alimentação"}
-"Academia 120 mensalidade" → {"description":"Academia","amount":12000,"category":"Saúde"}
-"Aluguel 1500" → {"description":"Aluguel","amount":150000,"category":"Moradia"}
+Currency detection rules:
+- If user says "reais", "R$", or just a number → "BRL"
+- If user says "dólares", "dollars", "$", "USD" → "USD"
+- If user says "euros", "EUR", "€" → "EUR"
+- Default to "BRL" if no currency is mentioned
 
-If the message doesn't contain expense information, return: {"error": "invalid"}`,
+Examples:
+"Mercado 350 reais" → {"description":"Mercado","amount":35000,"category":"Alimentação","type":"expense","currency":"BRL"}
+"Uber 25" → {"description":"Uber","amount":2500,"category":"Transporte","type":"expense","currency":"BRL"}
+"Recebi 1000 dólares do freelance" → {"description":"Freelance","amount":100000,"category":"Outros","type":"income","currency":"USD"}
+"Salário 5000 euros" → {"description":"Salário","amount":500000,"category":"Outros","type":"income","currency":"EUR"}
+"2 pães por 1,50 cada" → {"description":"Pães (2 unidades)","amount":300,"category":"Alimentação","type":"expense","currency":"BRL"}
+"Comprei Iphone por 300 dólares" → {"description":"Iphone","amount":30000,"category":"Outros","type":"expense","currency":"USD"}
+
+If the message doesn't contain transaction information, return: {"error": "invalid"}`,
         },
         { role: "user", content: message },
       ],
@@ -77,6 +100,8 @@ If the message doesn't contain expense information, return: {"error": "invalid"}
     const text = response.choices[0].message.content;
     const parsed = JSON.parse(typeof text === "string" ? text : JSON.stringify(text));
 
+    console.log("[WhatsApp] LLM parsed result:", parsed);
+
     if (parsed.error === "invalid" || !parsed.description || !parsed.amount) {
       return null;
     }
@@ -85,6 +110,8 @@ If the message doesn't contain expense information, return: {"error": "invalid"}
       description: parsed.description,
       amount: parsed.amount,
       category: parsed.category || "Outros",
+      type: parsed.type || "expense",
+      currency: parsed.currency || "BRL",
     };
   } catch (error) {
     console.error("Error parsing expense:", error);
@@ -120,7 +147,11 @@ export const whatsappRouter = router({
       }).passthrough() // Allow extra fields from Twilio
     )
     .mutation(async ({ input }) => {
-      console.log("[WhatsApp Webhook] Received:", JSON.stringify(input, null, 2));
+      console.log("=".repeat(80));
+      console.log("[WhatsApp Webhook] NEW MESSAGE RECEIVED");
+      console.log("[WhatsApp Webhook] Timestamp:", new Date().toISOString());
+      console.log("[WhatsApp Webhook] Full payload:", JSON.stringify(input, null, 2));
+      console.log("=".repeat(80));
 
       if (!input.From || !input.Body) {
         console.error("[WhatsApp Webhook] Missing From or Body", input);
@@ -216,14 +247,72 @@ export const whatsappRouter = router({
           return { success: false, reason: "no_active_goal" };
         }
 
+        // Get user settings for currency fallback
+        const settings = await db.getUserSettings(user.openId);
+        const defaultCurrency = settings?.currency || "BRL";
+        
+        // Use currency from parsed message, fallback to user settings
+        const currency = transaction.currency || defaultCurrency;
+
+        // Find or create category
+        let categoryId = null;
+        const categories = await db.getAllCategories(user.openId);
+        let category = categories.find((c: any) => c.name === transaction.category);
+        
+        if (!category) {
+          // Create category if it doesn't exist
+          const categoryEmojis: Record<string, string> = {
+            "Alimentação": "🍔",
+            "Transporte": "🚗",
+            "Saúde": "💊",
+            "Lazer": "🎮",
+            "Moradia": "🏠",
+            "Educação": "📚",
+            "Outros": "📦",
+          };
+          
+          const categoryColors: Record<string, string> = {
+            "Alimentação": "#10b981",
+            "Transporte": "#3b82f6",
+            "Saúde": "#ef4444",
+            "Lazer": "#8b5cf6",
+            "Moradia": "#f59e0b",
+            "Educação": "#06b6d4",
+            "Outros": "#6b7280",
+          };
+          
+          category = await db.createCategory({
+            userId: user.openId,
+            name: transaction.category,
+            emoji: categoryEmojis[transaction.category] || "📦",
+            color: categoryColors[transaction.category] || "#6b7280",
+          });
+        }
+        categoryId = category.id;
+
+        // Create transaction with WhatsApp tag in description
+        const description = `${transaction.description} [WhatsApp]`;
+        
         await db.createTransaction({
           userId: user.openId,
           goalId: activeGoal.id,
-          reason: transaction.description,
+          reason: description,
           amount: transaction.amount,
-          categoryId: null,
-          type: "expense",
+          categoryId: categoryId,
+          type: transaction.type as "expense" | "income",
           source: "whatsapp",
+          currency: currency,
+        });
+
+        console.log("[WhatsApp] Transaction created:", {
+          description,
+          amount: transaction.amount,
+          category: transaction.category,
+          categoryId,
+          type: transaction.type,
+          currency,
+          detectedCurrency: transaction.currency,
+          defaultCurrency,
         });
 
         // Get user's current balance/goals for context
@@ -231,22 +320,51 @@ export const whatsappRouter = router({
         const totalSaved = goals.reduce((sum: number, g: any) => sum + g.currentAmount, 0);
 
         // Send confirmation
-        await sendWhatsApp(
-          phoneNumber,
-          `✅ *Gasto registrado!*\n\n` +
-            `📝 ${transaction.description}\n` +
-            `💰 R$ ${(transaction.amount / 100).toFixed(2)}\n` +
-            `🏷️ ${transaction.category}\n\n` +
-            (totalSaved > 0 ? `💎 Economias totais: R$ ${(totalSaved / 100).toFixed(2)}` : `Confira no app: ${ENV.viteAppUrl || "https://seu-app.com"}`)
-        );
+        const emoji = transaction.type === "income" ? "💰" : "💸";
+        const actionText = transaction.type === "income" ? "Receita registrada" : "Gasto registrado";
+        
+        // Format currency symbol
+        const currencySymbol = currency === "BRL" ? "R$" : currency === "USD" ? "$" : currency === "EUR" ? "€" : currency;
+        
+        console.log("[WhatsApp] Sending confirmation message to", phoneNumber);
+        
+        const confirmationMessage = `✅ *${actionText}!*\n\n` +
+          `📝 ${transaction.description}\n` +
+          `${emoji} ${currencySymbol} ${(transaction.amount / 100).toFixed(2)}\n` +
+          `🏷️ ${transaction.category}\n\n` +
+          (totalSaved > 0 ? `💎 Economias totais: R$ ${(totalSaved / 100).toFixed(2)}` : `Confira no app: ${ENV.viteAppUrl || "https://seu-app.com"}`);
+        
+        console.log("[WhatsApp] Confirmation message content:", confirmationMessage);
+        
+        try {
+          await sendWhatsApp(phoneNumber, confirmationMessage);
+          console.log("[WhatsApp] Confirmation message sent successfully");
+        } catch (sendError: any) {
+          console.error("[WhatsApp] Failed to send confirmation:", {
+            error: sendError.message,
+            code: sendError.code,
+            status: sendError.status,
+          });
+          // Don't throw - transaction was created successfully
+        }
 
-        return { success: true, action: "expense_created" };
-      } catch (error) {
-        console.error("Error creating transaction:", error);
-        await sendWhatsApp(
-          phoneNumber,
-          `❌ Erro ao registrar gasto. Tente novamente ou acesse o app.`
-        );
+        return { success: true, action: "transaction_created" };
+      } catch (error: any) {
+        console.error("[WhatsApp] Error creating transaction:", {
+          error: error.message,
+          stack: error.stack,
+        });
+        
+        // Try to send error message to user
+        try {
+          await sendWhatsApp(
+            phoneNumber,
+            `❌ Erro ao registrar gasto. Tente novamente ou acesse o app.`
+          );
+        } catch (sendError) {
+          console.error("[WhatsApp] Failed to send error message:", sendError);
+        }
+        
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create transaction",
