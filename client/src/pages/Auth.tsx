@@ -26,6 +26,9 @@ const AuthPage = () => {
     onSuccess: async (data) => {
       if (data.token) {
         localStorage.setItem('sessionToken', data.token);
+        // Force localStorage to commit
+        const savedToken = localStorage.getItem('sessionToken');
+        console.log('[Auth] Token saved:', savedToken ? 'YES' : 'NO');
       }
       
       // Save credentials if remember me is checked
@@ -40,9 +43,11 @@ const AuthPage = () => {
       }
       
       toast.success("Login successful! Redirecting...");
-      // Wait for token to be persisted and queries to invalidate
+      
+      // Wait longer for token persistence and invalidation
       await queryClient.invalidateQueries();
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       navigate("/");
     },
     onError: (error) => {
@@ -55,11 +60,16 @@ const AuthPage = () => {
     onSuccess: async (data) => {
       if (data.token) {
         localStorage.setItem('sessionToken', data.token);
+        // Force localStorage to commit
+        const savedToken = localStorage.getItem('sessionToken');
+        console.log('[Auth] Token saved:', savedToken ? 'YES' : 'NO');
       }
       toast.success("Registration successful! Redirecting...");
-      // Wait for token to be persisted and queries to invalidate
+      
+      // Wait longer for token persistence and invalidation
       await queryClient.invalidateQueries();
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       navigate("/");
     },
     onError: (error) => {
