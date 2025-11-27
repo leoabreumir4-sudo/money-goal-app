@@ -123,19 +123,20 @@ export default function Chat() {
     setOptimisticMessages([optimisticUserMessage]);
     setIsLoading(true);
     
-    // Set dynamic loading status based on message content
+    // Set dynamic loading status based on message content (translated)
+    const lang = preferences.language as "en" | "pt" | "es";
     if (/\b(quanto custa|custo|pre[çc]o|or[çc]amento|viagem|hotel|passagem|voo|flight|price|cost|budget)\b/i.test(userMessage)) {
-      setLoadingStatus("Pesquisando na web...");
+      setLoadingStatus(t("searchingWeb", lang));
     } else if (/\b(converter|conversão|câmbio|dólar|real|exchange)\b/i.test(userMessage)) {
-      setLoadingStatus("Consultando câmbio...");
+      setLoadingStatus(t("checkingExchangeRate", lang));
     } else if (/\b(gastos|despesas|spending|expenses|categorias)\b/i.test(userMessage)) {
-      setLoadingStatus("Analisando gastos...");
+      setLoadingStatus(t("analyzingSpending", lang));
     } else if (/\b(meta|goal|objetivo|poupar|save)\b/i.test(userMessage)) {
-      setLoadingStatus("Calculando metas...");
+      setLoadingStatus(t("calculatingGoals", lang));
     } else if (/\b(oi|olá|hi|hello)\b/i.test(userMessage)) {
-      setLoadingStatus("Preparando saudação...");
+      setLoadingStatus(t("preparingGreeting", lang));
     } else {
-      setLoadingStatus("Pensando...");
+      setLoadingStatus(t("thinking", lang));
     }
 
     try {

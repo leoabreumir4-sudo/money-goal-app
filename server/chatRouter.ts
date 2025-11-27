@@ -129,8 +129,9 @@ function extractMemoriesFromMessage(userMessage: string, aiResponse: string): st
   
   // Pattern: Travel/vacation plans
   const travelPatterns = [
-    /(?:viajar|travel|ir|go)\s+(?:para|to|a)\s+([A-Z][a-zA-Z\sÀ-ÿ]+?)(?:\s+em|\s+in|\s+no|\s+na)?\s+(janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro|january|february|march|april|may|june|july|august|september|october|november|december|\d{4})/i,
-    /(?:trip to|viagem para|viaje a)\s+([A-Z][a-zA-Z\sÀ-ÿ]+)/i,
+    /(?:viajar|travel|ir|go|want to go|quero ir)\s+(?:para|pra|to|a|no|na)\s+([a-zA-Z][a-zA-Z\sÀ-ÿ]+?)(?:\s+em|\s+in|\s+no|\s+na)?(?:\s+(janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro|january|february|march|april|may|june|july|august|september|october|november|december|\d{4}))?/i,
+    /(?:trip to|viagem para|viaje a)\s+([a-zA-Z][a-zA-Z\sÀ-ÿ]+)/i,
+    /(?:quero ir|want to go)\s+(?:no|na|ao|em|to)?\s+([a-z][a-z\sÀ-ÿ0-9]+)/i,  // Accepts lowercase like "lollapalooza"
   ];
   
   for (const pattern of travelPatterns) {
@@ -138,7 +139,10 @@ function extractMemoriesFromMessage(userMessage: string, aiResponse: string): st
     if (match && match[1]) {
       const destination = match[1].trim();
       const when = match[2] ? ` (${match[2]})` : '';
-      memories.push(`Plans to travel to ${destination}${when}`);
+      // Only save if destination is meaningful (not common words)
+      if (destination.length > 3 && !/^(para|pra|the|uma|one)$/i.test(destination)) {
+        memories.push(`Plans to travel to ${destination}${when}`);
+      }
     }
   }
   
@@ -662,8 +666,17 @@ You are guiding the user through a multi-step conversation. Ask the next questio
       
       const systemPrompt = `${baseSystemPrompt}
 
-📅 **CURRENT DATE**: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} (${new Date().getFullYear()})
-⚠️ **CRITICAL**: When calculating months until a date, use the CURRENT DATE above. We are in November 2025.
+📅 **CURRENT DATE**: November 27, 2025
+⚠️ **CRITICAL DATE CALCULATION RULES**:
+
+When the user mentions a month and year in the future (e.g., "June 2026" or "March 2026"):
+1. Count from the NEXT MONTH (December 2025) to the target month
+2. Examples:
+   - June 2026 from December 2025 = Count: Dec, Jan, Feb, Mar, Apr, May, Jun = 7 months
+   - March 2026 from December 2025 = Count: Dec, Jan, Feb, Mar = 4 months
+   - Lollapalooza (March 2026) from December 2025 = 4 months
+3. ALWAYS show your math: "From December 2025 to June 2026: December, January, February, March, April, May, June = 7 months"
+4. NEVER say "19 months" or "16 months" - count carefully!
 
 YOUR ROLE & PERSONALITY:
 - You are Moni, ${financialContext.userName ? financialContext.userName + "'s" : "the user's"} personal financial manager and advisor
@@ -681,10 +694,13 @@ YOUR ROLE & PERSONALITY:
 
 💬 **CONVERSATION HISTORY AWARENESS**:
 - You have access to recent conversation history
-- DO NOT repeat information you've already shared unless specifically asked
-- Reference previous advice instead: "Como mencionei antes..." / "As I mentioned earlier..."
-- If you've already analyzed something, just reference it briefly
-- Only repeat full financial summaries if explicitly requested or if it's been many messages
+- **NEVER repeat the full financial summary (TOTAIS, MÉDIAS MENSAIS, META DE POUPANÇA) if you already showed it in the last 3 messages**
+- If you already shared financial data, reference it briefly: "Como vimos, você economiza $13.33/mês..."
+- Only show the FULL financial summary if:
+  * User explicitly asks: "mostre minhas finanças", "resumo financeiro", "analise completa"
+  * It's the first message of a new conversation
+  * More than 5 messages have passed since last summary
+- For follow-up questions about travel/goals, focus ONLY on the new calculation
 - Be conversational - build on what you've discussed, don't start from zero each time
 
 🧠 **LEARNING ABOUT THE USER**:
