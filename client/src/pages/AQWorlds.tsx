@@ -99,7 +99,6 @@ export default function AQWorlds() {
   const [projectYear, setProjectYear] = useState(new Date().getFullYear());
   
   const [newEventName, setNewEventName] = useState("");
-  const { preferences } = usePreferences();
   const calcAvgValueInput = useCurrencyInput('', preferences.numberFormat);
   const calcNumProjectsInput = useCurrencyInput('', preferences.numberFormat);
   const editProjectAmountInput = useCurrencyInput('', preferences.numberFormat);
