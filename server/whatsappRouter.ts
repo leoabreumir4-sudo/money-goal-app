@@ -114,19 +114,39 @@ export const whatsappRouter = router({
   webhook: publicProcedure
     .input(
       z.object({
-        From: z.string(), // Format: whatsapp:+5511999999999
-        Body: z.string(), // Message text
+        From: z.string().optional(), // Format: whatsapp:+5511999999999
+        Body: z.string().optional(), // Message text
         ProfileName: z.string().optional(),
-      })
+      }).passthrough() // Allow extra fields from Twilio
     )
     .mutation(async ({ input }) => {
+      console.log("[WhatsApp Webhook] Received:", JSON.stringify(input, null, 2));
+
+      if (!input.From || !input.Body) {
+        console.error("[WhatsApp Webhook] Missing From or Body", input);
+        return { success: false, reason: "missing_fields" };
+      }
+
       const phoneNumber = input.From.replace("whatsapp:", "");
       const message = input.Body.trim();
 
-      console.log(`WhatsApp message from ${phoneNumber}: ${message}`);
+      console.log(`[WhatsApp] Message from ${phoneNumber}: ${message}`);
+
+      // Log Twilio configuration
+      console.log("[WhatsApp] Twilio configured:", {
+        hasClient: !!twilioClient,
+        hasNumber: !!ENV.twilioWhatsappNumber,
+        number: ENV.twilioWhatsappNumber,
+      });
 
       // Find user by phone number
       const user = await db.getUserByPhone(phoneNumber);
+
+      console.log("[WhatsApp] User lookup:", {
+        phoneNumber,
+        userFound: !!user,
+        userId: user?.openId,
+      });
 
       if (!user) {
         // User not linked
@@ -172,7 +192,10 @@ export const whatsappRouter = router({
       }
 
       // Parse expense from message
+      console.log("[WhatsApp] Parsing expense from message:", message);
       const transaction = await parseExpense(message);
+
+      console.log("[WhatsApp] Parsed transaction:", transaction);
 
       if (!transaction) {
         await sendWhatsApp(
