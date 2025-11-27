@@ -7,84 +7,75 @@ export interface SearchResult {
 }
 
 /**
- * Perform a web search using Google Custom Search API
- * Note: Requires GOOGLE_SEARCH_ENGINE_ID environment variable
+ * Get current exchange rate using free API (no auth required)
  */
-export async function searchWeb(query: string): Promise<SearchResult[]> {
-  const apiKey = ENV.googleApiKey;
-  const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID || "017576662512468239146:omuauf_lfve"; // Default CSE ID
-  
-  if (!apiKey) {
-    console.warn("[Web Search] No API key available");
-    return [];
-  }
-
+export async function getCurrentExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
   try {
-    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=5`;
+    // Use exchangerate-api.com (free, no auth required)
+    const url = `https://api.exchangerate-api.com/v4/latest/${fromCurrency.toUpperCase()}`;
+    
+    console.log(`[Exchange Rate] Fetching ${fromCurrency}/${toCurrency} from exchangerate-api.com`);
     
     const response = await fetch(url);
     
     if (!response.ok) {
-      console.error(`[Web Search] API error: ${response.status} ${response.statusText}`);
-      return [];
+      console.error(`[Exchange Rate] API error: ${response.status}`);
+      return null;
     }
 
     const data = await response.json();
     
-    if (!data.items || data.items.length === 0) {
-      console.log("[Web Search] No results found");
-      return [];
+    if (!data.rates || !data.rates[toCurrency.toUpperCase()]) {
+      console.error(`[Exchange Rate] Currency ${toCurrency} not found`);
+      return null;
     }
 
-    return data.items.slice(0, 5).map((item: any) => ({
-      title: item.title,
-      link: item.link,
-      snippet: item.snippet || "",
-    }));
-  } catch (error) {
-    console.error("[Web Search] Error:", error);
-    return [];
-  }
-}
-
-/**
- * Get current exchange rate from web search
- */
-export async function getCurrentExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
-  try {
-    const query = `${fromCurrency} to ${toCurrency} exchange rate today`;
-    const results = await searchWeb(query);
+    const rate = data.rates[toCurrency.toUpperCase()];
+    console.log(`[Exchange Rate] ${fromCurrency}/${toCurrency}: ${rate}`);
     
-    if (results.length === 0) return null;
-    
-    // Try to extract rate from snippets
-    for (const result of results) {
-      const text = `${result.title} ${result.snippet}`.toLowerCase();
-      
-      // Match patterns like "1 usd = 5.25 brl" or "exchange rate: 5.25"
-      const patterns = [
-        /1\s*(?:usd|dollar|dólar)\s*=?\s*([\d.,]+)\s*(?:brl|real|reais)/i,
-        /(?:rate|taxa|cotação).*?([\d.,]+)/i,
-        /([\d.,]+)\s*(?:brl|real|reais)/i
-      ];
-      
-      for (const pattern of patterns) {
-        const match = text.match(pattern);
-        if (match && match[1]) {
-          const rate = parseFloat(match[1].replace(',', '.'));
-          if (rate > 0 && rate < 100) { // Sanity check
-            console.log(`[Exchange Rate] Found ${fromCurrency}/${toCurrency}: ${rate}`);
-            return rate;
-          }
-        }
-      }
-    }
-    
-    return null;
+    return rate;
   } catch (error) {
     console.error("[Exchange Rate] Error:", error);
     return null;
   }
+}
+
+/**
+ * Perform a web search using Google Custom Search API with fallback
+ */
+export async function searchWeb(query: string): Promise<SearchResult[]> {
+  const apiKey = ENV.googleApiKey;
+  const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID || "017576662512468239146:omuauf_lfve";
+  
+  // Try Google Custom Search API if we have API key
+  if (apiKey) {
+    try {
+      const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=5`;
+      
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.items && data.items.length > 0) {
+          console.log(`[Web Search] Google API returned ${data.items.length} results`);
+          return data.items.slice(0, 5).map((item: any) => ({
+            title: item.title,
+            link: item.link,
+            snippet: item.snippet || "",
+          }));
+        }
+      } else {
+        console.warn(`[Web Search] Google API error: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error("[Web Search] Google API failed:", error);
+    }
+  }
+
+  // Fallback: Return empty array and let AI use its knowledge
+  console.log("[Web Search] No results available, AI will use general knowledge");
+  return [];
 }
 
 /**
@@ -99,3 +90,4 @@ export function formatSearchResults(results: SearchResult[]): string {
     .map((result, i) => `${i + 1}. ${result.title}\n   ${result.snippet}\n   Fonte: ${result.link}`)
     .join("\n\n");
 }
+
