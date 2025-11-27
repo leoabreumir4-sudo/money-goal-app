@@ -249,7 +249,11 @@ export default function Chat() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Moni</h1>
-              <p className="text-sm text-muted-foreground">Sua Consultora Financeira Inteligente</p>
+              <p className="text-sm text-muted-foreground">
+                {preferences.language === 'pt' ? 'Sua Consultora Financeira Inteligente' : 
+                 preferences.language === 'es' ? 'Tu Asesora Financiera Inteligente' : 
+                 'Your Intelligent Financial Advisor'}
+              </p>
             </div>
           </div>
           {messages.length > 0 && (

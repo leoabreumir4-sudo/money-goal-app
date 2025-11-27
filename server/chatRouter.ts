@@ -645,7 +645,16 @@ export const chatRouter = router({
         .join(" ");
       
       const textToAnalyze = input.message + " " + recentUserMessages;
-      const detectedLanguage = detectLanguage(textToAnalyze);
+      let detectedLanguage = detectLanguage(textToAnalyze);
+      
+      // Get user's preferred language from settings
+      const userSettings = await db.getUserSettings(userId);
+      const preferredLanguage = userSettings?.language;
+      
+      // Override detection with user preference if set
+      if (preferredLanguage && ['en', 'pt', 'es'].includes(preferredLanguage)) {
+        detectedLanguage = preferredLanguage as "en" | "pt" | "es";
+      }
 
       // Build system prompt with context
       const baseSystemPrompt = getSystemPrompt(detectedLanguage);
@@ -781,19 +790,18 @@ ${financialContext.savingsTargetSet && financialContext.currentVsTarget ? `
 ⚠️ **IMPORTANT**: ${detectedLanguage === 'pt' ? 'O usuário definiu uma meta de poupar' : detectedLanguage === 'es' ? 'El usuario estableció una meta de ahorrar' : 'User set a goal to save'} ${financialContext.monthlySavingTarget} ${detectedLanguage === 'pt' ? 'por mês. SEMPRE mencione e compare com esta meta!' : detectedLanguage === 'es' ? 'por mes. ¡Menciona SIEMPRE y compara con esta meta!' : 'per month. ALWAYS mention and compare against this target!'}
 ` : ''}
 
-🔴 **MANDATORY STRUCTURE**:
-1. Start with the summary above showing BOTH totals and monthly averages
-2. Clearly label "TOTAIS" vs "MÉDIAS MENSAIS" so user understands the difference
-3. ${financialContext.savingsTargetSet ? 'ALWAYS reference the savings target and compare current performance' : ''}
-4. ${financialContext.hasSalary ? `Mention the Artix Entertainment salary (${financialContext.avgMonthlySalary}/month) as stable income` : ''}
-5. ${financialContext.wiseBalance ? `ALWAYS mention Wise balance (${financialContext.wiseBalance}) when discussing total savings` : ''}
+⚠️ **QUANDO MOSTRAR O RESUMO FINANCEIRO:**
+- ${detectedLanguage === 'pt' ? 'APENAS mostre se o usuário pedir explicitamente: "mostre minhas finanças", "resumo", "análise completa"' : detectedLanguage === 'es' ? 'SOLO muestra si el usuario pide explícitamente: "muestra mis finanzas", "resumen", "análisis completo"' : 'ONLY show if user explicitly asks: "show my finances", "summary", "complete analysis"'}
+- ${detectedLanguage === 'pt' ? 'NÃO mostre o resumo completo se o usuário fez uma pergunta específica (ex: "quanto custa ingresso do lollapalooza?")' : detectedLanguage === 'es' ? 'NO muestres el resumen completo si el usuario hizo una pregunta específica (ej: "¿cuánto cuesta entrada de lollapalooza?")' : 'DO NOT show full summary if user asked a specific question (e.g., "how much is lollapalooza ticket?")'}
+- ${detectedLanguage === 'pt' ? 'Para perguntas específicas: responda APENAS o que foi perguntado' : detectedLanguage === 'es' ? 'Para preguntas específicas: responde SOLO lo que se preguntó' : 'For specific questions: answer ONLY what was asked'}
+- ${detectedLanguage === 'pt' ? 'Use dados financeiros do contexto quando RELEVANTE para a resposta' : detectedLanguage === 'es' ? 'Usa datos financieros del contexto cuando sea RELEVANTE para la respuesta' : 'Use financial data from context when RELEVANT to the answer'}
 
 ⚠️ **STRICT RULES:**
-1. Show BOTH total (6 months) AND monthly average values clearly labeled
-2. These values are FINAL - DO NOT recalculate or modify them
-3. DO NOT parse numbers from the strings - use them AS-IS
+1. Answer ONLY what the user asked - don't add unrequested information
+2. Financial summary is REFERENCE DATA - use it only when relevant
+3. DO NOT recalculate values - use them AS-IS from the summary
 4. ALL values are already formatted in the correct currency
-5. Maintain consistent language based on user's detected language (${detectedLanguage})
+5. Maintain consistent language: ${detectedLanguage === 'pt' ? 'PORTUGUÊS' : detectedLanguage === 'es' ? 'ESPAÑOL' : 'ENGLISH'}
 
 SALARY & WORK INFORMATION:
 ${financialContext.hasSalary ? `✅ User has regular salary from ${financialContext.salarySource}
