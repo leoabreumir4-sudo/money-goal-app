@@ -85,25 +85,31 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="p-8 space-y-6">
+      <div className="p-8 space-y-8 max-w-4xl mx-auto">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t('settings', preferences.language)}</h1>
-          <p className="text-muted-foreground">{t('customizeExperience', preferences.language)}</p>
+        <div className="space-y-1">
+          <h1 className="text-4xl font-bold text-foreground">{t('settings', preferences.language)}</h1>
+          <p className="text-lg text-muted-foreground">{t('customizeExperience', preferences.language)}</p>
         </div>
 
         {/* Settings Card */}
-        <Card className="bg-card border-border max-w-2xl">
-          <CardHeader>
-            <CardTitle className="text-foreground">{t('preferences', preferences.language)}</CardTitle>
+        <Card className="bg-gradient-to-br from-card to-card/80 border-border shadow-lg">
+          <CardHeader className="border-b border-border/50 pb-4">
+            <CardTitle className="text-foreground text-xl flex items-center gap-2">
+              <span className="text-2xl">⚙️</span>
+              {t('preferences', preferences.language)}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8 pt-6">
             {/* Language */}
-            <div className="space-y-2">
-              <Label htmlFor="language">{t('language', preferences.language)}</Label>
-              <p className="text-sm text-muted-foreground">{t('chooseLanguage', preferences.language)}</p>
+            <div className="space-y-3 p-4 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🌍</span>
+                <Label htmlFor="language" className="text-base font-semibold">{t('language', preferences.language)}</Label>
+              </div>
+              <p className="text-sm text-muted-foreground pl-7">{t('chooseLanguage', preferences.language)}</p>
               <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger id="language">
+                <SelectTrigger id="language" className="bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,11 +120,14 @@ export default function Settings() {
               </Select>
             </div>
             {/* Currency */}
-            <div className="space-y-2">
-              <Label htmlFor="currency">{t('currency', preferences.language)}</Label>
-              <p className="text-sm text-muted-foreground">{t('preferredCurrency', preferences.language)}</p>
+            <div className="space-y-3 p-4 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💰</span>
+                <Label htmlFor="currency" className="text-base font-semibold">{t('currency', preferences.language)}</Label>
+              </div>
+              <p className="text-sm text-muted-foreground pl-7">{t('preferredCurrency', preferences.language)}</p>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger id="currency">
+                <SelectTrigger id="currency" className="bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -131,23 +140,26 @@ export default function Settings() {
             </div>
 
             {/* Number Format */}
-            <div className="space-y-2">
-              <Label htmlFor="numberFormat">Formato de Números</Label>
-              <p className="text-sm text-muted-foreground">Como você quer visualizar valores monetários</p>
+            <div className="space-y-3 p-4 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🔢</span>
+                <Label htmlFor="numberFormat" className="text-base font-semibold">Formato de Números</Label>
+              </div>
+              <p className="text-sm text-muted-foreground pl-7">Como você quer visualizar valores monetários</p>
               <Select value={numberFormat} onValueChange={(v: "en-US" | "pt-BR") => setNumberFormat(v)}>
-                <SelectTrigger id="numberFormat">
+                <SelectTrigger id="numberFormat" className="bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pt-BR">
-                    <div className="flex flex-col items-start">
-                      <span>🇧🇷 Brasileiro</span>
+                    <div className="flex flex-col items-start py-1">
+                      <span className="font-medium">🇧🇷 Brasileiro</span>
                       <span className="text-xs text-muted-foreground">R$ 1.550,50</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="en-US">
-                    <div className="flex flex-col items-start">
-                      <span>🇺🇸 Americano</span>
+                    <div className="flex flex-col items-start py-1">
+                      <span className="font-medium">🇺🇸 Americano</span>
                       <span className="text-xs text-muted-foreground">$ 1,550.50</span>
                     </div>
                   </SelectItem>
@@ -156,12 +168,14 @@ export default function Settings() {
             </div>
 
             {/* Theme */}
-            {/* Theme */}
-            <div className="space-y-2">
-              <Label htmlFor="theme">{t('theme', preferences.language)}</Label>
-              <p className="text-sm text-muted-foreground">{t('chooseTheme', preferences.language)}</p>
+            <div className="space-y-3 p-4 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎨</span>
+                <Label htmlFor="theme" className="text-base font-semibold">{t('theme', preferences.language)}</Label>
+              </div>
+              <p className="text-sm text-muted-foreground pl-7">{t('chooseTheme', preferences.language)}</p>
               <Select value={theme} onValueChange={(v: any) => setTheme(v)}>
-                <SelectTrigger id="theme">
+                <SelectTrigger id="theme" className="bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,19 +189,22 @@ export default function Settings() {
             <Button 
               onClick={handleSaveChanges} 
               disabled={updateSettingsMutation.isPending}
-              className="w-full"
+              className="w-full h-11 text-base font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all"
             >
-              {t('saveChanges', preferences.language)}
+              {updateSettingsMutation.isPending ? "Salvando..." : t('saveChanges', preferences.language)}
             </Button>
           </CardContent>
         </Card>
 
         {/* Wise API Integration */}
-        <Card className="bg-card border-border max-w-2xl">
-          <CardHeader>
-            <CardTitle className="text-foreground">Wise Integration</CardTitle>
+        <Card className="bg-gradient-to-br from-card to-card/80 border-border shadow-lg">
+          <CardHeader className="border-b border-border/50 pb-4">
+            <CardTitle className="text-foreground text-xl flex items-center gap-2">
+              <span className="text-2xl">🏦</span>
+              Wise Integration
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             {/* API Token */}
             <div className="space-y-2">
               <Label htmlFor="wiseToken">{t('wiseApiToken', preferences.language)}</Label>
@@ -234,7 +251,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <Button
                 onClick={() => {
                   updateSettingsMutation.mutate(
@@ -250,6 +267,7 @@ export default function Settings() {
                   );
                 }}
                 disabled={updateSettingsMutation.isPending || (!wiseToken && !webhookSecret)}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               >
                 {t('saveToken', preferences.language)}
               </Button>
@@ -269,6 +287,7 @@ export default function Settings() {
                     );
                   }}
                   disabled={updateSettingsMutation.isPending}
+                  className="border-red-500/50 text-red-500 hover:bg-red-500/10"
                 >
                   {t('removeToken', preferences.language)}
                 </Button>
@@ -278,11 +297,11 @@ export default function Settings() {
         </Card>
 
         {/* WhatsApp Integration */}
-        <Card className="bg-card border-border max-w-2xl">
-          <CardHeader>
+        <Card className="bg-gradient-to-br from-card to-card/80 border-border shadow-lg">
+          <CardHeader className="border-b border-border/50 pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-foreground flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
+              <CardTitle className="text-foreground text-xl flex items-center gap-2">
+                <span className="text-2xl">💬</span>
                 WhatsApp Integration
               </CardTitle>
               <Dialog open={isWhatsAppModalOpen} onOpenChange={setIsWhatsAppModalOpen}>
@@ -477,10 +496,10 @@ export default function Settings() {
                     window.open(whatsappLink, '_blank');
                   }}
                   disabled={linkPhoneMutation.isPending}
-                  className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-white"
+                  className="w-full h-12 text-base font-semibold bg-[#25D366] hover:bg-[#20BD5A] text-white shadow-lg hover:shadow-xl transition-all"
                 >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Conectar via WhatsApp
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  {linkPhoneMutation.isPending ? "Conectando..." : "Conectar via WhatsApp"}
                 </Button>
                 
                 <p className="text-xs text-muted-foreground">
@@ -521,12 +540,15 @@ export default function Settings() {
         </Card>
 
         {/* About Settings */}
-        <Card className="bg-card border-border max-w-2xl">
+        <Card className="bg-gradient-to-br from-muted/50 to-muted/30 border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">{t('aboutSettings', preferences.language)}</CardTitle>
+            <CardTitle className="text-foreground text-lg flex items-center gap-2">
+              <span className="text-xl">ℹ️</span>
+              {t('aboutSettings', preferences.language)}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {t('settingsDescription', preferences.language)}
             </p>
           </CardContent>
