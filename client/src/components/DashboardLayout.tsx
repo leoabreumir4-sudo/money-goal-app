@@ -22,6 +22,7 @@ import {
 import { APP_LOGO, APP_TITLE } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
+import { trpc } from "@/lib/trpc";
 import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, MessageSquare, PieChart, BarChart3, Archive, Settings as SettingsIcon } from "lucide-react";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
@@ -92,6 +93,30 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const { preferences, isLoading: preferencesLoading } = usePreferences();
+  const utils = trpc.useUtils();
+
+  // Prefetch data for common queries on mount
+  useEffect(() => {
+    utils.transactions.getAll.prefetch();
+    utils.categories.getAll.prefetch();
+    utils.goals.getActive.prefetch();
+    utils.settings.get.prefetch();
+  }, [utils]);
+
+  // Prefetch data when hovering over navigation items
+  const handlePrefetch = (path: string) => {
+    // Prefetch common data for all pages
+    utils.transactions.getAll.prefetch();
+    utils.categories.getAll.prefetch();
+    
+    // Page-specific prefetching
+    if (path === "/" || path === "/spending" || path === "/analytics") {
+      utils.goals.getActive.prefetch();
+    }
+    if (path === "/spending") {
+      utils.recurringExpenses.getAll.prefetch();
+    }
+  };
 
   // Restore scroll position when navigating
   useScrollRestoration();
@@ -190,6 +215,7 @@ function DashboardLayoutContent({
                     <SidebarMenuItem>
                       <button
                         onClick={() => setLocation(item.path)}
+                        onMouseEnter={() => handlePrefetch(item.path)}
                         className={`sidebar-menu-item h-11 mb-1 w-full font-medium rounded-lg relative flex items-center gap-2 px-3 transition-colors duration-200 ${
                           isActive ? 'bg-primary/10' : ''
                         }`}

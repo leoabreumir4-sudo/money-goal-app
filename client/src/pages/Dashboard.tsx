@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import type { Category } from "@shared/types";
 import { ArrowDown, ArrowUp, Pencil, Sparkles, Wallet, Target } from "lucide-react";
@@ -51,9 +52,11 @@ export default function Dashboard() {
 
   const utils = trpc.useUtils();
   const { data: activeGoal, isLoading: goalLoading } = trpc.goals.getActive.useQuery();
-  const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
-  const { data: wiseBalance = 0 } = trpc.wise.getTotalBalanceConverted.useQuery();
-  const { data: categoriesRaw = [] } = trpc.categories.getAll.useQuery();
+  const { data: transactions = [], isLoading: transactionsLoading } = trpc.transactions.getAll.useQuery();
+  const { data: wiseBalance = 0, isLoading: wiseLoading } = trpc.wise.getTotalBalanceConverted.useQuery();
+  const { data: categoriesRaw = [], isLoading: categoriesLoading } = trpc.categories.getAll.useQuery();
+  
+  const isLoading = goalLoading || transactionsLoading || categoriesLoading;
   
   // Remove duplicates (keep only unique categories by ID)
   const categories = useMemo(() => {
@@ -551,7 +554,25 @@ export default function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent>
-                {recentTransactions.length === 0 ? (
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <div className="flex items-center justify-between p-4 rounded-lg">
+                          <div className="flex items-center gap-3 flex-1">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className="space-y-2 flex-1">
+                              <Skeleton className="h-4 w-48" />
+                              <Skeleton className="h-3 w-24" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-5 w-24" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : recentTransactions.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">{t('noTransactions', preferences.language)}</p>
                 ) : (
                   <div className="space-y-3 max-h-[calc(20*4rem)] overflow-y-auto pr-2">
@@ -660,7 +681,36 @@ export default function Dashboard() {
 
           {/* Goal Progress */}
           <div className="space-y-4">
-            {activeGoal ? (
+            {isLoading ? (
+              <Card className="border-0 bg-gradient-to-br from-primary/5 via-background to-purple-500/5 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-8 w-48" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <Skeleton className="h-9 w-9 rounded-xl" />
+                  </div>
+                  <div className="flex items-center justify-center mb-6">
+                    <Skeleton className="w-40 h-40 rounded-full" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-6 w-32" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-6 w-32" />
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-6 w-32" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : activeGoal ? (
               <>
                 {/* Modern Goal Card */}
                 <Card className="border-0 bg-gradient-to-br from-primary/5 via-background to-purple-500/5 shadow-xl">

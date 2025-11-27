@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { ArrowDown, ArrowUp, TrendingUp, Target, Wallet } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
@@ -178,9 +179,11 @@ export default function Analytics() {
   const [projectionPeriod, setProjectionPeriod] = useState<'3M' | '6M' | '12M' | 'GOAL'>('GOAL');
   
   const utils = trpc.useUtils();
-  const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
-  const { data: settings } = trpc.settings.get.useQuery();
-  const { data: activeGoal } = trpc.goals.getActive.useQuery();
+  const { data: transactions = [], isLoading: transactionsLoading } = trpc.transactions.getAll.useQuery();
+  const { data: settings, isLoading: settingsLoading } = trpc.settings.get.useQuery();
+  const { data: activeGoal, isLoading: goalLoading } = trpc.goals.getActive.useQuery();
+  
+  const isLoading = transactionsLoading || settingsLoading || goalLoading;
 
   const updateSettingsMutation = trpc.settings.update.useMutation({
     onSuccess: () => {
@@ -295,32 +298,71 @@ export default function Analytics() {
           <p className="text-muted-foreground">{t("trackFinancialPerformance", lang)}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="bg-primary/5 border-primary/20">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <ArrowUp className="h-5 w-5 text-primary" />
-                <CardTitle className="text-sm text-muted-foreground">{t("income", lang).toUpperCase()}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-primary">{formatCurrency(totalIncome, curr)}</p>
-              <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
-            </CardContent>
-          </Card>
+        {isLoading ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="bg-muted/30 border-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-5 rounded" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-9 w-32 mb-2" />
+                    <Skeleton className="h-4 w-24" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-[300px] w-full" />
+                </CardContent>
+              </Card>
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-[300px] w-full" />
+                </CardContent>
+              </Card>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-primary/5 border-primary/20">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <ArrowUp className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-sm text-muted-foreground">{t("income", lang).toUpperCase()}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-primary">{formatCurrency(totalIncome, curr)}</p>
+                  <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
+                </CardContent>
+              </Card>
 
-          <Card className="bg-destructive/5 border-destructive/20">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <ArrowDown className="h-5 w-5 text-destructive" />
-                <CardTitle className="text-sm text-muted-foreground">{t("expense", lang).toUpperCase()}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-destructive">{formatCurrency(totalExpenses, curr)}</p>
-              <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
-            </CardContent>
-          </Card>
+              <Card className="bg-destructive/5 border-destructive/20">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <ArrowDown className="h-5 w-5 text-destructive" />
+                    <CardTitle className="text-sm text-muted-foreground">{t("expense", lang).toUpperCase()}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold text-destructive">{formatCurrency(totalExpenses, curr)}</p>
+                  <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
+                </CardContent>
+              </Card>
 
           <Card className="bg-muted/30 border-border">
             <CardHeader className="pb-3">
@@ -706,6 +748,8 @@ export default function Analytics() {
             })()}
           </CardContent>
         </Card>
+          </>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Plus, Trash, Edit, TrendingDown, DollarSign, Calendar, BarChart3 } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -66,9 +67,11 @@ export default function Spending() {
   } | null>(null);
 
   const utils = trpc.useUtils();
-  const { data: transactions = [] } = trpc.transactions.getAll.useQuery();
-  const { data: categoriesRaw = [] } = trpc.categories.getAll.useQuery();
-  const { data: recurringExpenses = [] } = trpc.recurringExpenses.getAll.useQuery();
+  const { data: transactions = [], isLoading: transactionsLoading } = trpc.transactions.getAll.useQuery();
+  const { data: categoriesRaw = [], isLoading: categoriesLoading } = trpc.categories.getAll.useQuery();
+  const { data: recurringExpenses = [], isLoading: recurringLoading } = trpc.recurringExpenses.getAll.useQuery();
+  
+  const isLoading = transactionsLoading || categoriesLoading || recurringLoading;
   
   // Remove duplicates (keep only unique categories by ID)
   const categories = useMemo(() => {
@@ -369,7 +372,25 @@ export default function Spending() {
         </div>
 
         {/* Recurring Expenses Summary Card */}
-        {recurringExpenses.length > 0 && (
+        {isLoading ? (
+          <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-48" />
+                    <Skeleton className="h-10 w-32" />
+                  </div>
+                </div>
+                <div className="text-right space-y-2">
+                  <Skeleton className="h-4 w-24 ml-auto" />
+                  <Skeleton className="h-5 w-32 ml-auto" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : recurringExpenses.length > 0 && (
           <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
             <CardContent className="py-4">
               <div className="flex items-center justify-between h-full">
