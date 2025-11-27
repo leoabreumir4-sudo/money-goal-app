@@ -228,12 +228,26 @@ If invalid, return: {"error": "invalid"}`
         return res.status(200).send("");
       }
 
+      // Map category name to ID
+      const categories = await db.getAllCategories(user.id);
+      const categoryMap: Record<string, number> = {
+        'Alimentação': categories.find(c => c.name === 'Alimentação')?.id || 1,
+        'Transporte': categories.find(c => c.name === 'Transporte')?.id || 2,
+        'Saúde': categories.find(c => c.name === 'Saúde')?.id || 3,
+        'Lazer': categories.find(c => c.name === 'Lazer')?.id || 4,
+        'Moradia': categories.find(c => c.name === 'Moradia')?.id || 5,
+        'Educação': categories.find(c => c.name === 'Educação')?.id || 6,
+        'Outros': categories.find(c => c.name === 'Outros')?.id || 7,
+      };
+      
+      const categoryId = categoryMap[parsed.category] || categoryMap['Outros'];
+
       await db.createTransaction({
         userId: user.id,
         goalId: activeGoal.id,
         reason: parsed.description,
         amount: parsed.amount,
-        categoryId: null,
+        categoryId: categoryId,
         type: "expense",
         source: "whatsapp"
       });
@@ -245,11 +259,13 @@ If invalid, return: {"error": "invalid"}`
         const goals = await db.getActiveGoals(user.id);
         const totalSaved = goals.reduce((sum: number, g: any) => sum + g.currentAmount, 0);
 
+        console.log("[WhatsApp] Sending confirmation message...");
         await twilioClient.messages.create({
           from: `whatsapp:${ENV.twilioWhatsappNumber}`,
           to: From,
           body: `✅ *Gasto registrado!*\n\n📝 ${parsed.description}\n💰 R$ ${(parsed.amount / 100).toFixed(2)}\n🏷️ ${parsed.category}\n\n💎 Economias: R$ ${(totalSaved / 100).toFixed(2)}`
         });
+        console.log("[WhatsApp] Confirmation sent");
       }
 
       res.status(200).send("");
