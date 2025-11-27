@@ -99,15 +99,152 @@ async function startServer() {
         return res.status(400).send("Missing required fields");
       }
 
-      // Call the whatsappRouter webhook procedure
-      const { whatsappRouter } = await import("../whatsappRouter");
-      const caller = whatsappRouter.createCaller({} as any); // No auth needed for webhook
+      const phoneNumber = From.replace("whatsapp:", "");
+      const message = Body.trim();
+
+      console.log(`[WhatsApp] Processing message from ${phoneNumber}: ${message}`);
+
+      // Import and process directly
+      const db = await import("../db");
+      const { invokeLLM } = await import("./llm");
+      const { ENV } = await import("./env");
       
-      const result = await caller.webhook({ From, Body, ProfileName });
+      // Initialize Twilio
+      let twilioClient: any = null;
+      if (ENV.twilioAccountSid && ENV.twilioAuthToken) {
+        const twilio = await import("twilio");
+        twilioClient = twilio.default(ENV.twilioAccountSid, ENV.twilioAuthToken);
+      }
+
+      // Find user by phone
+      const user = await db.getUserByPhone(phoneNumber);
       
-      console.log("[WhatsApp Webhook] Processed:", result);
+      if (!user) {
+        console.log("[WhatsApp] User not found for phone:", phoneNumber);
+        if (twilioClient && ENV.twilioWhatsappNumber) {
+          await twilioClient.messages.create({
+            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
+            to: From,
+            body: `❌ Número não vinculado ao MoneyGoal.\n\nPara usar este serviço, acesse: ${ENV.viteAppUrl}\n\nVá em Configurações → WhatsApp para vincular sua conta.`
+          });
+        }
+        return res.status(200).send("");
+      }
+
+      console.log("[WhatsApp] User found:", user.email);
+
+      // Verify phone if not verified
+      if (!user.phoneVerified) {
+        await db.verifyUserPhone(user.openId);
+      }
+
+      // Handle commands
+      const lowerMessage = message.toLowerCase();
       
-      // Twilio expects empty 200 response
+      if (lowerMessage.includes("ajuda") || lowerMessage === "?") {
+        if (twilioClient && ENV.twilioWhatsappNumber) {
+          await twilioClient.messages.create({
+            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
+            to: From,
+            body: `📱 *MoneyGoal - Comandos*\n\n*Registrar gastos:*\n• Mercado 350 reais\n• Uber 25\n\n*Consultas:*\n• "hoje" - gastos de hoje\n\n*Outros:*\n• "ajuda" - esta mensagem`
+          });
+        }
+        return res.status(200).send("");
+      }
+
+      if (lowerMessage === "hoje") {
+        const transactions = await db.getTransactionsByDateRange(
+          user.openId,
+          new Date(new Date().setHours(0, 0, 0, 0)),
+          new Date(new Date().setHours(23, 59, 59, 999))
+        );
+        const todayExpenses = transactions.filter((t: any) => t.type === "expense");
+        const total = todayExpenses.reduce((sum: number, t: any) => sum + t.amount, 0);
+
+        if (twilioClient && ENV.twilioWhatsappNumber) {
+          const list = todayExpenses.map((t: any) => `• ${t.reason} - R$ ${(t.amount / 100).toFixed(2)}`).join("\n");
+          await twilioClient.messages.create({
+            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
+            to: From,
+            body: todayExpenses.length === 0 
+              ? `📊 *Gastos de hoje*\n\nNenhum gasto registrado ainda! 🎉`
+              : `📊 *Gastos de hoje*\n\n${list}\n\n*Total:* R$ ${(total / 100).toFixed(2)}`
+          });
+        }
+        return res.status(200).send("");
+      }
+
+      // Parse expense with LLM
+      console.log("[WhatsApp] Parsing expense...");
+      const llmResponse = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `Extract expense data from Portuguese text. Return ONLY valid JSON:
+{"description": "string", "amount": number (in cents), "category": "Alimentação|Transporte|Saúde|Lazer|Moradia|Educação|Outros"}
+
+Examples:
+"Mercado 350 reais" → {"description":"Mercado","amount":35000,"category":"Alimentação"}
+"Uber 25" → {"description":"Uber","amount":2500,"category":"Transporte"}
+
+If invalid, return: {"error": "invalid"}`
+          },
+          { role: "user", content: message }
+        ],
+        responseFormat: { type: "json_object" }
+      });
+
+      const parsed = JSON.parse(llmResponse.choices[0].message.content as string);
+      
+      if (parsed.error || !parsed.description || !parsed.amount) {
+        console.log("[WhatsApp] Invalid expense format");
+        if (twilioClient && ENV.twilioWhatsappNumber) {
+          await twilioClient.messages.create({
+            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
+            to: From,
+            body: `❓ Não consegui entender.\n\n*Exemplos:*\n• Mercado 350 reais\n• Uber 25`
+          });
+        }
+        return res.status(200).send("");
+      }
+
+      // Create transaction
+      const activeGoal = await db.getActiveGoal(user.openId);
+      if (!activeGoal) {
+        if (twilioClient && ENV.twilioWhatsappNumber) {
+          await twilioClient.messages.create({
+            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
+            to: From,
+            body: `⚠️ Você precisa ter uma meta ativa.\n\nAcesse o app e crie uma meta primeiro!`
+          });
+        }
+        return res.status(200).send("");
+      }
+
+      await db.createTransaction({
+        userId: user.openId,
+        goalId: activeGoal.id,
+        reason: parsed.description,
+        amount: parsed.amount,
+        categoryId: null,
+        type: "expense",
+        source: "whatsapp"
+      });
+
+      console.log("[WhatsApp] Transaction created successfully");
+
+      // Send confirmation
+      if (twilioClient && ENV.twilioWhatsappNumber) {
+        const goals = await db.getActiveGoals(user.openId);
+        const totalSaved = goals.reduce((sum: number, g: any) => sum + g.currentAmount, 0);
+
+        await twilioClient.messages.create({
+          from: `whatsapp:${ENV.twilioWhatsappNumber}`,
+          to: From,
+          body: `✅ *Gasto registrado!*\n\n📝 ${parsed.description}\n💰 R$ ${(parsed.amount / 100).toFixed(2)}\n🏷️ ${parsed.category}\n\n💎 Economias: R$ ${(totalSaved / 100).toFixed(2)}`
+        });
+      }
+
       res.status(200).send("");
     } catch (error) {
       console.error("[WhatsApp Webhook] Error:", error);
