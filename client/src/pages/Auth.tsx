@@ -1,5 +1,5 @@
 // /home/ubuntu/money-goal-app/client/src/pages/Auth.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -9,51 +9,74 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { Checkbox } from "../components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, LogIn, UserPlus } from "lucide-react";
 
 type LoginForm = { email: string; password: string };
 type RegisterForm = { name: string; email: string; password: string };
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
 
   const loginMutation = trpc.auth.login.useMutation({
-  onSuccess: async (data) => {
-    if (data.token) {
-      localStorage.setItem('sessionToken', data.token);
-    }
-    toast.success("Login successful!");
-    // Small delay to ensure token is persisted
-    await new Promise(resolve => setTimeout(resolve, 100));
-    // Invalidate and refetch
-    await queryClient.invalidateQueries();
-    navigate("/");
-  },
-  onError: (error) => {
-    console.error('loginMutation error object:', error);
-    toast.error(`Login Error: ${error.message}`);
-  },
-});
+    onSuccess: async (data) => {
+      if (data.token) {
+        localStorage.setItem('sessionToken', data.token);
+      }
+      
+      // Save credentials if remember me is checked
+      if (rememberMe) {
+        const currentEmail = loginForm.getValues('email');
+        const currentPassword = loginForm.getValues('password');
+        localStorage.setItem('rememberedEmail', currentEmail);
+        localStorage.setItem('rememberedPassword', currentPassword);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+        localStorage.removeItem('rememberedPassword');
+      }
+      
+      toast.success("Login successful! Redirecting...");
+      // Wait for token to be persisted and queries to invalidate
+      await queryClient.invalidateQueries();
+      await new Promise(resolve => setTimeout(resolve, 200));
+      navigate("/");
+    },
+    onError: (error) => {
+      console.error('loginMutation error object:', error);
+      toast.error(`Login Error: ${error.message}`);
+    },
+  });
 
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: async (data) => {
       if (data.token) {
         localStorage.setItem('sessionToken', data.token);
       }
-      toast.success("Registration successful! You will be logged in automatically.");
-      // Small delay to ensure token is persisted
-      await new Promise(resolve => setTimeout(resolve, 100));
-      // Invalidate and refetch
+      toast.success("Registration successful! Redirecting...");
+      // Wait for token to be persisted and queries to invalidate
       await queryClient.invalidateQueries();
+      await new Promise(resolve => setTimeout(resolve, 200));
       navigate("/");
     },
     onError: (error) => {
       toast.error(`Registration Error: ${error.message}`);
     },
   });
+
+  // Load saved credentials on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    const savedPassword = localStorage.getItem('rememberedPassword');
+    if (savedEmail && savedPassword) {
+      loginForm.setValue('email', savedEmail);
+      loginForm.setValue('password', savedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   const loginForm = useForm<LoginForm>({
     defaultValues: {
@@ -82,118 +105,144 @@ const AuthPage = () => {
   const isLoading = loginMutation.isLoading || registerMutation.isLoading;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <Card className="w-[350px] bg-gray-800 text-white border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">
-            {isLogin ? "Sign In" : "Create Account"}
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <Card className="w-[420px] bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-xl text-white border-gray-700/50 shadow-2xl">
+        <CardHeader className="space-y-3 pb-6">
+          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-primary to-primary/70 rounded-2xl flex items-center justify-center shadow-lg">
+            {isLogin ? <LogIn className="w-8 h-8 text-white" /> : <UserPlus className="w-8 h-8 text-white" />}
+          </div>
+          <CardTitle className="text-3xl text-center font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            {isLogin ? "Welcome Back" : "Create Account"}
           </CardTitle>
-          <CardDescription className="text-center text-gray-400">
+          <CardDescription className="text-center text-gray-400 text-base">
             {isLogin
-              ? "Enter your credentials to access your dashboard."
-              : "Fill in the fields to create your account."}
+              ? "Enter your credentials to access your dashboard"
+              : "Fill in the information below to get started"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6">
           {isLogin ? (
-            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
+                <Label htmlFor="login-email" className="text-sm font-medium">Email Address</Label>
                 <Input
                   id="login-email"
                   type="email"
                   placeholder="you@example.com"
                   {...loginForm.register("email")}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500 h-11"
                   disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
+                <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
                 <Input
                   id="login-password"
                   type="password"
+                  placeholder="••••••••"
                   {...loginForm.register("password")}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500 h-11"
                   disabled={isLoading}
                 />
               </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="remember" 
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  disabled={isLoading}
+                  className="border-gray-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <Label 
+                  htmlFor="remember" 
+                  className="text-sm text-gray-400 cursor-pointer select-none"
+                >
+                  Remember my credentials
+                </Label>
+              </div>
               <Button 
                 type="submit" 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 transition-all" 
+                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all" 
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Signing in...
                   </>
                 ) : (
-                  "Sign In"
+                  <>
+                    <LogIn className="mr-2 h-5 w-5" />
+                    Sign In
+                  </>
                 )}
               </Button>
             </form>
           ) : (
-            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
+            <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="register-name">Name</Label>
+                <Label htmlFor="register-name" className="text-sm font-medium">Full Name</Label>
                 <Input
                   id="register-name"
                   type="text"
-                  placeholder="Your Name"
+                  placeholder="John Doe"
                   {...registerForm.register("name")}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500 h-11"
                   disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-email">Email</Label>
+                <Label htmlFor="register-email" className="text-sm font-medium">Email Address</Label>
                 <Input
                   id="register-email"
                   type="email"
                   placeholder="you@example.com"
                   {...registerForm.register("email")}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500 h-11"
                   disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="register-password">Password</Label>
+                <Label htmlFor="register-password" className="text-sm font-medium">Password</Label>
                 <Input
                   id="register-password"
                   type="password"
+                  placeholder="••••••••"
                   {...registerForm.register("password")}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-500 h-11"
                   disabled={isLoading}
                 />
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 transition-all" 
+                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all" 
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Creating account...
                   </>
                 ) : (
-                  "Create Account"
+                  <>
+                    <UserPlus className="mr-2 h-5 w-5" />
+                    Create Account
+                  </>
                 )}
               </Button>
             </form>
           )}
         </CardContent>
-        <CardFooter className="flex justify-center">
+        <CardFooter className="flex justify-center pt-2 pb-6">
           <Button
             variant="link"
             onClick={() => setIsLogin(!isLogin)}
-            className="text-indigo-400 hover:text-indigo-300"
+            className="text-primary hover:text-primary/80 text-base"
             disabled={isLoading}
           >
             {isLogin
-              ? "Don't have an account? Sign up."
-              : "Already have an account? Sign in."}
+              ? "Don't have an account? Sign up"
+              : "Already have an account? Sign in"}
           </Button>
         </CardFooter>
       </Card>
