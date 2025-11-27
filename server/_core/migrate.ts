@@ -29,11 +29,12 @@ async function main() {
     console.log("[Database] Creating database connection pool...");
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      connectionTimeoutMillis: 10000, // 10 second timeout
+      connectionTimeoutMillis: 30000, // 30 second timeout
+      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
     });
     
     console.log("[Database] Testing database connection...");
-    await pool.query('SELECT NOW()');
+    await pool.query('SELECT NOW()', { timeout: 30000 });
     console.log("[Database] ✅ Database connection successful");
     
     const db = drizzle(pool);
