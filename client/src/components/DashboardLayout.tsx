@@ -25,9 +25,10 @@ import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, MessageSquare, PieChart, BarChart3, Archive, Settings as SettingsIcon } from "lucide-react";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "./ui/button";
+
 
 const menuItems = [
   { icon: LayoutDashboard, labelKey: "dashboard" as const, path: "/" },
@@ -182,9 +183,9 @@ function DashboardLayoutContent({
             <SidebarMenu className="px-2 py-2 relative">
               {/* Sliding active indicator */}
               <div 
-                className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg pointer-events-none transition-all duration-300 ease-out"
+                className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg pointer-events-none transition-transform duration-300 ease-out"
                 style={{
-                  transform: `translateY(${(() => {
+                  transform: `translateY(${useMemo(() => {
                     const activeIndex = menuItems.findIndex(item => location === item.path);
                     if (activeIndex === -1) return 0;
                     
@@ -197,7 +198,7 @@ function DashboardLayoutContent({
                       }
                     }
                     return position;
-                  })()}px)`,
+                  }, [location])}px)`,
                   opacity: menuItems.some(item => location === item.path) ? 1 : 0
                 }}
               />
