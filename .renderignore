@@ -1,0 +1,12 @@
+# Don't upload these to Render (saves upload time)
+node_modules
+client/node_modules
+.git
+*.test.ts
+test-*.js
+vitest.config.ts
+*.md
+!README.md
+.env.local
+.vscode
+.idea

@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+client/node_modules
+
+# Build outputs
+dist
+build
+.vite
+client/dist
+
+# Development
+.git
+.github
+*.log
+*.test.ts
+**/*.test.ts
+
+# Cache
+.cache
+.turbo
+.eslintcache
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Documentation
+*.md
+!README.md
+
+# SQL files (not needed in production)
+*.sql
+!drizzle/migrations/*.sql
+
+# Testing
+vitest.config.ts
+test-*.js

@@ -21,8 +21,20 @@ export default defineConfig({
   publicDir: path.resolve(import.meta.dirname, "public"),
   build: {
     outDir: "dist",
-
     emptyOutDir: true,
+    // Build optimizations
+    minify: 'esbuild',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-trpc': ['@trpc/client', '@trpc/react-query', '@tanstack/react-query'],
+          'vendor-ui': ['lucide-react', 'framer-motion'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     host: true,
