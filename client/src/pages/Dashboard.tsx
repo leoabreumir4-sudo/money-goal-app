@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import type { Category } from "@shared/types";
-import { ArrowDown, ArrowUp, Pencil, Sparkles, Wallet } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Sparkles, Wallet, Target } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { BankSync } from "@/components/BankSync";
@@ -626,71 +626,116 @@ export default function Dashboard() {
           <div className="space-y-4">
             {activeGoal ? (
               <>
-                {/* Compact Progress Card */}
-                <Card className="bg-gradient-to-br from-primary/5 via-primary/10 to-purple-500/10 border-primary/20">
-                  <CardContent className="pt-6 pb-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground font-medium">{activeGoal.name}</p>
-                        <div className="flex items-baseline gap-2 mt-1">
-                          <p className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-                            {progressPercentage}%
-                          </p>
-                          <span className="text-sm text-muted-foreground">{t('completed', preferences.language)}</span>
-                        </div>
+                {/* Modern Goal Card */}
+                <Card className="border-0 bg-gradient-to-br from-primary/5 via-background to-purple-500/5 shadow-xl">
+                  <CardContent className="p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold text-foreground mb-1">{activeGoal.name}</h3>
+                        <p className="text-sm text-muted-foreground">Your financial goal</p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={openEditGoalModal}
-                        className="h-8 w-8 hover:bg-primary/10"
+                        className="h-9 w-9 hover:bg-primary/10 rounded-xl"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </div>
 
-                    {/* Enhanced Progress Bar */}
-                    <div className="space-y-3">
-                      <div className="relative h-3 bg-secondary/50 rounded-full overflow-hidden">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-full transition-all duration-700 ease-out shadow-lg shadow-primary/30"
-                          style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-shimmer" />
+                    {/* Progress Circle */}
+                    <div className="flex items-center justify-center mb-6">
+                      <div className="relative w-40 h-40">
+                        {/* Background Circle */}
+                        <svg className="w-full h-full transform -rotate-90">
+                          <circle
+                            cx="80"
+                            cy="80"
+                            r="70"
+                            stroke="currentColor"
+                            strokeWidth="12"
+                            fill="none"
+                            className="text-secondary"
+                          />
+                          {/* Progress Circle */}
+                          <circle
+                            cx="80"
+                            cy="80"
+                            r="70"
+                            stroke="url(#gradient)"
+                            strokeWidth="12"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeDasharray={`${2 * Math.PI * 70}`}
+                            strokeDashoffset={`${2 * Math.PI * 70 * (1 - progressPercentage / 100)}`}
+                            className="transition-all duration-1000 ease-out"
+                          />
+                          <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="rgb(168, 85, 247)" />
+                              <stop offset="100%" stopColor="rgb(236, 72, 153)" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        
+                        {/* Center Text */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                            {progressPercentage}%
+                          </span>
+                          <span className="text-xs text-muted-foreground mt-1">complete</span>
                         </div>
-                        {progressPercentage >= 100 && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-xs font-bold text-white drop-shadow-lg">🎉 COMPLETE!</span>
+                      </div>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Current Amount */}
+                      <div className="bg-background/80 backdrop-blur rounded-2xl p-4 border border-border/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground">Current</span>
+                        </div>
+                        <p className="text-xl font-bold text-foreground mb-1">
+                          {formatCurrency(activeGoal.currentAmount, preferences.currency)}
+                        </p>
+                        {wiseBalance > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                            <Wallet className="h-3 w-3" />
+                            <span>+{formatCurrency(wiseBalance, preferences.currency)}</span>
                           </div>
                         )}
                       </div>
 
-                      {/* Amount Details */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-background/60 backdrop-blur rounded-lg p-3 border border-border/50">
-                          <p className="text-xs text-muted-foreground mb-1">{t('currentAmount', preferences.language)}</p>
-                          <p className="text-lg font-bold text-foreground">
-                            {formatCurrency(activeGoal.currentAmount, preferences.currency)}
-                          </p>
-                          {wiseBalance > 0 && (
-                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                              <Wallet className="h-3 w-3 text-[#9fe870]" />
-                              +{formatCurrency(wiseBalance, preferences.currency)} Wise
-                            </p>
-                          )}
+                      {/* Target Amount */}
+                      <div className="bg-background/80 backdrop-blur rounded-2xl p-4 border border-border/50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                            <Target className="h-4 w-4 text-purple-500" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground">Target</span>
                         </div>
-                        
-                        <div className="bg-background/60 backdrop-blur rounded-lg p-3 border border-border/50">
-                          <p className="text-xs text-muted-foreground mb-1">{t('targetAmount', preferences.language)}</p>
-                          <p className="text-lg font-bold text-foreground">
-                            {formatCurrency(activeGoal.targetAmount, preferences.currency)}
-                          </p>
-                          <p className="text-xs text-primary mt-1 font-medium">
-                            {formatCurrency(activeGoal.targetAmount - activeGoal.currentAmount, preferences.currency)} to go
-                          </p>
-                        </div>
+                        <p className="text-xl font-bold text-foreground mb-1">
+                          {formatCurrency(activeGoal.targetAmount, preferences.currency)}
+                        </p>
+                        <p className="text-xs text-primary font-medium">
+                          {formatCurrency(Math.max(0, activeGoal.targetAmount - activeGoal.currentAmount), preferences.currency)} left
+                        </p>
                       </div>
                     </div>
+
+                    {/* Achievement Badge */}
+                    {progressPercentage >= 100 && (
+                      <div className="mt-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-3 text-center">
+                        <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                          🎉 Goal Achieved! Congratulations!
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </>
