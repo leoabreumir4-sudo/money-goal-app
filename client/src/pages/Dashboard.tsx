@@ -346,11 +346,11 @@ export default function Dashboard() {
       <div className="p-8 space-y-6">
         {/* Header with Action Buttons */}
         <div className="flex justify-end items-center gap-4">
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Dialog open={isIncomeModalOpen} onOpenChange={setIsIncomeModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90">
-                  <ArrowUp className="mr-2 h-4 w-4" />
+                <Button className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-200 hover:scale-105 font-semibold">
+                  <ArrowUp className="mr-2 h-5 w-5" />
                   {t('addIncome', preferences.language)}
                 </Button>
               </DialogTrigger>
@@ -359,7 +359,7 @@ export default function Dashboard() {
                   <DialogTitle>Add Income</DialogTitle>
                   <DialogDescription>Record a new income transaction for your goal.</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-5 px-6">
                   <div className="space-y-2">
                     <Label htmlFor="income-amount">Amount ($)</Label>
                     <Input
@@ -409,8 +409,8 @@ export default function Dashboard() {
 
             <Dialog open={isExpenseModalOpen} onOpenChange={setIsExpenseModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-accent hover:bg-accent/90">
-                  <ArrowDown className="mr-2 h-4 w-4" />
+                <Button className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-200 hover:scale-105 font-semibold">
+                  <ArrowDown className="mr-2 h-5 w-5" />
                   {t('addExpense', preferences.language)}
                 </Button>
               </DialogTrigger>
@@ -419,7 +419,7 @@ export default function Dashboard() {
                   <DialogTitle>Add Expense</DialogTitle>
                   <DialogDescription>Record a new expense transaction for your goal.</DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-5 px-6">
                   <div className="space-y-2">
                     <Label htmlFor="expense-amount">Amount ($)</Label>
                     <Input
@@ -633,7 +633,7 @@ export default function Dashboard() {
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex-1">
                         <h3 className="text-2xl font-bold text-foreground mb-1">{activeGoal.name}</h3>
-                        <p className="text-sm text-muted-foreground">Your financial goal</p>
+                        <p className="text-sm text-muted-foreground">Saving for your dream</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -648,8 +648,25 @@ export default function Dashboard() {
                     {/* Progress Circle */}
                     <div className="flex items-center justify-center mb-6">
                       <div className="relative w-40 h-40">
+                        {/* Glow Effect */}
+                        <div className="absolute inset-0 blur-xl opacity-50">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle
+                              cx="80"
+                              cy="80"
+                              r="70"
+                              stroke="url(#gradient)"
+                              strokeWidth="12"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeDasharray={`${2 * Math.PI * 70}`}
+                              strokeDashoffset={`${2 * Math.PI * 70 * (1 - progressPercentage / 100)}`}
+                            />
+                          </svg>
+                        </div>
+                        
                         {/* Background Circle */}
-                        <svg className="w-full h-full transform -rotate-90">
+                        <svg className="w-full h-full transform -rotate-90 relative">
                           <circle
                             cx="80"
                             cy="80"
@@ -670,12 +687,13 @@ export default function Dashboard() {
                             strokeLinecap="round"
                             strokeDasharray={`${2 * Math.PI * 70}`}
                             strokeDashoffset={`${2 * Math.PI * 70 * (1 - progressPercentage / 100)}`}
-                            className="transition-all duration-1000 ease-out"
+                            className="transition-all duration-1000 ease-out drop-shadow-lg"
                           />
                           <defs>
                             <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stopColor="rgb(168, 85, 247)" />
-                              <stop offset="100%" stopColor="rgb(236, 72, 153)" />
+                              <stop offset="0%" stopColor="rgb(59, 130, 246)" />
+                              <stop offset="50%" stopColor="rgb(96, 165, 250)" />
+                              <stop offset="100%" stopColor="rgb(34, 211, 238)" />
                             </linearGradient>
                           </defs>
                         </svg>
@@ -707,6 +725,7 @@ export default function Dashboard() {
                           <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                             <Wallet className="h-3 w-3" />
                             <span>+{formatCurrency(wiseBalance, preferences.currency)}</span>
+                            <span className="text-muted-foreground">• Wise Balance</span>
                           </div>
                         )}
                       </div>
@@ -752,7 +771,7 @@ export default function Dashboard() {
                         <DialogTitle>Create New Goal</DialogTitle>
                         <DialogDescription>Set a new financial goal to start tracking your progress.</DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
+                      <div className="space-y-5 px-6">
                         <div className="space-y-2">
                           <Label htmlFor="goal-name">Goal Name</Label>
                           <Input
@@ -797,7 +816,7 @@ export default function Dashboard() {
               <DialogTitle>Edit Goal</DialogTitle>
               <DialogDescription>Update your goal name and target amount.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 px-6">
               <div className="space-y-2">
                 <Label htmlFor="edit-goal-name">Goal Name</Label>
                 <Input
@@ -854,7 +873,7 @@ export default function Dashboard() {
               <DialogTitle>Edit Transaction</DialogTitle>
               <DialogDescription>Update transaction details or delete it.</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 px-6">
               <div className="space-y-2">
                 <Label htmlFor="edit-transaction-amount">Amount ({editingTransaction?.currency || preferences.currency})</Label>
                 <Input

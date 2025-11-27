@@ -179,24 +179,45 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
+            <SidebarMenu className="px-2 py-2">
+              {menuItems.map((item, index) => {
                 const isActive = location === item.path;
                 const label = 'labelKey' in item ? t(item.labelKey, preferences?.language || 'en') : item.label;
+                const showDivider = index === 1 || index === 4; // After AQWorlds and after Analytics
                 return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={label}
-                      className={`h-10 transition-all font-normal`}
-                    >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
-                      <span className={isActive ? "text-primary" : ""}>{label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <div key={item.path}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => setLocation(item.path)}
+                        tooltip={label}
+                        className={`h-11 mb-1 transition-all duration-200 font-medium rounded-lg group relative overflow-hidden ${
+                          isActive 
+                            ? "bg-gradient-to-r from-primary/20 to-primary/10 border-l-2 border-primary shadow-sm" 
+                            : "hover:bg-gradient-to-r hover:from-primary/10 hover:to-transparent hover:translate-x-0.5"
+                        }`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 transition-all duration-200 ${
+                            isActive 
+                              ? "text-primary scale-110" 
+                              : "text-muted-foreground group-hover:text-primary group-hover:scale-105"
+                          }`}
+                        />
+                        <span className={`transition-all duration-200 ${
+                          isActive 
+                            ? "text-primary font-semibold" 
+                            : "text-muted-foreground group-hover:text-foreground"
+                        }`}>{label}</span>
+                        {isActive && (
+                          <span className="absolute right-2 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {showDivider && (
+                      <div className="my-2 mx-2 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                    )}
+                  </div>
                 );
               })}
             </SidebarMenu>
@@ -205,14 +226,14 @@ function DashboardLayoutContent({
           <SidebarFooter className="p-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-primary/20 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
+                <button className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-gradient-to-r hover:from-primary/15 hover:to-primary/5 transition-all duration-200 w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary border border-transparent hover:border-primary/20">
+                  <Avatar className="h-9 w-9 border-2 border-primary/30 shrink-0 transition-transform duration-200 hover:scale-105">
+                    <AvatarFallback className="text-xs font-semibold bg-gradient-to-br from-primary to-primary/70">
                       {user?.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
+                    <p className="text-sm font-semibold truncate leading-none">
                       {user?.name || "-"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate mt-1.5">
