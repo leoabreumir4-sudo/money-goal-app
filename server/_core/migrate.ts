@@ -15,27 +15,43 @@ async function main() {
   }
 
   try {
-    console.log("[Database] Running Drizzle migrations...");
+    console.log("[Database] Starting migration process...");
+    console.log(`[Database] NODE_ENV: ${process.env.NODE_ENV}`);
+    console.log(`[Database] DATABASE_URL: ${process.env.DATABASE_URL ? '***configured***' : 'MISSING'}`);
+    
+    const startTime = Date.now();
+    
+    console.log("[Database] Importing drizzle dependencies...");
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const { migrate } = await import("drizzle-orm/node-postgres/migrator");
     const { Pool } = await import("pg");
     
+    console.log("[Database] Creating database connection pool...");
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
+      connectionTimeoutMillis: 10000, // 10 second timeout
     });
+    
+    console.log("[Database] Testing database connection...");
+    await pool.query('SELECT NOW()');
+    console.log("[Database] ✅ Database connection successful");
     
     const db = drizzle(pool);
     
     // Run migrations from the drizzle/migrations folder
     console.log("[Database] Migrations folder: ./drizzle/migrations");
+    console.log("[Database] Running migrations...");
+    
     await migrate(db, { migrationsFolder: "./drizzle/migrations" });
     
-    console.log("[Database] Migrations completed successfully.");
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+    console.log(`[Database] ✅ Migrations completed successfully in ${elapsed}s`);
     
     await pool.end();
     process.exit(0);
   } catch (err: any) {
-    console.error("[Database] Migration failed:", err?.message ?? err);
+    console.error("[Database] ❌ Migration failed:", err?.message ?? err);
+    console.error("[Database] Stack trace:", err?.stack);
     // Fail fast so deploys fail when migrations cannot be applied
     process.exit(1);
   }
