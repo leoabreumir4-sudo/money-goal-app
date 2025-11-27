@@ -126,9 +126,11 @@ export default function Chat() {
     try {
       await chatMutation.mutateAsync({ message: userMessage });
       
-      // Clear optimistic message and refetch to get real history with AI response
-      setOptimisticMessages([]);
+      // Refetch to get real history with AI response
       await refetch();
+      
+      // Only clear optimistic message AFTER refetch completes successfully
+      setOptimisticMessages([]);
     } catch (error: any) {
       console.error("Chat error:", error);
       
