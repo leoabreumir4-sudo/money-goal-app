@@ -245,7 +245,10 @@ export default function Dashboard() {
   const handleDeleteTransaction = () => {
     if (!editingTransaction) return;
     
-    if (confirm("Are you sure you want to delete this transaction?")) {
+    const amount = formatCurrency(editingTransaction.amount, editingTransaction.currency || preferences.currency);
+    const message = `Are you sure you want to delete this transaction?\n\n${editingTransaction.reason}\n${amount}`;
+    
+    if (confirm(message)) {
       deleteTransactionMutation.mutate({ id: editingTransaction.id });
     }
   };
@@ -357,14 +360,21 @@ export default function Dashboard() {
                   {t('addIncome', preferences.language)}
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Income</DialogTitle>
-                  <DialogDescription>Record a new income transaction for your goal.</DialogDescription>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-primary/20 text-primary">
+                      <ArrowUp className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <DialogTitle className="text-xl">Add Income</DialogTitle>
+                      <DialogDescription className="text-sm">Record a new income transaction</DialogDescription>
+                    </div>
+                  </div>
                 </DialogHeader>
-                <div className="space-y-5 px-6">
+                <div className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label htmlFor="income-amount">Amount ($)</Label>
+                    <Label htmlFor="income-amount">Amount ({preferences.currency})</Label>
                     <Input
                       id="income-amount"
                       type="text"
@@ -372,10 +382,11 @@ export default function Dashboard() {
                       placeholder="0.00"
                       value={incomeAmountInput.displayValue}
                       onChange={(e) => incomeAmountInput.handleChange(e.target.value)}
+                      className="text-lg font-medium"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="income-reason">Reason</Label>
+                    <Label htmlFor="income-reason">Description</Label>
                     <Input
                       id="income-reason"
                       placeholder="e.g., Salary, Freelance work"
@@ -392,19 +403,26 @@ export default function Dashboard() {
                       <SelectContent>
                         {categories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id.toString()}>
-                            {cat.emoji} {cat.name}
+                            <div className="flex items-center gap-2">
+                              <span>{cat.emoji}</span>
+                              <span>{cat.name}</span>
+                              <div 
+                                className="w-2 h-2 rounded-full ml-auto" 
+                                style={{ backgroundColor: cat.color }}
+                              />
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-2">
                   <Button variant="outline" onClick={() => setIsIncomeModalOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleAddIncome} disabled={createTransactionMutation.isPending}>
-                    Add Income
+                  <Button onClick={handleAddIncome} disabled={createTransactionMutation.isPending} className="bg-primary hover:bg-primary/90">
+                    {createTransactionMutation.isPending ? "Adding..." : "Add Income"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -417,14 +435,21 @@ export default function Dashboard() {
                   {t('addExpense', preferences.language)}
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Expense</DialogTitle>
-                  <DialogDescription>Record a new expense transaction for your goal.</DialogDescription>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-accent/20 text-accent">
+                      <ArrowDown className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <DialogTitle className="text-xl">Add Expense</DialogTitle>
+                      <DialogDescription className="text-sm">Record a new expense transaction</DialogDescription>
+                    </div>
+                  </div>
                 </DialogHeader>
-                <div className="space-y-5 px-6">
+                <div className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label htmlFor="expense-amount">Amount ($)</Label>
+                    <Label htmlFor="expense-amount">Amount ({preferences.currency})</Label>
                     <Input
                       id="expense-amount"
                       type="text"
@@ -432,10 +457,11 @@ export default function Dashboard() {
                       placeholder="0.00"
                       value={expenseAmountInput.displayValue}
                       onChange={(e) => expenseAmountInput.handleChange(e.target.value)}
+                      className="text-lg font-medium"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="expense-reason">Reason</Label>
+                    <Label htmlFor="expense-reason">Description</Label>
                     <Input
                       id="expense-reason"
                       placeholder="e.g., Shopping, Bills"
@@ -452,19 +478,26 @@ export default function Dashboard() {
                       <SelectContent>
                         {categories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id.toString()}>
-                            {cat.emoji} {cat.name}
+                            <div className="flex items-center gap-2">
+                              <span>{cat.emoji}</span>
+                              <span>{cat.name}</span>
+                              <div 
+                                className="w-2 h-2 rounded-full ml-auto" 
+                                style={{ backgroundColor: cat.color }}
+                              />
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-2">
                   <Button variant="outline" onClick={() => setIsExpenseModalOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleAddExpense} disabled={createTransactionMutation.isPending}>
-                    Add Expense
+                  <Button onClick={handleAddExpense} disabled={createTransactionMutation.isPending} className="bg-red-600 hover:bg-red-700">
+                    {createTransactionMutation.isPending ? "Adding..." : "Add Expense"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -870,12 +903,48 @@ export default function Dashboard() {
 
         {/* Edit Transaction Modal */}
         <Dialog open={isEditTransactionModalOpen} onOpenChange={setIsEditTransactionModalOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Transaction</DialogTitle>
-              <DialogDescription>Update transaction details or delete it.</DialogDescription>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader className="space-y-4">
+              <div className="flex items-start gap-4">
+                <div
+                  className={`p-3 rounded-xl ${
+                    editingTransaction?.type === "income"
+                      ? "bg-primary/20 text-primary"
+                      : "bg-accent/20 text-accent"
+                  }`}
+                >
+                  {editingTransaction?.type === "income" ? (
+                    <ArrowUp className="h-5 w-5" />
+                  ) : (
+                    <ArrowDown className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <DialogTitle className="text-xl mb-1">
+                    {editingTransaction?.type === "income" ? "Income" : "Expense"} Transaction
+                  </DialogTitle>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {editingTransaction?.createdDate && (
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(editingTransaction.createdDate).toLocaleDateString()} • {new Date(editingTransaction.createdDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    )}
+                    {editingTransaction?.source && (
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                        editingTransaction.source === 'wise' 
+                          ? 'bg-[#9fe870]/20 text-[#9fe870]' 
+                          : editingTransaction.source === 'whatsapp'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-purple-500/20 text-purple-400'
+                      }`}>
+                        {editingTransaction.source === 'wise' ? 'Wise' : editingTransaction.source === 'whatsapp' ? 'WhatsApp' : 'CSV'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </DialogHeader>
-            <div className="space-y-5 px-6">
+            <div className="space-y-4 pt-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-transaction-amount">Amount ({editingTransaction?.currency || preferences.currency})</Label>
                 <Input
@@ -885,6 +954,7 @@ export default function Dashboard() {
                   placeholder="0.00"
                   value={editTransactionAmountInput.displayValue}
                   onChange={(e) => editTransactionAmountInput.handleChange(e.target.value)}
+                  className="text-lg font-medium"
                 />
               </div>
               <div className="space-y-2">
@@ -905,18 +975,26 @@ export default function Dashboard() {
                   <SelectContent>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id.toString()}>
-                        {cat.emoji} {cat.name}
+                        <div className="flex items-center gap-2">
+                          <span>{cat.emoji}</span>
+                          <span>{cat.name}</span>
+                          <div 
+                            className="w-2 h-2 rounded-full ml-auto" 
+                            style={{ backgroundColor: cat.color }}
+                          />
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <DialogFooter className="flex gap-2">
+            <DialogFooter className="gap-2 sm:gap-2">
               <Button 
                 variant="destructive" 
                 onClick={handleDeleteTransaction}
                 disabled={deleteTransactionMutation.isPending}
+                className="sm:flex-initial"
               >
                 Delete
               </Button>
@@ -928,7 +1006,7 @@ export default function Dashboard() {
                 onClick={handleUpdateTransaction} 
                 disabled={updateTransactionMutation.isPending}
               >
-                Update
+                {updateTransactionMutation.isPending ? "Updating..." : "Update"}
               </Button>
             </DialogFooter>
           </DialogContent>

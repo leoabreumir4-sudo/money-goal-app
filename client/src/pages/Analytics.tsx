@@ -190,7 +190,10 @@ export default function Analytics() {
   });
 
   const handleSaveSavingTarget = () => {
-    const target = Math.round(parseFloat(savingTarget) * 100);
+    // Remove formatting (commas and handle decimal point)
+    const numericValue = parseFloat(savingTarget.replace(/,/g, ''));
+    const target = Math.round(numericValue * 100);
+    
     if (isNaN(target) || target <= 0) {
       toast.error(t("pleaseEnterValidAmount", lang));
       return;
@@ -276,7 +279,11 @@ export default function Analytics() {
   // Initialize savingTarget when settings load
   useEffect(() => {
     if (settings?.monthlySavingTarget) {
-      setSavingTarget((settings.monthlySavingTarget / 100).toString());
+      const formatted = (settings.monthlySavingTarget / 100).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      setSavingTarget(formatted);
     }
   }, [settings?.monthlySavingTarget]);
 
@@ -406,17 +413,28 @@ export default function Analytics() {
               <Label htmlFor="saving-target">How much do you expect to save every month?</Label>
               <div className="flex gap-2 items-center">
                 <div className="relative max-w-xs">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {curr === "BRL" ? "R$" : curr === "USD" ? "$" : "€"}
+                  </span>
                   <Input
                     id="saving-target"
                     type="text"
-                    placeholder="500"
+                    placeholder="1100"
                     value={savingTarget}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9.]/g, '');
-                      setSavingTarget(value);
+                      const rawValue = e.target.value.replace(/[^\d]/g, '');
+                      if (rawValue === '' || rawValue === '0') {
+                        setSavingTarget('');
+                        return;
+                      }
+                      const numericValue = parseInt(rawValue, 10);
+                      const formatted = (numericValue / 100).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      });
+                      setSavingTarget(formatted);
                     }}
-                    className="pl-7"
+                    className="pl-9"
                   />
                 </div>
                 <Button onClick={handleSaveSavingTarget} disabled={updateSettingsMutation.isPending}>
