@@ -48,6 +48,46 @@ export async function searchWeb(query: string): Promise<SearchResult[]> {
 }
 
 /**
+ * Get current exchange rate from web search
+ */
+export async function getCurrentExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
+  try {
+    const query = `${fromCurrency} to ${toCurrency} exchange rate today`;
+    const results = await searchWeb(query);
+    
+    if (results.length === 0) return null;
+    
+    // Try to extract rate from snippets
+    for (const result of results) {
+      const text = `${result.title} ${result.snippet}`.toLowerCase();
+      
+      // Match patterns like "1 usd = 5.25 brl" or "exchange rate: 5.25"
+      const patterns = [
+        /1\s*(?:usd|dollar|dólar)\s*=?\s*([\d.,]+)\s*(?:brl|real|reais)/i,
+        /(?:rate|taxa|cotação).*?([\d.,]+)/i,
+        /([\d.,]+)\s*(?:brl|real|reais)/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+          const rate = parseFloat(match[1].replace(',', '.'));
+          if (rate > 0 && rate < 100) { // Sanity check
+            console.log(`[Exchange Rate] Found ${fromCurrency}/${toCurrency}: ${rate}`);
+            return rate;
+          }
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("[Exchange Rate] Error:", error);
+    return null;
+  }
+}
+
+/**
  * Format search results for AI context
  */
 export function formatSearchResults(results: SearchResult[]): string {

@@ -72,6 +72,7 @@ export default function Chat() {
   const { preferences } = usePreferences();
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState("Analisando...");
   const [optimisticMessages, setOptimisticMessages] = useState<any[]>([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -79,9 +80,8 @@ export default function Chat() {
   
   const { data: chatHistory = [], refetch } = trpc.chat.getHistory.useQuery();
   const { data: suggestedPrompts = [] } = trpc.chat.getSuggestedPrompts.useQuery();
-  // Temporarily disabled to avoid quota issues
-  // const { data: welcomeData } = trpc.chat.getWelcomeInsights.useQuery();
-  const welcomeData = null;
+  // Welcome insights disabled for now
+  const welcomeData: { userName?: string; insights?: string[] } | null = null;
   const chatMutation = trpc.chat.sendMessage.useMutation();
   const clearHistoryMutation = trpc.chat.clearHistory.useMutation();
 
@@ -122,6 +122,21 @@ export default function Chat() {
     
     setOptimisticMessages([optimisticUserMessage]);
     setIsLoading(true);
+    
+    // Set dynamic loading status based on message content
+    if (/\b(quanto custa|custo|pre[çc]o|or[çc]amento|viagem|hotel|passagem|voo|flight|price|cost|budget)\b/i.test(userMessage)) {
+      setLoadingStatus("Pesquisando na web...");
+    } else if (/\b(converter|conversão|câmbio|dólar|real|exchange)\b/i.test(userMessage)) {
+      setLoadingStatus("Consultando câmbio...");
+    } else if (/\b(gastos|despesas|spending|expenses|categorias)\b/i.test(userMessage)) {
+      setLoadingStatus("Analisando gastos...");
+    } else if (/\b(meta|goal|objetivo|poupar|save)\b/i.test(userMessage)) {
+      setLoadingStatus("Calculando metas...");
+    } else if (/\b(oi|olá|hi|hello)\b/i.test(userMessage)) {
+      setLoadingStatus("Preparando saudação...");
+    } else {
+      setLoadingStatus("Pensando...");
+    }
 
     try {
       await chatMutation.mutateAsync({ message: userMessage });
@@ -258,24 +273,11 @@ export default function Chat() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-foreground mb-2">
-                    Hello{welcomeData?.userName && `, ${welcomeData.userName}`}! 👋
+                    Hello! 👋
                   </h2>
                   <p className="text-muted-foreground max-w-md mb-4">
                     I have access to all your financial data and can help you make smart money decisions. Ask me anything!
                   </p>
-                  
-                  {welcomeData?.insights && welcomeData.insights.length > 0 && (
-                    <div className="bg-secondary/50 rounded-lg p-4 max-w-md mb-4">
-                      <p className="text-sm font-semibold mb-2">Quick insights from your finances:</p>
-                      <ul className="space-y-1 text-sm">
-                        {welcomeData.insights.map((insight, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span>{insight}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
                 <div className="space-y-2 w-full max-w-2xl">
                   <p className="text-sm text-muted-foreground font-medium">💡 Suggested questions based on your finances:</p>
@@ -323,7 +325,7 @@ export default function Chat() {
                     <div className="max-w-[80%] rounded-lg p-4 bg-secondary text-secondary-foreground">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Analyzing your finances...</span>
+                        <span className="text-sm">{loadingStatus}</span>
                       </div>
                     </div>
                   </div>

@@ -4,7 +4,7 @@ import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { convertCurrency } from "./_core/currency";
 import { getProfiles, getBalances } from "./_core/wise";
-import { searchWeb, formatSearchResults } from "./_core/webSearch";
+import { searchWeb, formatSearchResults, getCurrentExchangeRate } from "./_core/webSearch";
 
 /**
  * Detect language from user message using simple keyword matching and character patterns
@@ -114,35 +114,80 @@ function extractMemoriesFromMessage(userMessage: string, aiResponse: string): st
   
   // Pattern: User mentions a goal or aspiration
   const goalPatterns = [
-    /(?:quero|want to|planning to|planejo|planeo)\s+(?:comprar|buy|purchase|adquirir)\s+([a-zA-Z\s]+)/i,
-    /(?:quero|want to|need to|preciso|necesito)\s+(?:economizar|save|juntar|ahorrar)\s+(?:para|for|to)\s+([a-zA-Z\s]+)/i,
-    /my goal is (?:to\s+)?([a-zA-Z\s]+)/i,
-    /minha meta (?:é|e)\s+([a-zA-Z\s]+)/i,
+    /(?:quero|want to|planning to|planejo|planeo)\s+(?:comprar|buy|purchase|adquirir)\s+([a-zA-Z\sÀ-ÿ]+)/i,
+    /(?:quero|want to|need to|preciso|necesito)\s+(?:economizar|save|juntar|ahorrar)\s+(?:para|for|to)\s+([a-zA-Z\sÀ-ÿ]+)/i,
+    /my goal is (?:to\s+)?([a-zA-Z\sÀ-ÿ]+)/i,
+    /minha meta (?:é|e)\s+([a-zA-Z\sÀ-ÿ]+)/i,
   ];
   
   for (const pattern of goalPatterns) {
     const match = userMessage.match(pattern);
-    if (match && match[1]) {
-      memories.push(`User wants to: ${match[1].trim()}`);
+    if (match && match[1] && match[1].length < 100) {
+      memories.push(`Goal: ${match[1].trim()}`);
     }
   }
   
-  // Pattern: User mentions a preference
+  // Pattern: Travel/vacation plans
+  const travelPatterns = [
+    /(?:viajar|travel|ir|go)\s+(?:para|to|a)\s+([A-Z][a-zA-Z\sÀ-ÿ]+?)(?:\s+em|\s+in|\s+no|\s+na)?\s+(janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro|january|february|march|april|may|june|july|august|september|october|november|december|\d{4})/i,
+    /(?:trip to|viagem para|viaje a)\s+([A-Z][a-zA-Z\sÀ-ÿ]+)/i,
+  ];
+  
+  for (const pattern of travelPatterns) {
+    const match = userMessage.match(pattern);
+    if (match && match[1]) {
+      const destination = match[1].trim();
+      const when = match[2] ? ` (${match[2]})` : '';
+      memories.push(`Plans to travel to ${destination}${when}`);
+    }
+  }
+  
+  // Pattern: User mentions preferences (restaurants, hobbies, etc.)
   const preferencePatterns = [
-    /(?:i prefer|prefiro|prefiero)\s+([a-zA-Z\s]+)/i,
-    /(?:i like|gosto|me gusta)\s+(?:to\s+)?([a-zA-Z\s]+)/i,
+    /(?:i prefer|prefiro|prefiero)\s+([a-zA-Z\sÀ-ÿ]+)/i,
+    /(?:i like|gosto de|me gusta)\s+(?:to\s+)?([a-zA-Z\sÀ-ÿ]+)/i,
+    /(?:adoro|love|amo)\s+([a-zA-Z\sÀ-ÿ]+)/i,
   ];
   
   for (const pattern of preferencePatterns) {
     const match = userMessage.match(pattern);
-    if (match && match[1]) {
-      memories.push(`User prefers: ${match[1].trim()}`);
+    if (match && match[1] && match[1].length < 80) {
+      memories.push(`Preference: ${match[1].trim()}`);
     }
   }
   
-  // Pattern: User mentions family/personal context
-  if (/\b(family|familia|família|kids|children|filhos|hijos|spouse|cônjuge|cónyuge)\b/i.test(userMessage)) {
-    memories.push(`User has family considerations mentioned in conversation`);
+  // Pattern: Major purchases mentioned
+  const purchasePatterns = [
+    /(?:comprar|buy|purchase|adquirir)\s+(?:um|uma|a|an)\s+([a-zA-Z\sÀ-ÿ]+?)(?:\s+por|\s+for|\s+de)?\s*\$?(\d+)/i,
+    /(?:trocar|change|upgrade|atualizar)\s+(?:de|o|a)?\s+([a-zA-Z\sÀ-ÿ]+)/i,
+  ];
+  
+  for (const pattern of purchasePatterns) {
+    const match = userMessage.match(pattern);
+    if (match && match[1]) {
+      const item = match[1].trim();
+      const price = match[2] ? ` (~$${match[2]})` : '';
+      memories.push(`Plans to buy: ${item}${price}`);
+    }
+  }
+  
+  // Pattern: Family/personal context
+  if (/\b(family|familia|família|kids|children|filhos|hijos)\b/i.test(userMessage)) {
+    memories.push(`Has family (mentioned in conversation)`);
+  }
+  
+  if (/\b(spouse|cônjuge|cónyuge|wife|husband|esposa|esposo|namorad[ao]|boyfriend|girlfriend)\b/i.test(userMessage)) {
+    memories.push(`Has partner/spouse (mentioned in conversation)`);
+  }
+  
+  // Pattern: Job/career changes
+  if (/\b(new job|novo emprego|nuevo trabajo|changing jobs|mudando de emprego|promotion|promoção)\b/i.test(userMessage)) {
+    memories.push(`Career change or new job mentioned`);
+  }
+  
+  // Pattern: Housing plans
+  if (/\b(buy(?:ing)? (?:a |an )?house|comprar casa|apartment|apartamento|moving|mudança|mudar de casa)\b/i.test(userMessage)) {
+    memories.push(`Housing plans mentioned (buying/moving)`);
   }
   
   return memories;
@@ -162,7 +207,7 @@ function getSystemPrompt(language: "en" | "pt" | "es"): string {
 }
 
 // Build comprehensive financial context for the AI
-async function buildUserFinancialContext(userId: string) {
+async function buildUserFinancialContext(userId: string, userName?: string | null) {
   const dbInstance = await db.getDb();
   if (!dbInstance) throw new Error("Database not available");
 
@@ -341,7 +386,7 @@ async function buildUserFinancialContext(userId: string) {
   // Create simplified context WITHOUT raw cent values to prevent AI confusion
   const simplifiedContext = {
     // User info
-    userName: settings?.userName || null,
+    userName: userName || null,
     
     // Overview
     currentDate: now.toISOString().split('T')[0],
@@ -362,7 +407,9 @@ async function buildUserFinancialContext(userId: string) {
     avgMonthlyIncome: formatMoney(avgMonthlyIncome),
     avgMonthlyExpenses: formatMoney(avgMonthlyExpenses),
     avgMonthlySavings: formatMoney(avgMonthlySavings),
+    avgMonthlySavingsRaw: avgMonthlySavings,
     savingsRate: `${savingsRate}%`,
+    savingsRateRaw: savingsRate,
     
     // User's Savings Goal
     monthlySavingTarget: monthlySavingTarget > 0 ? formatMoney(monthlySavingTarget) : null,
@@ -432,7 +479,8 @@ export const chatRouter = router({
   // Get personalized welcome message with insights
   getWelcomeInsights: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
-    const financialContext = await buildUserFinancialContext(userId);
+    const userName = ctx.user.name;
+    const financialContext = await buildUserFinancialContext(userId, userName);
     
     const insights: string[] = [];
     
@@ -463,7 +511,7 @@ export const chatRouter = router({
     // Top spending category
     if (financialContext.topCategories.length > 0) {
       const top = financialContext.topCategories[0];
-      insights.push(`📊 Top expense: ${top.emoji} ${top.name} (${formatMoney(top.avgMonthly)}/mo)`);
+      insights.push(`📊 Top expense: ${top.emoji} ${top.name} (${top.avgMonthly}/mo)`);
     }
     
     return {
@@ -481,7 +529,8 @@ export const chatRouter = router({
   // Get suggested prompts based on user's financial situation
   getSuggestedPrompts: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
-    const financialContext = await buildUserFinancialContext(userId);
+    const userName = ctx.user.name;
+    const financialContext = await buildUserFinancialContext(userId, userName);
     
     const prompts: string[] = [];
     
@@ -528,6 +577,7 @@ export const chatRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.user.id;
+      const userName = ctx.user.name;
 
       // Rate limiting: Check message count in last 24 hours
       const dbInstance = await db.getDb();
@@ -544,7 +594,7 @@ export const chatRouter = router({
       }
 
       // Build financial context
-      const financialContext = await buildUserFinancialContext(userId);
+      const financialContext = await buildUserFinancialContext(userId, userName);
 
       // Get conversation history (last 10 messages)
       const history = await db.getChatMessagesByUserId(userId);
@@ -637,11 +687,24 @@ YOUR ROLE & PERSONALITY:
 - Only repeat full financial summaries if explicitly requested or if it's been many messages
 - Be conversational - build on what you've discussed, don't start from zero each time
 
+🧠 **LEARNING ABOUT THE USER**:
+- Pay attention to personal details the user shares (dreams, goals, preferences, plans)
+- Examples: "Quero viajar para Paris em Junho de 2026", "Gosto de comer em restaurantes japoneses", "Planejo trocar de carro ano que vem"
+- These details will be saved automatically and used in future conversations
+- Use this knowledge to personalize advice and show you remember what matters to them
+- When relevant, reference things they've mentioned before: "Considerando sua viagem para Paris..."
+${financialContext.memories.length > 0 ? `
+📝 **THINGS YOU ALREADY KNOW ABOUT THIS USER**:
+${financialContext.memories.map((m: string, i: number) => `${i + 1}. ${m}`).join('\n')}
+
+Use this context to personalize your responses and show continuity in the relationship.` : ''}
+
 👋 **FIRST MESSAGE GREETING PROTOCOL**:
 If the user sends a simple greeting ("oi", "olá", "hi", "hello") without specific questions:
-1. Greet them warmly and introduce yourself: "Oi! Eu sou a Moni, sua consultora financeira pessoal!"
+1. Greet them warmly using their name and introduce yourself: "Oi${financialContext.userName ? `, ${financialContext.userName}` : ''}! Eu sou a Moni, sua consultora financeira pessoal!"
 2. Offer to provide an overview: "Gostaria que eu faça uma análise rápida das suas finanças?"
 3. Keep it brief - don't show financial data until they confirm they want it
+4. ALWAYS use the user's name when available to make the conversation more personal
 ${flowContext}
 
 CURRENT USER FINANCIAL PROFILE:
@@ -661,7 +724,7 @@ Otherwise, maintain the detected language throughout your ENTIRE response.
 **${detectedLanguage === 'pt' ? 'TOTAIS' : detectedLanguage === 'es' ? 'TOTALES' : 'TOTALS'} (${detectedLanguage === 'pt' ? 'últimos 6 meses' : detectedLanguage === 'es' ? 'últimos 6 meses' : 'last 6 months'}):**
 - ${detectedLanguage === 'pt' ? 'Receita Total' : detectedLanguage === 'es' ? 'Ingresos Totales' : 'Total Income'}: ${financialContext.totalIncome}
 - ${detectedLanguage === 'pt' ? 'Despesas Totais' : detectedLanguage === 'es' ? 'Gastos Totales' : 'Total Expenses'}: ${financialContext.totalExpenses}
-- ${detectedLanguage === 'pt' ? 'Poupança Total' : detectedLanguage === 'es' ? 'Ahorros Totales' : 'Total Savings'}: ${financialContext.totalSavings}
+- ${detectedLanguage === 'pt' ? 'Poupança Total' : detectedLanguage === 'es' ? 'Ahorros Totales' : 'Total Savings'}: ${financialContext.totalSavingsLast6Months}
 
 **${detectedLanguage === 'pt' ? 'MÉDIAS MENSAIS' : detectedLanguage === 'es' ? 'PROMEDIOS MENSUALES' : 'MONTHLY AVERAGES'}:**
 - ${detectedLanguage === 'pt' ? 'Receita Média' : detectedLanguage === 'es' ? 'Ingreso Promedio' : 'Avg Income'}: ${financialContext.avgMonthlyIncome}
@@ -669,7 +732,7 @@ Otherwise, maintain the detected language throughout your ENTIRE response.
 - ${detectedLanguage === 'pt' ? 'Poupança Média' : detectedLanguage === 'es' ? 'Ahorros Promedio' : 'Avg Savings'}: ${financialContext.avgMonthlySavings}
 - ${detectedLanguage === 'pt' ? 'Taxa de Poupança' : detectedLanguage === 'es' ? 'Tasa de Ahorro' : 'Savings Rate'}: ${financialContext.savingsRate}
 
-${financialContext.savingsTargetSet ? `
+${financialContext.savingsTargetSet && financialContext.currentVsTarget ? `
 **${detectedLanguage === 'pt' ? '🎯 META DE POUPANÇA MENSAL' : detectedLanguage === 'es' ? '🎯 META DE AHORRO MENSUAL' : '🎯 MONTHLY SAVINGS TARGET'}:**
 - ${detectedLanguage === 'pt' ? 'Meta' : detectedLanguage === 'es' ? 'Meta' : 'Target'}: ${financialContext.currentVsTarget.target}
 - ${detectedLanguage === 'pt' ? 'Atual' : detectedLanguage === 'es' ? 'Actual' : 'Actual'}: ${financialContext.currentVsTarget.actual}
@@ -818,6 +881,15 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
       // Detect if user is asking for prices/budgets that need web search
       const needsWebSearch = /\b(quanto custa|custo|pre[çc]o|or[çc]amento|viagem|hotel|passagem|voo|flight|price|cost|budget|how much)\b/i.test(input.message);
       
+      // Get current exchange rate if user's currency is not USD
+      let currentExchangeRate: string = "";
+      if (financialContext.currency !== "USD") {
+        const rate = await getCurrentExchangeRate("USD", financialContext.currency);
+        if (rate) {
+          currentExchangeRate = `\n\n💱 **Taxa de Câmbio Atual:** 1 USD = ${rate.toFixed(2)} ${financialContext.currency} (fonte: pesquisa web em tempo real)`;
+        }
+      }
+      
       // Perform web search if needed
       if (needsWebSearch) {
         console.log("[Chat] Performing web search for:", input.message);
@@ -828,10 +900,16 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
           // Add search results to the last user message
           messages[messages.length - 1] = {
             role: "user" as const,
-            content: `${input.message}\n\n📊 **Resultados da Pesquisa na Web:**\n${formattedResults}\n\nUse estas informações para fornecer uma resposta precisa e atualizada.`
+            content: `${input.message}${currentExchangeRate}\n\n📊 **Resultados da Pesquisa na Web:**\n${formattedResults}\n\nUse estas informações para fornecer uma resposta precisa e atualizada.`
           };
           console.log("[Chat] Added search results to context");
         }
+      } else if (currentExchangeRate) {
+        // Add exchange rate even without search
+        messages[messages.length - 1] = {
+          role: "user" as const,
+          content: `${input.message}${currentExchangeRate}`
+        };
       }
 
       // Call LLM
