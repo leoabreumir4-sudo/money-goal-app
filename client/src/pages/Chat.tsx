@@ -244,11 +244,11 @@ export default function Chat() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-primary" />
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-lg flex items-center justify-center">
+              <Sparkles className="h-7 w-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Moni</h1>
+              <h1 className="text-3xl font-bold text-foreground">Moni</h1>
               <p className="text-sm text-muted-foreground">
                 {preferences.language === 'pt' ? 'Sua Consultora Financeira Inteligente' : 
                  preferences.language === 'es' ? 'Tu Asesora Financiera Inteligente' : 
@@ -262,6 +262,7 @@ export default function Chat() {
               size="sm"
               onClick={handleClearHistory}
               disabled={clearHistoryMutation.isPending}
+              className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 transition-all"
             >
               Clear History
             </Button>
@@ -269,32 +270,32 @@ export default function Chat() {
         </div>
 
         {/* Chat Messages */}
-        <Card className="flex-1 flex flex-col overflow-hidden bg-card border-border relative">
+        <Card className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-card to-card/80 border-border/50 shadow-xl relative">
           <CardContent className="flex-1 overflow-y-auto p-6 space-y-4 relative" ref={messagesContainerRef}>
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-                <div className="h-20 w-20 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Sparkles className="h-10 w-10 text-primary" />
+                <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-lg flex items-center justify-center">
+                  <Sparkles className="h-12 w-12 text-primary-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-2">
+                  <h2 className="text-3xl font-bold text-foreground mb-3">
                     Hello! 👋
                   </h2>
-                  <p className="text-muted-foreground max-w-md mb-4">
+                  <p className="text-muted-foreground max-w-md mb-4 text-base">
                     I have access to all your financial data and can help you make smart money decisions. Ask me anything!
                   </p>
                 </div>
-                <div className="space-y-2 w-full max-w-2xl">
-                  <p className="text-sm text-muted-foreground font-medium">💡 Suggested questions based on your finances:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-3 w-full max-w-2xl">
+                  <p className="text-sm text-muted-foreground font-semibold">💡 Suggested questions based on your finances:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {suggestedPrompts.map((question, index) => (
                       <Button
                         key={index}
                         variant="outline"
-                        className="text-left h-auto py-3 px-4 whitespace-normal justify-start"
+                        className="text-left h-auto py-4 px-4 whitespace-normal justify-start hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:border-primary/50 transition-all duration-200 hover:shadow-md"
                         onClick={() => handlePromptClick(question)}
                       >
-                        <span className="text-sm">{question}</span>
+                        <span className="text-sm font-medium">{question}</span>
                       </Button>
                     ))}
                   </div>
@@ -308,10 +309,10 @@ export default function Chat() {
                     className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-lg p-4 ${
+                      className={`max-w-[80%] rounded-xl p-4 shadow-md ${
                         message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground"
+                          ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground shadow-primary/20"
+                          : "bg-gradient-to-br from-secondary to-secondary/80 text-secondary-foreground"
                       }`}
                     >
                       {message.role === "assistant" ? (
@@ -327,10 +328,10 @@ export default function Chat() {
                 ))}
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="max-w-[80%] rounded-lg p-4 bg-secondary text-secondary-foreground">
+                    <div className="max-w-[80%] rounded-xl p-4 bg-gradient-to-br from-secondary to-secondary/80 text-secondary-foreground shadow-md">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">{loadingStatus}</span>
+                        <span className="text-sm font-medium">{loadingStatus}</span>
                       </div>
                     </div>
                   </div>
@@ -344,7 +345,7 @@ export default function Chat() {
           {showScrollButton && messages.length > 0 && (
             <button
               onClick={scrollToBottom}
-              className="absolute bottom-32 right-6 bg-primary/90 hover:bg-primary text-primary-foreground rounded-full p-2.5 shadow-lg transition-all duration-200 z-20"
+              className="absolute bottom-32 right-6 bg-gradient-to-br from-primary to-primary/90 hover:shadow-xl hover:shadow-primary/30 text-primary-foreground rounded-full p-3 shadow-lg transition-all duration-200 z-20 hover:scale-110"
               aria-label="Scroll to bottom"
             >
               <svg
@@ -364,13 +365,13 @@ export default function Chat() {
           )}
 
           {/* Input Area */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border/50 bg-gradient-to-b from-transparent to-card/50">
             {messagesRemaining < 10 && (
-              <div className="mb-2 text-xs text-muted-foreground text-center">
+              <div className="mb-3 text-xs text-center">
                 {messagesRemaining > 0 ? (
-                  <span>⚠️ {messagesRemaining} messages remaining today</span>
+                  <span className="px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 font-medium">⚠️ {messagesRemaining} messages remaining today</span>
                 ) : (
-                  <span className="text-destructive">❌ Daily limit reached. Try again in 24 hours.</span>
+                  <span className="px-3 py-1.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20 font-medium">❌ Daily limit reached. Try again in 24 hours.</span>
                 )}
               </div>
             )}
@@ -381,12 +382,13 @@ export default function Chat() {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
-                className="flex-1"
+                className="flex-1 bg-background/50 border-border/50 focus:border-primary/50 transition-colors"
               />
               <Button
                 onClick={handleSendMessage}
                 disabled={isLoading || !inputMessage.trim() || messagesRemaining === 0}
                 size="icon"
+                className="bg-gradient-to-br from-primary to-primary/90 hover:shadow-lg hover:shadow-primary/30 transition-all"
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

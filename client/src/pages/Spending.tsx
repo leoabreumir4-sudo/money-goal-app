@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
-import { Plus, Trash, Edit, TrendingDown, DollarSign, Calendar, BarChart3 } from "lucide-react";
+import { Plus, Trash, Edit, TrendingDown, DollarSign, Calendar, BarChart3, Sparkles } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from 'recharts';
@@ -361,11 +361,16 @@ export default function Spending() {
     <DashboardLayout>
       <div className="p-8 space-y-6">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t("spendingAnalysis", preferences.language)}</h1>
-            <p className="text-muted-foreground">{t("seeWhereMoney", preferences.language)}</p>
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-destructive to-destructive/80 rounded-xl shadow-lg">
+              <TrendingDown className="h-6 w-6 text-destructive-foreground" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{t("spendingAnalysis", preferences.language)}</h1>
+              <p className="text-muted-foreground">{t("seeWhereMoney", preferences.language)}</p>
+            </div>
           </div>
-          <Button onClick={() => setIsAddRecurringModalOpen(true)} className="bg-destructive hover:bg-destructive/90 flex items-center gap-2">
+          <Button onClick={() => setIsAddRecurringModalOpen(true)} className="bg-gradient-to-r from-destructive to-destructive/90 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-300 flex items-center gap-2">
             <Plus className="h-4 w-4" />
             <span>{t("recurringExpense", preferences.language)}</span>
           </Button>
@@ -373,43 +378,43 @@ export default function Spending() {
 
         {/* Recurring Expenses Summary Card */}
         {isLoading ? (
-          <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
-            <CardContent className="py-4">
+          <Card className="bg-gradient-to-br from-destructive/15 via-destructive/10 to-destructive/5 border-destructive/30 shadow-lg shadow-destructive/5">
+            <CardContent className="py-6">
               <div className="flex items-center justify-between h-full">
                 <div className="flex items-center gap-4">
-                  <Skeleton className="h-14 w-14 rounded-full" />
+                  <Skeleton className="h-16 w-16 rounded-xl" />
                   <div className="space-y-2">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-3 w-28" />
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-8 w-36" />
                   </div>
                 </div>
                 <div className="text-right space-y-2">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-6 w-28" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-32" />
                 </div>
               </div>
             </CardContent>
           </Card>
         ) : recurringExpenses.length > 0 && (
-          <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
-            <CardContent className="py-4">
+          <Card className="bg-gradient-to-br from-destructive/15 via-destructive/10 to-destructive/5 border-destructive/30 shadow-lg shadow-destructive/5 hover:shadow-xl hover:shadow-destructive/10 transition-all duration-300">
+            <CardContent className="py-6">
               <div className="flex items-center justify-between h-full">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-destructive/20 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-6 w-6 text-destructive" />
+                  <div className="h-14 w-14 rounded-xl bg-destructive/25 shadow-inner flex items-center justify-center flex-shrink-0">
+                    <Calendar className="h-7 w-7 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                       Total Monthly Recurring Expenses
                     </p>
                     <div className="text-4xl font-bold text-destructive leading-none">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground mb-1">
+                  <p className="text-sm text-muted-foreground mb-2">
                     {recurringExpenses.length} {recurringExpenses.length === 1 ? 'expense' : 'expenses'}
                   </p>
-                  <p className="text-base font-semibold text-foreground">
+                  <p className="text-lg font-bold text-foreground">
                     Annual: {formatCurrency(totalMonthlyRecurring * 12, preferences.currency)}
                   </p>
                 </div>
@@ -419,8 +424,8 @@ export default function Spending() {
         )}
 
         {/* Filters */}
-        <Card className="bg-card border-border">
-          <CardContent className="py-2">
+        <Card className="bg-gradient-to-br from-card to-card/80 border-border/50">
+          <CardContent className="py-3">
             <div className="flex flex-wrap gap-2 items-center">
               <div className="flex gap-2 items-center">
                 <Button
@@ -473,10 +478,10 @@ export default function Spending() {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Spending Distribution (Pie Chart) */}
-          <Card className="bg-card border-border">
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                <div className="p-2.5 bg-gradient-to-br from-purple-500/20 to-purple-500/10 rounded-xl shadow-sm">
                   <BarChart3 className="h-5 w-5 text-purple-500" />
                 </div>
                 <CardTitle className="text-foreground">{t("spendingDistribution", preferences.language)}</CardTitle>
@@ -544,10 +549,10 @@ export default function Spending() {
           </Card>
 
           {/* By Category */}
-          <Card className="bg-card border-border">
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-xl shadow-sm">
                   <TrendingDown className="h-5 w-5 text-blue-500" />
                 </div>
                 <CardTitle className="text-foreground">{t("byCategory", preferences.language)}</CardTitle>
@@ -567,7 +572,7 @@ export default function Spending() {
                     return (
                       <div 
                         key={item.name} 
-                        className="space-y-2 cursor-pointer hover:bg-secondary/30 p-3 rounded-lg transition-colors"
+                        className="space-y-2 cursor-pointer hover:bg-gradient-to-r hover:from-secondary/40 hover:to-secondary/20 p-3 rounded-lg transition-all duration-200 hover:shadow-md border border-transparent hover:border-border/50"
                         onClick={() => handleCategoryClick(item.name, item.emoji, color, item.value)}
                       >
                         <div className="flex justify-between items-center">
@@ -604,10 +609,10 @@ export default function Spending() {
 
         {/* Recurring Expenses */}
         {recurringExpenses.length > 0 && (
-          <Card className="bg-card border-border">
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                <div className="p-2.5 bg-gradient-to-br from-green-500/20 to-green-500/10 rounded-xl shadow-sm">
                   <DollarSign className="h-5 w-5 text-green-500" />
                 </div>
                 <CardTitle className="text-foreground">{t("recurringExpenses", preferences.language)}</CardTitle>
@@ -629,10 +634,10 @@ export default function Spending() {
                     <div 
                       key={expense.id} 
                       onClick={() => handleEditRecurring(expense)}
-                      className={`flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-md bg-card cursor-pointer ${
+                      className={`flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-lg bg-gradient-to-br cursor-pointer ${
                         isActive 
-                          ? 'border-border hover:border-destructive/50' 
-                          : 'border-muted opacity-60 hover:opacity-100'
+                          ? 'from-card to-card/80 border-border/50 hover:border-destructive/50 hover:shadow-destructive/10' 
+                          : 'from-muted/50 to-muted/30 border-muted opacity-60 hover:opacity-100'
                       }`}
                     >
                       <div className="flex-1">
@@ -662,22 +667,31 @@ export default function Spending() {
         )}
 
         {/* Insights */}
-        <Card>
+        <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
           <CardHeader>
-            <CardTitle>{t("insightsRecommendations", preferences.language)}</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <CardTitle>{t("insightsRecommendations", preferences.language)}</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                <div className="font-semibold text-blue-500">{t("spendingTip", preferences.language)}</div>
+              <div className="p-4 rounded-xl bg-gradient-to-br from-blue-500/15 to-blue-500/5 border border-blue-500/30 shadow-sm">
+                <div className="font-bold text-blue-500 flex items-center gap-2 mb-1">
+                  💡 {t("spendingTip", preferences.language)}
+                </div>
                 <p className="text-sm mt-1">
                   {t("largestExpenseCategory", preferences.language)} {expensesByCategory[0]?.name || "N/A"}. 
                   {t("reviewExpenses", preferences.language)}
                 </p>
               </div>
               
-              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                <div className="font-semibold text-green-500">{t("goodJob", preferences.language)}</div>
+              <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/15 to-green-500/5 border border-green-500/30 shadow-sm">
+                <div className="font-bold text-green-500 flex items-center gap-2 mb-1">
+                  ✨ {t("goodJob", preferences.language)}
+                </div>
                 <p className="text-sm mt-1">
                   {t("trackingConsistently", preferences.language)}
                 </p>
