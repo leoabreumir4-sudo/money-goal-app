@@ -93,6 +93,22 @@ function DashboardLayoutContent({
   const isMobile = useIsMobile();
   const { preferences, isLoading: preferencesLoading } = usePreferences();
 
+  // Calculate active indicator position
+  const activeIndicatorPosition = useMemo(() => {
+    const activeIndex = menuItems.findIndex(item => location === item.path);
+    if (activeIndex === -1) return 0;
+    
+    let position = 0;
+    for (let i = 0; i < activeIndex; i++) {
+      position += 48; // h-11 (44px) + mb-1 (4px)
+      // Add divider height after items 1 and 4 (AQWorlds and Analytics)
+      if (i === 1 || i === 4) {
+        position += 20; // my-2 (16px) + h-px
+      }
+    }
+    return position;
+  }, [location]);
+
   // Restore scroll position when navigating
   useScrollRestoration();
 
@@ -185,20 +201,7 @@ function DashboardLayoutContent({
               <div 
                 className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg pointer-events-none transition-transform duration-300 ease-out"
                 style={{
-                  transform: `translateY(${useMemo(() => {
-                    const activeIndex = menuItems.findIndex(item => location === item.path);
-                    if (activeIndex === -1) return 0;
-                    
-                    let position = 0;
-                    for (let i = 0; i < activeIndex; i++) {
-                      position += 48; // h-11 (44px) + mb-1 (4px)
-                      // Add divider height
-                      if (i === 1 || i === 4) {
-                        position += 20; // my-2 (16px) + h-px
-                      }
-                    }
-                    return position;
-                  }, [location])}px)`,
+                  transform: `translateY(${activeIndicatorPosition}px)`,
                   opacity: menuItems.some(item => location === item.path) ? 1 : 0
                 }}
               />
