@@ -199,10 +199,11 @@ function DashboardLayoutContent({
             <SidebarMenu className="px-2 py-2 relative">
               {/* Sliding active indicator */}
               <div 
-                className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg pointer-events-none transition-transform duration-300 ease-out"
+                className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg pointer-events-none will-change-transform"
                 style={{
                   transform: `translateY(${activeIndicatorPosition}px)`,
-                  opacity: menuItems.some(item => location === item.path) ? 1 : 0
+                  opacity: menuItems.some(item => location === item.path) ? 1 : 0,
+                  transition: 'transform 300ms ease-out, opacity 200ms ease-in-out'
                 }}
               />
               
