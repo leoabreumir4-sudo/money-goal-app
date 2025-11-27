@@ -15,5 +15,9 @@ export const ENV = {
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID ?? "",
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN ?? "",
   twilioWhatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER ?? "",
+  // WhatsApp Cloud API (360Dialog / Meta)
+  whatsappPhoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ?? "",
+  whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN ?? "",
+  whatsappWebhookToken: process.env.WHATSAPP_WEBHOOK_TOKEN ?? "",
   viteAppUrl: process.env.VITE_APP_URL ?? "",
 };

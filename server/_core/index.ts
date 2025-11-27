@@ -86,34 +86,115 @@ async function startServer() {
   // Register OAuth routes
   registerOAuthRoutes(app);
 
-  // WhatsApp webhook endpoint (Twilio)
-  app.post("/api/webhooks/whatsapp", express.urlencoded({ extended: true }), async (req, res) => {
+  // WhatsApp webhook verification (GET)
+  app.get("/api/webhooks/whatsapp", (req, res) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+    
+    console.log("[WhatsApp Webhook] Verification request:", { mode, token: token ? "***" : "none" });
+    
+    if (mode === "subscribe" && token === ENV.whatsappWebhookToken) {
+      console.log("[WhatsApp Webhook] Verification successful");
+      return res.status(200).send(challenge);
+    } else {
+      console.log("[WhatsApp Webhook] Verification failed");
+      return res.status(403).send("Forbidden");
+    }
+  });
+
+  // WhatsApp webhook endpoint (WhatsApp Cloud API / 360Dialog)
+  app.post("/api/webhooks/whatsapp", express.json(), async (req, res) => {
     try {
       console.log("[WhatsApp Webhook] Received request:", JSON.stringify(req.body, null, 2));
       
-      // Twilio sends data as application/x-www-form-urlencoded
-      const { From, Body, ProfileName } = req.body;
+      // WhatsApp Cloud API sends data as JSON
+      const { object, entry } = req.body;
+      
+      if (object !== "whatsapp_business_account" || !entry || entry.length === 0) {
+        console.error("[WhatsApp Webhook] Invalid payload structure");
+        return res.status(400).send("Invalid payload");
+      }
+      
+      const changes = entry[0]?.changes;
+      if (!changes || changes.length === 0) {
+        return res.status(200).send("");
+      }
+      
+      const value = changes[0]?.value;
+      const messages = value?.messages;
+      
+      if (!messages || messages.length === 0) {
+        // Status update or other event type
+        return res.status(200).send("");
+      }
+      
+      // Process first message
+      const incomingMessage = messages[0];
+      const From = incomingMessage.from; // Phone number without "whatsapp:" prefix
+      const Body = incomingMessage.text?.body;
+      const ProfileName = value.contacts?.[0]?.profile?.name;
       
       if (!From || !Body) {
-        console.error("[WhatsApp Webhook] Missing From or Body");
+        console.error("[WhatsApp Webhook] Missing from or body");
         return res.status(400).send("Missing required fields");
       }
 
-      const phoneNumber = From.replace("whatsapp:", "");
+      const phoneNumber = From; // Already in correct format (no prefix)
       const message = Body.trim();
 
-      console.log(`[WhatsApp] Processing message from ${phoneNumber}: ${message}`);
+      console.log("[WhatsApp] Processing message from ${phoneNumber}: ${message}");
 
-      // Import and process directly
+      // Import DB and LLM
       const db = await import("../db");
       const { invokeLLM } = await import("./llm");
       const { ENV } = await import("./env");
       
-      // Initialize Twilio
-      let twilioClient: any = null;
-      if (ENV.twilioAccountSid && ENV.twilioAuthToken) {
-        const twilio = await import("twilio");
-        twilioClient = twilio.default(ENV.twilioAccountSid, ENV.twilioAuthToken);
+      // Check if WhatsApp Cloud API is configured
+      const hasWhatsAppAPI = ENV.whatsappPhoneNumberId && ENV.whatsappAccessToken;
+      
+      if (!hasWhatsAppAPI) {
+        console.warn("[WhatsApp] WhatsApp Cloud API not configured");
+        return res.status(500).send("WhatsApp not configured");
+      }
+      
+      // Helper: Send WhatsApp message via Cloud API
+      async function sendWhatsAppMessage(to: string, text: string) {
+        console.log("[WhatsApp] Sending message to:", to);
+        console.log("[WhatsApp] Message:", text);
+        
+        try {
+          const response = await fetch(
+            `https://graph.facebook.com/v21.0/${ENV.whatsappPhoneNumberId}/messages`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${ENV.whatsappAccessToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                messaging_product: "whatsapp",
+                recipient_type: "individual",
+                to: to,
+                type: "text",
+                text: { body: text },
+              }),
+            }
+          );
+          
+          const result = await response.json();
+          
+          if (!response.ok) {
+            console.error("[WhatsApp] Send failed:", result);
+            throw new Error(`WhatsApp API error: ${result.error?.message || "Unknown error"}`);
+          }
+          
+          console.log("[WhatsApp] Message sent successfully:", result.messages?.[0]?.id);
+          return result;
+        } catch (error: any) {
+          console.error("[WhatsApp] Error sending message:", error.message);
+          throw error;
+        }
       }
 
       // Find user by phone
@@ -121,13 +202,10 @@ async function startServer() {
       
       if (!user) {
         console.log("[WhatsApp] User not found for phone:", phoneNumber);
-        if (twilioClient && ENV.twilioWhatsappNumber) {
-          await twilioClient.messages.create({
-            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
-            to: From,
-            body: `❌ Número não vinculado ao MoneyGoal.\n\nPara usar este serviço, acesse: ${ENV.viteAppUrl}\n\nVá em Configurações → WhatsApp para vincular sua conta.`
-          });
-        }
+        await sendWhatsAppMessage(
+          phoneNumber,
+          `❌ Número não vinculado ao MoneyGoal.\n\nPara usar este serviço, acesse: ${ENV.viteAppUrl}\n\nVá em Configurações → WhatsApp para vincular sua conta.`
+        );
         return res.status(200).send("");
       }
 
@@ -142,13 +220,10 @@ async function startServer() {
       const lowerMessage = message.toLowerCase();
       
       if (lowerMessage.includes("ajuda") || lowerMessage === "?") {
-        if (twilioClient && ENV.twilioWhatsappNumber) {
-          await twilioClient.messages.create({
-            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
-            to: From,
-            body: `📱 *MoneyGoal - Comandos*\n\n*Registrar gastos:*\n• Mercado 350 reais\n• Uber 25\n\n*Consultas:*\n• "hoje" - gastos de hoje\n\n*Outros:*\n• "ajuda" - esta mensagem`
-          });
-        }
+        await sendWhatsAppMessage(
+          phoneNumber,
+          `📱 *MoneyGoal - Comandos*\n\n*Registrar gastos:*\n• Mercado 350 reais\n• Uber 25\n\n*Consultas:*\n• "hoje" - gastos de hoje\n\n*Outros:*\n• "ajuda" - esta mensagem`
+        );
         return res.status(200).send("");
       }
 
@@ -161,16 +236,13 @@ async function startServer() {
         const todayExpenses = transactions.filter((t: any) => t.type === "expense");
         const total = todayExpenses.reduce((sum: number, t: any) => sum + t.amount, 0);
 
-        if (twilioClient && ENV.twilioWhatsappNumber) {
-          const list = todayExpenses.map((t: any) => `• ${t.reason} - R$ ${(t.amount / 100).toFixed(2)}`).join("\n");
-          await twilioClient.messages.create({
-            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
-            to: From,
-            body: todayExpenses.length === 0 
-              ? `📊 *Gastos de hoje*\n\nNenhum gasto registrado ainda! 🎉`
-              : `📊 *Gastos de hoje*\n\n${list}\n\n*Total:* R$ ${(total / 100).toFixed(2)}`
-          });
-        }
+        const list = todayExpenses.map((t: any) => `• ${t.reason} - R$ ${(t.amount / 100).toFixed(2)}`).join("\n");
+        await sendWhatsAppMessage(
+          phoneNumber,
+          todayExpenses.length === 0 
+            ? `📊 *Gastos de hoje*\n\nNenhum gasto registrado ainda! 🎉`
+            : `📊 *Gastos de hoje*\n\n${list}\n\n*Total:* R$ ${(total / 100).toFixed(2)}`
+        );
         return res.status(200).send("");
       }
 
@@ -211,27 +283,21 @@ If invalid, return: {"error": "invalid"}`
       const parsed = JSON.parse(responseText);
       
       if (parsed.error || !parsed.description || !parsed.amount) {
-        console.log("[WhatsApp] Invalid expense format");
-        if (twilioClient && ENV.twilioWhatsappNumber) {
-          await twilioClient.messages.create({
-            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
-            to: From,
-            body: `❓ Não consegui entender.\n\n*Exemplos:*\n• Mercado 350 reais\n• Uber 25`
-          });
-        }
+        console.log("[WhatsApp] Invalid transaction format");
+        await sendWhatsAppMessage(
+          phoneNumber,
+          `❓ Não consegui entender.\n\n*Exemplos:*\n• Mercado 350 reais\n• Uber 25`
+        );
         return res.status(200).send("");
       }
 
       // Create transaction
-      const activeGoal = await db.getActiveGoal(user.id);
+      const activeGoal = await db.getActiveGoal(user.openId);
       if (!activeGoal) {
-        if (twilioClient && ENV.twilioWhatsappNumber) {
-          await twilioClient.messages.create({
-            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
-            to: From,
-            body: `⚠️ Você precisa ter uma meta ativa.\n\nAcesse o app e crie uma meta primeiro!`
-          });
-        }
+        await sendWhatsAppMessage(
+          phoneNumber,
+          `⚠️ Você precisa ter uma meta ativa.\n\nAcesse o app e crie uma meta primeiro!`
+        );
         return res.status(200).send("");
       }
 
@@ -299,33 +365,25 @@ If invalid, return: {"error": "invalid"}`
       });
 
       // Send confirmation
-      if (twilioClient && ENV.twilioWhatsappNumber) {
-        const goals = await db.getActiveGoals(user.openId);
-        const totalSaved = goals.reduce((sum: number, g: any) => sum + g.currentAmount, 0);
+      const goals = await db.getActiveGoals(user.openId);
+      const totalSaved = goals.reduce((sum: number, g: any) => sum + g.currentAmount, 0);
 
-        const emoji = transactionType === "income" ? "💰" : "💸";
-        const actionText = transactionType === "income" ? "Receita registrada" : "Gasto registrado";
-        const currencySymbol = currency === "BRL" ? "R$" : currency === "USD" ? "$" : currency === "EUR" ? "€" : currency;
+      const emoji = transactionType === "income" ? "💰" : "💸";
+      const actionText = transactionType === "income" ? "Receita registrada" : "Gasto registrado";
+      const currencySymbol = currency === "BRL" ? "R$" : currency === "USD" ? "$" : currency === "EUR" ? "€" : currency;
 
-        const confirmationMessage = `✅ *${actionText}!*\n\n📝 ${parsed.description}\n${emoji} ${currencySymbol} ${(parsed.amount / 100).toFixed(2)}\n🏷️ ${parsed.category}\n\n💎 Economias totais: R$ ${(totalSaved / 100).toFixed(2)}`;
+      const confirmationMessage = `✅ *${actionText}!*\n\n📝 ${parsed.description}\n${emoji} ${currencySymbol} ${(parsed.amount / 100).toFixed(2)}\n🏷️ ${parsed.category}\n\n💎 Economias totais: R$ ${(totalSaved / 100).toFixed(2)}`;
 
-        console.log("[WhatsApp] Sending confirmation message...");
-        console.log("[WhatsApp] Message content:", confirmationMessage);
-        
-        try {
-          const msgResult = await twilioClient.messages.create({
-            from: `whatsapp:${ENV.twilioWhatsappNumber}`,
-            to: From,
-            body: confirmationMessage
-          });
-          console.log("[WhatsApp] Confirmation sent successfully! SID:", msgResult.sid);
-        } catch (sendError: any) {
-          console.error("[WhatsApp] Failed to send confirmation:", {
-            error: sendError.message,
-            code: sendError.code,
-            status: sendError.status,
-          });
-        }
+      console.log("[WhatsApp] Sending confirmation message...");
+      console.log("[WhatsApp] Message content:", confirmationMessage);
+      
+      try {
+        const msgResult = await sendWhatsAppMessage(phoneNumber, confirmationMessage);
+        console.log("[WhatsApp] Confirmation sent successfully! ID:", msgResult.messages?.[0]?.id);
+      } catch (sendError: any) {
+        console.error("[WhatsApp] Failed to send confirmation:", {
+          error: sendError.message,
+        });
       }
 
       res.status(200).send("");
