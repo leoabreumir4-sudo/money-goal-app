@@ -164,6 +164,10 @@ async function buildUserFinancialContext(userId: string) {
   const dbInstance = await db.getDb();
   if (!dbInstance) throw new Error("Database not available");
 
+  // Import schema and sql for Wise query
+  const schema = await import("../drizzle/schema");
+  const { sql } = await import("drizzle-orm");
+
   // Get all user data in parallel
   const [transactions, goals, recurringExpenses, categories, settings] = await Promise.all([
     db.getAllTransactionsByUserId(userId),
@@ -279,6 +283,11 @@ async function buildUserFinancialContext(userId: string) {
       };
     });
 
+  // Debug log top categories with actual values
+  console.log('[AI Chat Context] Top spending categories:', 
+    topCategories.map(c => `${c.emoji} ${c.name}: ${formatMoney(c.total)} total, ${formatMoney(c.avgMonthly)}/month`)
+  );
+
   // Recurring expenses
   const activeRecurring = recurringExpenses.filter((e: any) => e.isActive !== false);
   const totalMonthlyRecurring = activeRecurring.reduce((sum: number, e: any) => {
@@ -305,6 +314,20 @@ async function buildUserFinancialContext(userId: string) {
   // Get user's monthly savings target
   const monthlySavingTarget = settings?.monthlySavingTarget || 0;
 
+  // Get Wise account balance if available
+  const dbInstance2 = await db.getDb();
+  let wiseBalance = 0;
+  if (dbInstance2) {
+    const wiseAccounts = await dbInstance2
+      .select()
+      .from(schema.bankAccounts)
+      .where(sql`${schema.bankAccounts.userId} = ${userId} AND ${schema.bankAccounts.provider} = 'wise'`);
+    
+    if (wiseAccounts.length > 0) {
+      wiseBalance = wiseAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+    }
+  }
+
   // Create simplified context WITHOUT raw cent values to prevent AI confusion
   const simplifiedContext = {
     // User info
@@ -316,6 +339,8 @@ async function buildUserFinancialContext(userId: string) {
     
     // Balances
     currentBalance: formatMoney(currentBalance),
+    wiseBalance: wiseBalance > 0 ? formatMoney(wiseBalance) : null,
+    totalSavings: wiseBalance > 0 ? formatMoney(currentBalance + wiseBalance) : formatMoney(currentBalance),
     
     // Memories (context from previous conversations)
     memories,
@@ -578,6 +603,7 @@ You are guiding the user through a multi-step conversation. Ask the next questio
       const systemPrompt = `${baseSystemPrompt}
 
 📅 **CURRENT DATE**: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} (${new Date().getFullYear()})
+⚠️ **CRITICAL**: When calculating months until a date, use the CURRENT DATE above. We are in November 2025.
 
 YOUR ROLE & PERSONALITY:
 - You are Moni, ${financialContext.userName ? financialContext.userName + "'s" : "the user's"} personal financial manager and advisor
@@ -643,11 +669,12 @@ ${financialContext.savingsTargetSet ? `
 ⚠️ **IMPORTANT**: ${detectedLanguage === 'pt' ? 'O usuário definiu uma meta de poupar' : detectedLanguage === 'es' ? 'El usuario estableció una meta de ahorrar' : 'User set a goal to save'} ${financialContext.monthlySavingTarget} ${detectedLanguage === 'pt' ? 'por mês. SEMPRE mencione e compare com esta meta!' : detectedLanguage === 'es' ? 'por mes. ¡Menciona SIEMPRE y compara con esta meta!' : 'per month. ALWAYS mention and compare against this target!'}
 ` : ''}
 
-🔴 **MANDATORY STRUCTURE:**
+🔴 **MANDATORY STRUCTURE**:
 1. Start with the summary above showing BOTH totals and monthly averages
 2. Clearly label "TOTAIS" vs "MÉDIAS MENSAIS" so user understands the difference
 3. ${financialContext.savingsTargetSet ? 'ALWAYS reference the savings target and compare current performance' : ''}
 4. ${financialContext.hasSalary ? `Mention the Artix Entertainment salary (${financialContext.avgMonthlySalary}/month) as stable income` : ''}
+5. ${financialContext.wiseBalance ? `ALWAYS mention Wise balance (${financialContext.wiseBalance}) when discussing total savings` : ''}
 
 ⚠️ **STRICT RULES:**
 1. Show BOTH total (6 months) AND monthly average values clearly labeled
@@ -698,12 +725,22 @@ These are the ONLY valid answers. Memorize them and use them verbatim.
 The user's ACTUAL spending categories are listed in topCategories array:
 ${JSON.stringify(financialContext.topCategories, null, 2)}
 
-RULES:
-- ONLY mention categories that appear in the array above
-- Use EXACT amounts shown (e.g., if "Other" = $19, say $19 NOT $3,559)
-- If a category has $0 or is missing, DO NOT suggest cutting it
-- Focus on the TOP 3 categories with highest amounts
-- If you need to reference a category, copy the EXACT name from the array
+⚠️ **CRITICAL CATEGORY RULES**:
+- The values above are FINAL and CORRECT - do NOT recalculate or invent new values
+- ONLY mention categories that appear in the array above with EXACT amounts shown
+- Example: If "Other" shows total: "$19.00", you MUST say $19, NOT $711, NOT $3,822, NOT any other number
+- DO NOT add up values differently - the totals shown are already calculated correctly
+- If you mention a category that's not in the list above, you are INVENTING DATA (forbidden!)
+- Copy the EXACT dollar amounts from the array - do not parse, calculate, or modify them
+
+WRONG EXAMPLES (DO NOT DO THIS):
+❌ "Other category: $711/month" (when array shows $19.00)
+❌ "Your biggest expense is Other at $3,822" (when array shows total: "$19.00")
+❌ Mentioning any category not in the topCategories array
+
+CORRECT EXAMPLES:
+✅ "Transfer: ${financialContext.topCategories[0]?.avgMonthly || '$0'}/month"
+✅ "Other category represents ${financialContext.topCategories.find(c => c.name === 'Other')?.avgMonthly || 'a small amount'} of spending"
 
 🎯 **GOAL CALCULATION VALIDATION**:
 When calculating months to reach a goal:
