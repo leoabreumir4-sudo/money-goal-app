@@ -67,6 +67,7 @@ export const usePreferences = () => {
     // Fallback seguro: retorna valores padrão e avisa no console
     if (typeof window !== "undefined") {
       console.error("usePreferences: PreferencesProvider não encontrado! Retornando valores padrão.");
+    }
     return {
       preferences: {
         language: "en",
