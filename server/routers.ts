@@ -10,6 +10,7 @@ import { csvRouter } from "./csvRouter";
 import { webhookRouter } from "./webhookRouter";
 import { categoryRouter } from "./categoryRouter";
 import { chatRouter } from "./chatRouter";
+import { whatsappRouter } from "./whatsappRouter";
 
 export const appRouter = router({
   system: systemRouter,
@@ -19,6 +20,7 @@ export const appRouter = router({
   webhooks: webhookRouter, // Webhook endpoints
   categories: categoryRouter, // Category management with auto-categorization
   chat: chatRouter, // AI Financial Advisor
+  whatsapp: whatsappRouter, // WhatsApp integration
 
   // TEMPORARY: Delete all users (REMOVE AFTER USE!)
   _dangerDeleteAllUsers: publicProcedure.mutation(async () => {

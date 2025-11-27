@@ -22,6 +22,8 @@ export const users = pgTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(), // PostgreSQL does not have ON UPDATE CURRENT_TIMESTAMP natively
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  phoneVerified: boolean("phone_verified").default(false),
 });
 
 export type User = typeof users.$inferSelect;

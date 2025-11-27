@@ -12,4 +12,8 @@ export const ENV = {
   plaidClientId: process.env.PLAID_CLIENT_ID ?? "",
   plaidSecret: process.env.PLAID_SECRET ?? "",
   plaidEnv: process.env.PLAID_ENV ?? "sandbox",
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID ?? "",
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN ?? "",
+  twilioWhatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER ?? "",
+  viteAppUrl: process.env.VITE_APP_URL ?? "",
 };

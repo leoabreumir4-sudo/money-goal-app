@@ -1,4 +1,4 @@
-import { eq, and, or, desc, asc } from "drizzle-orm";
+import { eq, and, or, desc, asc, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "../drizzle/schema";
@@ -161,6 +161,8 @@ export async function getUserByOpenId(openId: string) {
       email: users.email,
       name: users.name,
       passwordHash: users.passwordHash,
+      phoneNumber: users.phoneNumber,
+      phoneVerified: users.phoneVerified,
     })
     .from(users)
     .where(eq(users.openId, openId))
@@ -168,6 +170,80 @@ export async function getUserByOpenId(openId: string) {
 
   return result.length > 0 ? result[0] : undefined;
 }
+
+export async function getUserByPhone(phoneNumber: string) {
+  const db = getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      email: users.email,
+      name: users.name,
+      phoneNumber: users.phoneNumber,
+      phoneVerified: users.phoneVerified,
+    })
+    .from(users)
+    .where(eq(users.phoneNumber, phoneNumber))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserById(userId: string) {
+  const db = getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db
+    .select({
+      id: users.id,
+      openId: users.openId,
+      email: users.email,
+      name: users.name,
+      phoneNumber: users.phoneNumber,
+      phoneVerified: users.phoneVerified,
+    })
+    .from(users)
+    .where(eq(users.openId, userId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateUserPhone(userId: string, phoneNumber: string | null) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(users)
+    .set({ 
+      phoneNumber,
+      phoneVerified: phoneNumber ? false : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.openId, userId));
+}
+
+export async function verifyUserPhone(userId: string) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(users)
+    .set({ 
+      phoneVerified: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.openId, userId));
+}
+
 // -------------------------------------------------------------------------------
 
 // Goals
@@ -194,6 +270,16 @@ export async function getActiveGoal(userId: string) {
     .where(and(eq(goals.userId, userId), eq(goals.status, "active")))
     .limit(1);
   return result[0] ?? null;
+}
+
+export async function getActiveGoals(userId: string) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(goals)
+    .where(and(eq(goals.userId, userId), eq(goals.status, "active")));
 }
 
 export async function getGoalById(id: number, userId: string) {
@@ -253,6 +339,23 @@ export async function getAllTransactionsByUserId(userId: string) {
   
   return await db.select().from(transactions)
     .where(eq(transactions.userId, userId))
+    .orderBy(desc(transactions.createdDate));
+}
+
+export async function getTransactionsByDateRange(userId: string, startDate: Date, endDate: Date) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        gte(transactions.createdDate, startDate),
+        lte(transactions.createdDate, endDate)
+      )
+    )
     .orderBy(desc(transactions.createdDate));
 }
 

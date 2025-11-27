@@ -71,6 +71,13 @@
       "when": 1764175662150,
       "tag": "0009_talented_chamber",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1764229908836,
+      "tag": "0010_lowly_paladin",
+      "breakpoints": true
     }
   ]
 }
