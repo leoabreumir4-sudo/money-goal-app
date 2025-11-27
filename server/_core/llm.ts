@@ -210,9 +210,15 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () => {
+const resolveApiUrl = (useGrounding?: boolean) => {
   // Use Google AI Studio API instead of Forge
   const apiKey = ENV.forgeApiKey || ENV.googleApiKey;
+  
+  // For grounding, use a different model endpoint that supports it
+  if (useGrounding) {
+    return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+  }
+  
   return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 };
 
@@ -312,16 +318,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   // Add Google Search grounding if requested
   if (params.useGrounding) {
     payload.tools = [{
-      googleSearchRetrieval: {
-        dynamicRetrievalConfig: {
-          mode: "MODE_DYNAMIC",
-          dynamicThreshold: 0.3
-        }
-      }
+      google_search_retrieval: {}
     }];
   }
 
-  const response = await fetch(resolveApiUrl(), {
+  const response = await fetch(resolveApiUrl(params.useGrounding), {
     method: "POST",
     headers: {
       "content-type": "application/json",

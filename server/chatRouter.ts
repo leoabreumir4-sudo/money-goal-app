@@ -828,7 +828,6 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
       const response = await invokeLLM({
         messages,
         maxTokens: 1000,
-        // Enable Google Search grounding for price/budget queries
         useGrounding: needsWebSearch,
       });
 
