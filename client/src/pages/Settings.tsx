@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { CheckCircle, HelpCircle, MessageSquare, Smartphone } from "lucide-react";
+import { CheckCircle, HelpCircle, MessageSquare, Smartphone, MessageCircle } from "lucide-react";
 
 export default function Settings() {
   const utils = trpc.useUtils();
@@ -263,106 +263,152 @@ export default function Settings() {
                     <HelpCircle className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <Smartphone className="w-6 h-6" />
+                    <DialogTitle className="flex items-center gap-3 text-2xl">
+                      <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 rounded-xl">
+                        <MessageSquare className="w-6 h-6 text-white" />
+                      </div>
                       Como funciona o WhatsApp
                     </DialogTitle>
-                    <DialogDescription className="sr-only">
-                      Instruções de uso da integração WhatsApp
+                    <DialogDescription className="text-base mt-2">
+                      Gerencie suas finanças de forma rápida e natural, sem precisar abrir o app!
                     </DialogDescription>
                   </DialogHeader>
                   
-                  <div className="space-y-6 text-sm">
-                    {/* O que é */}
-                    <div>
-                      <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        💬 O que é?
+                  <div className="space-y-6">
+                    {/* Quick Start */}
+                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-xl border border-primary/20">
+                      <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                        🚀 Início Rápido
                       </h4>
-                      <p className="text-muted-foreground">
-                        Registre seus gastos diretamente pelo WhatsApp de forma rápida e prática, sem precisar abrir o aplicativo!
-                      </p>
-                    </div>
-
-                    {/* Como usar */}
-                    <div>
-                      <h4 className="font-semibold mb-2">📱 Como usar:</h4>
-                      <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                        <li>Clique em "Conectar via WhatsApp" abaixo</li>
-                        <li>O WhatsApp abrirá automaticamente com a mensagem pronta</li>
-                        <li>Aperte ENVIAR para ativar</li>
-                        <li>Pronto! Agora você pode mandar seus gastos</li>
-                      </ol>
-                    </div>
-
-                    {/* Exemplos */}
-                    <div>
-                      <h4 className="font-semibold mb-2">✍️ Exemplos de mensagens:</h4>
-                      <div className="bg-secondary/50 p-4 rounded-lg space-y-3">
-                        <div>
-                          <p className="font-mono text-xs">• "Mercado 350 reais"</p>
-                          <p className="text-xs text-muted-foreground ml-4">→ Registra R$ 350,00 em Alimentação</p>
-                        </div>
-                        <div>
-                          <p className="font-mono text-xs">• "Uber 25"</p>
-                          <p className="text-xs text-muted-foreground ml-4">→ Registra R$ 25,00 em Transporte</p>
-                        </div>
-                        <div>
-                          <p className="font-mono text-xs">• "20 garrafas de água por 2 reais cada"</p>
-                          <p className="text-xs text-muted-foreground ml-4">→ Registra R$ 40,00 em Alimentação</p>
-                        </div>
-                        <div>
-                          <p className="font-mono text-xs">• "Academia 120 mensalidade"</p>
-                          <p className="text-xs text-muted-foreground ml-4">→ Registra R$ 120,00 em Saúde</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Comandos */}
-                    <div>
-                      <h4 className="font-semibold mb-2">🤖 Comandos úteis:</h4>
-                      <div className="bg-secondary/50 p-4 rounded-lg space-y-2">
-                        <div className="flex items-start gap-2">
-                          <span className="font-mono text-xs">•</span>
+                      <div className="grid gap-4">
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-sm">1</div>
                           <div>
-                            <p className="font-mono text-xs">"hoje"</p>
-                            <p className="text-xs text-muted-foreground">Ver gastos de hoje</p>
+                            <p className="font-medium">Digite seu número</p>
+                            <p className="text-sm text-muted-foreground">Com DDD, ex: 5511999999999</p>
                           </div>
                         </div>
-                        <div className="flex items-start gap-2">
-                          <span className="font-mono text-xs">•</span>
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-sm">2</div>
                           <div>
-                            <p className="font-mono text-xs">"ajuda"</p>
-                            <p className="text-xs text-muted-foreground">Ver todos os comandos</p>
+                            <p className="font-medium">Clique em "Conectar"</p>
+                            <p className="text-sm text-muted-foreground">O WhatsApp abrirá automaticamente</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-sm">3</div>
+                          <div>
+                            <p className="font-medium">Envie a mensagem pronta</p>
+                            <p className="text-sm text-muted-foreground">Aperte "Enviar" e pronto! ✅</p>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Resposta */}
+                    {/* Examples Grid */}
                     <div>
-                      <h4 className="font-semibold mb-2">✅ O que você recebe:</h4>
-                      <div className="bg-secondary/50 p-4 rounded-lg">
-                        <p className="text-xs font-semibold mb-1">✅ Gasto registrado!</p>
-                        <p className="text-xs">📝 Mercado</p>
-                        <p className="text-xs">💰 R$ 350,00</p>
-                        <p className="text-xs">🏷️ Alimentação</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          💎 Economias totais: R$ 1.253,00
+                      <h4 className="font-bold text-lg mb-4">💬 Exemplos de uso</h4>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <div className="bg-secondary/30 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                          <p className="font-mono text-sm mb-2 text-primary">"Mercado 350 reais"</p>
+                          <div className="text-xs space-y-1 text-muted-foreground">
+                            <p>✓ Descrição: Mercado</p>
+                            <p>✓ Valor: R$ 350,00</p>
+                            <p>✓ Categoria: Alimentação</p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-secondary/30 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                          <p className="font-mono text-sm mb-2 text-primary">"Uber 25"</p>
+                          <div className="text-xs space-y-1 text-muted-foreground">
+                            <p>✓ Descrição: Uber</p>
+                            <p>✓ Valor: R$ 25,00</p>
+                            <p>✓ Categoria: Transporte</p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-secondary/30 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                          <p className="font-mono text-sm mb-2 text-primary">"Academia 120"</p>
+                          <div className="text-xs space-y-1 text-muted-foreground">
+                            <p>✓ Descrição: Academia</p>
+                            <p>✓ Valor: R$ 120,00</p>
+                            <p>✓ Categoria: Saúde</p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-secondary/30 p-4 rounded-lg border border-border hover:border-primary/50 transition-colors">
+                          <p className="font-mono text-sm mb-2 text-primary">"20 águas por 2 reais"</p>
+                          <div className="text-xs space-y-1 text-muted-foreground">
+                            <p>✓ Descrição: 20 águas</p>
+                            <p>✓ Valor: R$ 40,00</p>
+                            <p>✓ Categoria: Alimentação</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Commands */}
+                    <div>
+                      <h4 className="font-bold text-lg mb-4">⚡ Comandos úteis</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3 p-3 bg-secondary/30 rounded-lg">
+                          <div className="text-2xl">📊</div>
+                          <div className="flex-1">
+                            <p className="font-mono text-sm font-medium">"hoje"</p>
+                            <p className="text-sm text-muted-foreground">Ver todos os gastos de hoje</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-3 p-3 bg-secondary/30 rounded-lg">
+                          <div className="text-2xl">❓</div>
+                          <div className="flex-1">
+                            <p className="font-mono text-sm font-medium">"ajuda"</p>
+                            <p className="text-sm text-muted-foreground">Ver lista completa de comandos</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Response Example */}
+                    <div>
+                      <h4 className="font-bold text-lg mb-4">✅ Resposta automática</h4>
+                      <div className="bg-green-500/10 border-2 border-green-500/30 p-5 rounded-xl space-y-2">
+                        <p className="font-bold flex items-center gap-2 text-green-600 dark:text-green-400">
+                          <CheckCircle className="w-5 h-5" />
+                          Gasto registrado!
                         </p>
+                        <div className="pl-7 space-y-1 text-sm">
+                          <p>📝 <span className="font-medium">Mercado</span></p>
+                          <p>💰 <span className="font-medium">R$ 350,00</span></p>
+                          <p>🏷️ <span className="font-medium">Alimentação</span></p>
+                          <p className="text-muted-foreground mt-3 pt-3 border-t border-green-500/20">
+                            💎 Economias totais: R$ 1.253,00
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Importante */}
-                    <div className="border-l-4 border-primary pl-4">
-                      <h4 className="font-semibold mb-2 text-primary">⚡ Importante:</h4>
-                      <ul className="space-y-1 text-muted-foreground text-xs">
-                        <li>• As transações aparecem instantaneamente no app</li>
-                        <li>• O número é compartilhado (para testes)</li>
-                        <li>• 100% gratuito para uso pessoal</li>
-                        <li>• Funciona 24/7</li>
-                      </ul>
+                    {/* Features */}
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-secondary/20 rounded-lg">
+                        <div className="text-3xl mb-2">⚡</div>
+                        <p className="font-semibold text-sm">Instantâneo</p>
+                        <p className="text-xs text-muted-foreground mt-1">Aparece no app na hora</p>
+                      </div>
+                      
+                      <div className="text-center p-4 bg-secondary/20 rounded-lg">
+                        <div className="text-3xl mb-2">🔓</div>
+                        <p className="font-semibold text-sm">100% Gratuito</p>
+                        <p className="text-xs text-muted-foreground mt-1">Sem limites de uso</p>
+                      </div>
+                      
+                      <div className="text-center p-4 bg-secondary/20 rounded-lg">
+                        <div className="text-3xl mb-2">🤖</div>
+                        <p className="font-semibold text-sm">IA Inteligente</p>
+                        <p className="text-xs text-muted-foreground mt-1">Entende linguagem natural</p>
+                      </div>
                     </div>
                   </div>
                 </DialogContent>
@@ -403,9 +449,10 @@ export default function Settings() {
                     window.open(whatsappLink, '_blank');
                   }}
                   disabled={linkPhoneMutation.isPending}
-                  className="w-full"
+                  className="w-full bg-[#25D366] hover:bg-[#20BD5A] text-white"
                 >
-                  🚀 Conectar via WhatsApp
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Conectar via WhatsApp
                 </Button>
                 
                 <p className="text-xs text-muted-foreground">
