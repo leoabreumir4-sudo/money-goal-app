@@ -189,24 +189,24 @@ function DashboardLayoutContent({
                     <SidebarMenuItem>
                       <button
                         onClick={() => setLocation(item.path)}
-                        className={`h-11 mb-1 w-full transition-all duration-300 font-medium rounded-lg group relative flex items-center gap-2 px-3 ${
-                          isActive ? 'bg-primary/10' : ''
+                        className={`sidebar-menu-item h-11 mb-1 w-full font-medium rounded-lg relative flex items-center gap-2 px-3 transition-all duration-300 ease-in-out ${
+                          isActive ? 'bg-primary/10' : 'bg-transparent'
                         }`}
                       >
                         {isActive && (
-                          <div className="absolute left-0 w-0.5 h-6 bg-primary rounded-full" />
+                          <div className="absolute left-0 w-0.5 h-6 bg-primary rounded-full transition-opacity duration-300" />
                         )}
                         <item.icon
                           className={`h-4 w-4 transition-colors duration-200 ${
                             isActive 
                               ? "text-primary" 
-                              : "text-muted-foreground group-hover:text-primary"
+                              : "text-muted-foreground sidebar-icon"
                           }`}
                         />
                         <span className={`transition-colors duration-200 ${
                           isActive 
                             ? "text-primary font-semibold" 
-                            : "text-muted-foreground group-hover:text-white"
+                            : "text-muted-foreground sidebar-label"
                         }`}>{label}</span>
                       </button>
                     </SidebarMenuItem>

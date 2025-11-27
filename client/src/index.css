@@ -238,4 +238,13 @@
       max-width: 1280px; /* Standard content width */
     }
   }
+
+  /* Sidebar menu item hover styles */
+  .sidebar-menu-item:hover .sidebar-icon {
+    color: hsl(var(--primary));
+  }
+
+  .sidebar-menu-item:hover .sidebar-label {
+    color: white;
+  }
 }
