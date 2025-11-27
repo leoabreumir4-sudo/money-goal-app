@@ -35,7 +35,7 @@ const convertToPreferredCurrency = (amount: number, fromCurrency: string, toCurr
 };
 
 // Custom Tooltip for Monthly Overview
-const CustomMonthlyTooltip = ({ active, payload, label, curr }: any) => {
+const CustomMonthlyTooltip = ({ active, payload, label, curr, lang }: any) => {
   if (!active || !payload || !payload.length) return null;
   
   const income = payload.find((p: any) => p.dataKey === 'income')?.value || 0;
@@ -50,7 +50,7 @@ const CustomMonthlyTooltip = ({ active, payload, label, curr }: any) => {
         <div className="flex items-center justify-between gap-6 p-2 bg-primary/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-sm font-medium">Income</span>
+            <span className="text-sm font-medium">{t('income', lang)}</span>
           </div>
           <span className="font-semibold text-primary">{formatCurrency(income, curr)}</span>
         </div>
@@ -58,14 +58,14 @@ const CustomMonthlyTooltip = ({ active, payload, label, curr }: any) => {
         <div className="flex items-center justify-between gap-6 p-2 bg-destructive/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-destructive" />
-            <span className="text-sm font-medium">Expense</span>
+            <span className="text-sm font-medium">{t('expense', lang)}</span>
           </div>
           <span className="font-semibold text-destructive">{formatCurrency(expense, curr)}</span>
         </div>
         
         <div className="border-t border-border pt-2 mt-2">
           <div className="flex items-center justify-between gap-6 p-2 bg-muted/30 rounded">
-            <span className="text-sm font-medium">Net Saving</span>
+            <span className="text-sm font-medium">{t('netSaving', lang)}</span>
             <span className={`font-bold ${netSaving >= 0 ? 'text-green-500' : 'text-destructive'}`}>
               {formatCurrency(netSaving, curr)}
             </span>
@@ -84,7 +84,8 @@ const CustomProjectionTooltip = ({
   activeGoal,
   monthsToGoalAvg,
   monthsToGoalTarget,
-  curr
+  curr,
+  lang
 }: any) => {
   if (!active || !payload || !payload.length || !activeGoal) return null;
   
@@ -100,21 +101,21 @@ const CustomProjectionTooltip = ({
     <div className="bg-background/95 backdrop-blur border border-border rounded-lg p-4 shadow-lg min-w-[300px]">
       <p className="font-semibold text-base mb-3">{label} {anyReached ? '🎉' : ''}</p>
       <p className="text-xs text-muted-foreground mb-3">
-        {monthIdx === 0 ? 'Today (current month)' : `In ${monthIdx} ${monthIdx === 1 ? 'month' : 'months'} from now`}
+        {monthIdx === 0 ? t('todayCurrentMonth', lang) : t('inMonthsFromNow', lang).replace('{0}', monthIdx.toString()).replace('{1}', monthIdx === 1 ? t('months', lang).slice(0, -1) : t('months', lang))}
       </p>
       
       <div className="space-y-2 mb-3">
         <div className="flex items-center justify-between p-2 bg-primary/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-sm font-medium">Expected {data.targetReached && '✓'}</span>
+            <span className="text-sm font-medium">{t('expected', lang)} {data.targetReached && '✓'}</span>
           </div>
           <span className="font-semibold">{formatCurrency(targetVal, curr)}</span>
         </div>
         <div className="flex items-center justify-between p-2 bg-blue-500/5 rounded">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <span className="text-sm font-medium">Actual {data.avgReached && '✓'}</span>
+            <span className="text-sm font-medium">{t('actual', lang)} {data.avgReached && '✓'}</span>
           </div>
           <span className="font-semibold">{formatCurrency(avgVal, curr)}</span>
         </div>
@@ -126,7 +127,7 @@ const CustomProjectionTooltip = ({
             <div className="flex items-start gap-2 bg-primary/10 p-2 rounded">
               <div className="w-2 h-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
               <div className="text-xs">
-                <p className="font-medium text-primary">Expected reached in {monthsToGoalTarget} months</p>
+                <p className="font-medium text-primary">{t('expectedReachedIn', lang).replace('{0}', monthsToGoalTarget.toString())}</p>
               </div>
             </div>
           )}
@@ -134,7 +135,7 @@ const CustomProjectionTooltip = ({
             <div className="flex items-start gap-2 bg-blue-500/10 p-2 rounded">
               <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
               <div className="text-xs">
-                <p className="font-medium text-blue-500">Actual reached in {monthsToGoalAvg} months</p>
+                <p className="font-medium text-blue-500">{t('actualReachedIn', lang).replace('{0}', monthsToGoalAvg.toString())}</p>
               </div>
             </div>
           )}
@@ -154,13 +155,13 @@ const CustomProjectionTooltip = ({
           <div className="border-t border-border pt-3 text-sm">
             <div className="bg-muted/30 p-2 rounded space-y-1">
               <p className="text-xs text-muted-foreground">
-                {targetReachesFirst ? '🎯 Target pace' : '📊 Average pace'} to reach goal:
+                {targetReachesFirst ? `🎯 ${t('targetPace', lang)}` : `📊 ${t('averagePace', lang)}`} {t('toReachGoal', lang)}
               </p>
               <p className="font-medium">
-                {formatCurrency(remaining, curr)} remaining
+                {formatCurrency(remaining, curr)} {t('remaining', lang)}
               </p>
               <p className="text-xs text-muted-foreground">
-                ⏱️ About {monthsLeft} {monthsLeft === 1 ? 'month' : 'months'} left
+                ⏱️ {t('aboutMonthsLeft', lang).replace('{0}', monthsLeft.toString()).replace('{1}', monthsLeft === 1 ? t('months', lang).slice(0, -1) : t('months', lang))}
               </p>
             </div>
           </div>
@@ -435,7 +436,7 @@ export default function Analytics() {
                   tickLine={false}
                   tickFormatter={(value) => formatCurrency(value, curr)}
                 />
-                <Tooltip content={<CustomMonthlyTooltip curr={curr} />} />
+                <Tooltip content={<CustomMonthlyTooltip curr={curr} lang={lang} />} />
                 <Area 
                   type="monotone" 
                   dataKey="income" 
@@ -477,12 +478,12 @@ export default function Analytics() {
               <div className="p-2 bg-primary/10 rounded-lg">
                 <Target className="h-5 w-5 text-primary" />
               </div>
-              <CardTitle className="text-foreground">Set Your Monthly Savings Target</CardTitle>
+              <CardTitle className="text-foreground">{t('monthlySavingTargetTitle', lang)}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="saving-target">How much do you expect to save every month?</Label>
+              <Label htmlFor="saving-target">{t('howMuchExpectToSave', lang)}</Label>
               <div className="flex gap-2 items-center">
                 <div className="relative max-w-xs">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -515,9 +516,9 @@ export default function Analytics() {
               </div>
               <p className="text-sm text-muted-foreground mt-1">
                 <span className="inline-flex items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-full text-primary font-medium">
-                  💡 Your actual average saving: <span className="font-bold">{formatCurrency(averageMonthlySaving, curr)}/month</span>
+                  💡 {t('yourActualAverageSaving', lang)} <span className="font-bold">{formatCurrency(averageMonthlySaving, curr)}{t('perMonth', lang)}</span>
                 </span>
-                <span className="block text-xs mt-2 text-muted-foreground/70">(Income minus expenses over the last 6 months)</span>
+                <span className="block text-xs mt-2 text-muted-foreground/70">{t('incomeMinusExpensesLast6Months', lang)}</span>
               </p>
             </div>
 
@@ -579,7 +580,7 @@ export default function Analytics() {
                             <div className="p-2 bg-primary/20 rounded-xl shadow-sm">
                               <Target className="h-5 w-5 text-primary" />
                             </div>
-                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Goal</span>
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('yourGoal', lang)}</span>
                           </div>
                           <p className="text-3xl font-bold text-foreground">{formatCurrency(activeGoal.targetAmount, curr)}</p>
                         </div>
@@ -590,7 +591,7 @@ export default function Analytics() {
                             <div className="p-2 bg-primary/20 rounded-xl shadow-sm">
                               <Wallet className="h-5 w-5 text-primary" />
                             </div>
-                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Progress</span>
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('progress', lang)}</span>
                           </div>
                           <div className="flex items-baseline gap-2">
                             <p className="text-3xl font-bold text-primary">
@@ -606,32 +607,32 @@ export default function Analytics() {
                       {wiseBalance > 0 && (
                         <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-500/15 border border-green-500/30 px-3 py-2 rounded-lg mb-4 shadow-sm">
                           <Wallet className="h-4 w-4" />
-                          <span className="font-medium">Includes Wise balance: {formatCurrency(wiseBalance, curr)}</span>
+                          <span className="font-medium">{t('includesWiseBalance', lang)} {formatCurrency(wiseBalance, curr)}</span>
                         </div>
                       )}
                       
                       <div className="border-t border-primary/20 pt-5 space-y-4">
                         <div className="text-sm font-bold text-foreground flex items-center gap-2">
                           <div className="h-1 w-1 bg-primary rounded-full"></div>
-                          Time to reach goal:
+                          {t('timeToReachGoal', lang)}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl p-4 border border-primary/30 shadow-sm hover:shadow-md transition-all">
-                            <div className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">Expected Target</div>
-                            <div className="text-2xl font-bold text-primary mb-1">{monthsToGoalTarget} months</div>
+                            <div className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">{t('expectedTarget', lang)}</div>
+                            <div className="text-2xl font-bold text-primary mb-1">{monthsToGoalTarget} {t('months', lang)}</div>
                             <div className="text-xs text-muted-foreground">({new Date(now.getFullYear(), now.getMonth() + (monthsToGoalTarget || 0), 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})</div>
                           </div>
                           <div className="bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-xl p-4 border border-blue-500/30 shadow-sm hover:shadow-md transition-all">
-                            <div className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">Actual Average</div>
-                            <div className="text-2xl font-bold text-blue-500 mb-1">{monthsToGoalAvg} months</div>
+                            <div className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">{t('actualAverage', lang)}</div>
+                            <div className="text-2xl font-bold text-blue-500 mb-1">{monthsToGoalAvg} {t('months', lang)}</div>
                             <div className="text-xs text-muted-foreground">({new Date(now.getFullYear(), now.getMonth() + (monthsToGoalAvg || 0), 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})</div>
                           </div>
                         </div>
                         {monthsToGoalTarget && monthsToGoalAvg && monthsToGoalTarget !== monthsToGoalAvg && (
                           <div className="text-xs text-center py-2 px-3 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg font-medium">
                             {monthsToGoalTarget < monthsToGoalAvg 
-                              ? `⚡ Your target plan is ${Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months faster!`
-                              : `⏳ Average pace is ${Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months faster`
+                              ? `⚡ ${t('yourTargetPlanFaster', lang).replace('{0}', Math.abs(monthsToGoalAvg - monthsToGoalTarget).toString())}`
+                              : `⏳ ${t('averagePaceFaster', lang).replace('{0}', Math.abs(monthsToGoalAvg - monthsToGoalTarget).toString())}`
                             }
                           </div>
                         )}
@@ -648,7 +649,7 @@ export default function Analytics() {
                         size="sm"
                         onClick={() => setProjectionPeriod(period)}
                       >
-                        {period === 'GOAL' ? 'Until Goal' : period}
+                        {period === 'GOAL' ? t('untilGoal', lang) : period}
                       </Button>
                     ))}
                   </div>
@@ -680,7 +681,7 @@ export default function Analytics() {
                           tickLine={false}
                           tickFormatter={(value) => `$${(value / 100).toFixed(0)}`}
                         />
-                        <Tooltip content={<CustomProjectionTooltip activeGoal={activeGoal} monthsToGoalAvg={monthsToGoalAvg} monthsToGoalTarget={monthsToGoalTarget} curr={curr} />} />
+                        <Tooltip content={<CustomProjectionTooltip activeGoal={activeGoal} monthsToGoalAvg={monthsToGoalAvg} monthsToGoalTarget={monthsToGoalTarget} curr={curr} lang={lang} />} />
                         
                         {/* Horizontal line showing the goal amount */}
                         <ReferenceLine 
@@ -689,7 +690,7 @@ export default function Analytics() {
                           strokeDasharray="5 5" 
                           strokeWidth={2}
                           label={{ 
-                            value: `Goal: ${formatCurrency(activeGoal.targetAmount, curr)}`, 
+                            value: `${t('goal', lang)}: ${formatCurrency(activeGoal.targetAmount, curr)}`, 
                             position: 'insideTopLeft', 
                             fill: '#10b981', 
                             fontSize: 11, 
@@ -706,7 +707,7 @@ export default function Analytics() {
                             strokeDasharray="3 3"
                             strokeWidth={2}
                             label={{ 
-                              value: `🎯 Expected (${monthsToGoalTarget}mo)`, 
+                              value: `🎯 ${t('expected', lang)} (${monthsToGoalTarget}mo)`, 
                               position: 'top',
                               fill: '#8b5cf6', 
                               fontSize: 11,
@@ -724,7 +725,7 @@ export default function Analytics() {
                             strokeDasharray="3 3"
                             strokeWidth={2}
                             label={{ 
-                              value: `📊 Actual (${monthsToGoalAvg}mo)`, 
+                              value: `📊 ${t('actual', lang)} (${monthsToGoalAvg}mo)`, 
                               position: 'top',
                               fill: '#3b82f6', 
                               fontSize: 11,
