@@ -194,7 +194,14 @@ If invalid, return: {"error": "invalid"}`
         responseFormat: { type: "json_object" }
       });
 
-      const parsed = JSON.parse(llmResponse.choices[0].message.content as string);
+      let responseText = llmResponse.choices[0].message.content as string;
+      
+      // Remove markdown code blocks if present
+      responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      
+      console.log("[WhatsApp] LLM response:", responseText);
+      
+      const parsed = JSON.parse(responseText);
       
       if (parsed.error || !parsed.description || !parsed.amount) {
         console.log("[WhatsApp] Invalid expense format");
