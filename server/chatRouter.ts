@@ -7,26 +7,45 @@ import { getProfiles, getBalances } from "./_core/wise";
 import { searchWeb, formatSearchResults, getCurrentExchangeRate } from "./_core/webSearch";
 
 /**
- * Detect language from user message using simple keyword matching and character patterns
+ * Detect language from user message using character frequency analysis and linguistic patterns
+ * Much more robust than keyword matching - analyzes linguistic fingerprints
  */
 function detectLanguage(message: string): "en" | "pt" | "es" {
-  const portugueseKeywords = /\b(olá|oi|obrigad[oa]|como|está|você|voce|porque|por que|quero|posso|preciso|fazer|tenho|meu|minha|sim|não|nao)\b/i;
-  const spanishKeywords = /\b(hola|gracias|cómo|como|está|usted|porque|por qué|quiero|puedo|necesito|hacer|tengo|mi|sí|no)\b/i;
+  const text = message.toLowerCase();
   
-  // Check for Portuguese-specific characters
-  const hasPortugueseChars = /[ãçõê]/i.test(message);
+  // Portuguese-specific patterns (weighted scoring)
+  const ptScore = 
+    (text.match(/[ãõç]/g) || []).length * 5 +  // Strong PT indicators (ã, õ, ç)
+    (text.match(/ê|â|ô|á|é|í|ó|ú/g) || []).length * 2 +  // Common accents in PT
+    (text.match(/\bque\b/g) || []).length * 3 +  // "que" extremely common in PT
+    (text.match(/\b(de|da|do|dos|das|para|pra|com|sem|está|como|não|sim|por|qual|quando|onde|quem|seu|sua|meu|minha|esse|essa|isto|isso)\b/g) || []).length * 2;
   
-  // Check for Spanish-specific characters (excluding those shared with Portuguese)
-  const hasSpanishChars = /[ñ¿¡]/i.test(message);
+  // Spanish-specific patterns
+  const esScore = 
+    (text.match(/[ñ¿¡]/g) || []).length * 5 +  // Strong ES indicators (ñ, ¿, ¡)
+    (text.match(/\b(el|la|los|las|un|una|para|con|sin|está|cómo|cuál|cuándo|dónde|quién|su|mi|ese|esa|esto|eso)\b/g) || []).length * 2 +
+    (text.match(/ción\b/g) || []).length * 3;  // Common ES ending
   
-  if (portugueseKeywords.test(message) || hasPortugueseChars) {
+  // English patterns
+  const enScore = 
+    (text.match(/\b(the|is|are|was|were|what|when|where|who|why|how|can|could|would|should|will|this|that|these|those)\b/g) || []).length * 2 +
+    (text.match(/ing\b/g) || []).length * 2 +  // -ing ending very common in EN
+    (text.match(/\b(a|an|and|or|but|of|in|on|at|to|for|with)\b/g) || []).length;  // Common EN words
+  
+  // Log scores for debugging
+  console.log(`[Language Detection] Scores - PT: ${ptScore}, ES: ${esScore}, EN: ${enScore} | Message: "${message}"`);
+  
+  // Determine language based on highest score
+  const maxScore = Math.max(ptScore, esScore, enScore);
+  
+  if (maxScore === 0) {
+    // No clear indicators - default to PT (most likely for this app's users)
+    console.log(`[Language Detection] No indicators found, defaulting to PT`);
     return "pt";
   }
   
-  if (spanishKeywords.test(message) || hasSpanishChars) {
-    return "es";
-  }
-  
+  if (ptScore === maxScore) return "pt";
+  if (esScore === maxScore) return "es";
   return "en";
 }
 
