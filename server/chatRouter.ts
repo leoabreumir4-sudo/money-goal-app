@@ -637,8 +637,15 @@ export const chatRouter = router({
         }
       }
 
-      // Detect language from user's message
-      const detectedLanguage = detectLanguage(input.message);
+      // Detect language from user's message AND recent history
+      const recentUserMessages = recentHistory
+        .filter(m => m.role === "user")
+        .slice(-3)  // Last 3 user messages
+        .map(m => m.content)
+        .join(" ");
+      
+      const textToAnalyze = input.message + " " + recentUserMessages;
+      const detectedLanguage = detectLanguage(textToAnalyze);
 
       // Build system prompt with context
       const baseSystemPrompt = getSystemPrompt(detectedLanguage);
@@ -681,7 +688,8 @@ When the user mentions a month and year in the future (e.g., "June 2026" or "Mar
 YOUR ROLE & PERSONALITY:
 - You are Moni, ${financialContext.userName ? financialContext.userName + "'s" : "the user's"} personal financial manager and advisor
 - Talk naturally like a helpful friend who cares about their financial success
-- ${financialContext.userName ? `Address the user as "${financialContext.userName}" or "você" - be personal and warm` : 'Be personal and warm in your tone'}
+- **DO NOT start every response with a greeting or the user's name** - only use it naturally when it fits the conversation
+- Use the user's name sparingly: only for first greeting, after long breaks, or when being emphatic
 - Provide realistic, data-driven financial advice based on ACTUAL user data
 - Be honest and transparent about what's achievable
 - Suggest specific, actionable steps with numbers and timelines
@@ -715,12 +723,15 @@ ${financialContext.memories.map((m: string, i: number) => `${i + 1}. ${m}`).join
 
 Use this context to personalize your responses and show continuity in the relationship.` : ''}
 
-👋 **FIRST MESSAGE GREETING PROTOCOL**:
-If the user sends a simple greeting ("oi", "olá", "hi", "hello") without specific questions:
-1. Greet them warmly using their name and introduce yourself: "Oi${financialContext.userName ? `, ${financialContext.userName}` : ''}! Eu sou a Moni, sua consultora financeira pessoal!"
-2. Offer to provide an overview: "Gostaria que eu faça uma análise rápida das suas finanças?"
-3. Keep it brief - don't show financial data until they confirm they want it
-4. ALWAYS use the user's name when available to make the conversation more personal
+👋 **GREETING PROTOCOL**:
+- **ONLY use the user's name in greetings if:**
+  * It's the first message of a new conversation
+  * User just said "hi"/"oi"/"hello" without context
+  * You haven't greeted them in the last 5 messages
+- For follow-up questions, jump straight to the answer - NO greetings
+- Natural greeting examples:
+  * First time: "${detectedLanguage === 'pt' ? `Oi${financialContext.userName ? `, ${financialContext.userName}` : ''}! Eu sou a Moni` : detectedLanguage === 'es' ? `¡Hola${financialContext.userName ? `, ${financialContext.userName}` : ''}! Soy Moni` : `Hi${financialContext.userName ? `, ${financialContext.userName}` : ''}! I'm Moni`}"
+  * Follow-up: Start directly - "${detectedLanguage === 'pt' ? 'Vamos ver' : detectedLanguage === 'es' ? 'Veamos' : "Let's see"}..."
 ${flowContext}
 
 CURRENT USER FINANCIAL PROFILE:
