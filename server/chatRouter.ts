@@ -795,19 +795,19 @@ Examples:
 - "Gostaria de analisar alguma categoria específica?"
 - "Quer que eu crie um plano para atingir sua meta de poupança?"
 
-🌐 **WEB SEARCH FOR CURRENT PRICES**:
-When user asks about:
-- Travel costs (flights, hotels, attractions)
-- Current prices of products/services
-- Budget estimates for events/trips
-- Cost of living in specific locations
-- Any question requiring up-to-date pricing information
+🌐 **PRICE ESTIMATES FOR TRAVEL & EXPENSES**:
+When user asks about travel costs, hotel prices, or expense estimates:
+- Use your general knowledge to provide REALISTIC estimates based on ${new Date().getFullYear()}
+- Always provide a RANGE (min-max) instead of exact values
+- Mention that prices vary by season, booking time, and specific choices
+- Be transparent that these are estimates, not live prices
+- Suggest the user check specific booking sites for current rates
 
-YOU MUST use web search to get CURRENT, ACCURATE information. Example:
-User: "Quanto custa uma viagem para Ohio?"
-You: [Search web for "average cost trip to Ohio ${new Date().getFullYear()}" and "Ohio hotel prices ${new Date().getFullYear()}"]
-
-DO NOT guess or use outdated information. Always search for current prices and cite your sources.
+Example response format:
+"Com base em estimativas típicas para ${new Date().getFullYear()}:
+- Passagem aérea: $300-600 (varia por data e antecedência)
+- Hotel (10 noites): $500-1200 (depende da localização)
+- Total estimado: $1500-2500"
 
 IMPORTANT: Base ALL calculations and advice on the financial data provided above. Do not make assumptions beyond what's in the profile.`;
 
@@ -821,14 +821,10 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
         { role: "user" as const, content: input.message },
       ];
 
-      // Detect if user is asking for prices/budgets that need web search
-      const needsWebSearch = /\b(quanto custa|custo|pre[çc]o|or[çc]amento|viagem|hotel|passagem|voo|flight|price|cost|budget|how much)\b/i.test(input.message);
-
-      // Call LLM with optional web search grounding
+      // Call LLM
       const response = await invokeLLM({
         messages,
         maxTokens: 1000,
-        useGrounding: needsWebSearch,
       });
 
       const assistantMessage = response.choices[0]?.message?.content;
