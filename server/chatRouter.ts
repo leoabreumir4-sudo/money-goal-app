@@ -671,7 +671,17 @@ Next Question: ${stepData?.question}
 You are guiding the user through a multi-step conversation. Ask the next question clearly and wait for their response. Keep it brief and focused.`;
       }
       
-      const systemPrompt = `${baseSystemPrompt}
+      const systemPrompt = `🌍 **INSTRUÇÕES DE IDIOMA - MÁXIMA PRIORIDADE**:
+**IDIOMA DETECTADO DO USUÁRIO**: ${detectedLanguage === 'pt' ? 'PORTUGUÊS (PT-BR)' : detectedLanguage === 'es' ? 'ESPAÑOL (ES)' : 'ENGLISH (EN)'}
+**SEU IDIOMA DE RESPOSTA**: ${detectedLanguage === 'pt' ? 'PORTUGUÊS' : detectedLanguage === 'es' ? 'ESPAÑOL' : 'ENGLISH'}
+
+${languageInstructions[detectedLanguage]}
+
+⚠️ **REGRA ABSOLUTA**: Sua resposta INTEIRA deve ser em ${detectedLanguage === 'pt' ? 'Português do Brasil' : detectedLanguage === 'es' ? 'Español' : 'English'}.
+⚠️ **NUNCA** use inglês se o usuário está falando português ou espanhol.
+⚠️ **NUNCA** misture idiomas na mesma resposta.
+
+${baseSystemPrompt}
 
 📅 **CURRENT DATE**: November 27, 2025
 ⚠️ **CRITICAL DATE CALCULATION RULES**:
@@ -695,10 +705,6 @@ YOUR ROLE & PERSONALITY:
 - Suggest specific, actionable steps with numbers and timelines
 - Consider income, expenses, savings rate, and financial goals
 - Prioritize financial health and realistic planning
-- **CRITICAL LANGUAGE RULE**: The user wrote to you in ${detectedLanguage === 'pt' ? 'Portuguese' : detectedLanguage === 'es' ? 'Spanish' : 'English'}
-- ${languageInstructions[detectedLanguage]}
-- **NEVER switch languages mid-response** - maintain consistency throughout
-- If user asks you to switch languages (e.g., "responda em inglês"), honor that request
 
 💰 **CURRENCY RULE - CRITICAL**:
 - The user's current preferred currency is: **${financialContext.currency}**
@@ -741,12 +747,11 @@ Use this context to personalize your responses and show continuity in the relati
   * Follow-up: Start directly - "${detectedLanguage === 'pt' ? 'Vamos ver' : detectedLanguage === 'es' ? 'Veamos' : "Let's see"}..."
 ${flowContext}
 
+🌍 **LEMBRETE FINAL DE IDIOMA**:
+Responda TODA sua mensagem em ${detectedLanguage === 'pt' ? 'PORTUGUÊS' : detectedLanguage === 'es' ? 'ESPAÑOL' : 'ENGLISH'}.
+NÃO use inglês se o usuário falou português. NÃO misture idiomas.
+
 CURRENT USER FINANCIAL PROFILE:
-⚠️ CRITICAL - USER'S CURRENT FINANCIAL SUMMARY:
-**DETECTED LANGUAGE**: User is communicating in ${detectedLanguage === 'pt' ? 'Portuguese (PT-BR)' : detectedLanguage === 'es' ? 'Spanish (ES)' : 'English (EN)'}.
-**YOUR RESPONSE LANGUAGE**: Match the user's language. Respond in ${detectedLanguage === 'pt' ? 'Portuguese' : detectedLanguage === 'es' ? 'Spanish' : 'English'}.
-If the user explicitly asks to switch languages (e.g., "answer in English"), switch to that language.
-Otherwise, maintain the detected language throughout your ENTIRE response.
 
 ℹ️ **WHEN TO SHOW FINANCIAL SUMMARY**:
 - Only show if: user asks for overview/resumo/análise OR it's relevant to their question

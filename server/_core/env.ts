@@ -8,6 +8,7 @@ export const ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   googleApiKey: process.env.GOOGLE_API_KEY ?? "AIzaSyDlzBesSH_l_Xj7ivU3YEzTjoCHvu3qc5Q",
+  serpApiKey: process.env.SERPAPI_KEY ?? "d0c982379954fe11a405499ed5747a5d19f669e071643986bc79c74e7ce87a54",
   plaidClientId: process.env.PLAID_CLIENT_ID ?? "",
   plaidSecret: process.env.PLAID_SECRET ?? "",
   plaidEnv: process.env.PLAID_ENV ?? "sandbox",

@@ -41,41 +41,47 @@ export async function getCurrentExchangeRate(fromCurrency: string, toCurrency: s
 }
 
 /**
- * Perform a web search using Google Custom Search API with fallback
+ * Perform a web search using SerpAPI
  */
 export async function searchWeb(query: string): Promise<SearchResult[]> {
-  const apiKey = ENV.googleApiKey;
-  const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID || "017576662512468239146:omuauf_lfve";
+  const serpApiKey = ENV.serpApiKey;
   
-  // Try Google Custom Search API if we have API key
-  if (apiKey) {
-    try {
-      const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&num=5`;
-      
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.items && data.items.length > 0) {
-          console.log(`[Web Search] Google API returned ${data.items.length} results`);
-          return data.items.slice(0, 5).map((item: any) => ({
-            title: item.title,
-            link: item.link,
-            snippet: item.snippet || "",
-          }));
-        }
-      } else {
-        console.warn(`[Web Search] Google API error: ${response.status} ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error("[Web Search] Google API failed:", error);
-    }
+  if (!serpApiKey) {
+    console.log("[Web Search] SerpAPI key not configured");
+    return [];
   }
+  
+  try {
+    const url = `https://serpapi.com/search.json?q=${encodeURIComponent(query)}&api_key=${serpApiKey}&num=5`;
+    
+    console.log(`[Web Search] Searching with SerpAPI: "${query}"`);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.error(`[Web Search] SerpAPI error: ${response.status} ${response.statusText}`);
+      return [];
+    }
 
-  // Fallback: Return empty array and let AI use its knowledge
-  console.log("[Web Search] No results available, AI will use general knowledge");
-  return [];
+    const data = await response.json();
+    
+    if (!data.organic_results || data.organic_results.length === 0) {
+      console.log("[Web Search] No results found");
+      return [];
+    }
+
+    const results = data.organic_results.slice(0, 5).map((item: any) => ({
+      title: item.title || "",
+      link: item.link || "",
+      snippet: item.snippet || "",
+    }));
+
+    console.log(`[Web Search] SerpAPI returned ${results.length} results`);
+    return results;
+  } catch (error) {
+    console.error("[Web Search] SerpAPI failed:", error);
+    return [];
+  }
 }
 
 /**
@@ -90,4 +96,5 @@ export function formatSearchResults(results: SearchResult[]): string {
     .map((result, i) => `${i + 1}. ${result.title}\n   ${result.snippet}\n   Fonte: ${result.link}`)
     .join("\n\n");
 }
+
 
