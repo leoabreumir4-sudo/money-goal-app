@@ -294,44 +294,57 @@ export default function Analytics() {
   return (
     <DashboardLayout>
       <div className="p-8 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t("analytics", lang)}</h1>
-          <p className="text-muted-foreground">{t("trackFinancialPerformance", lang)}</p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-lg">
+              <TrendingUp className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{t("analytics", lang)}</h1>
+              <p className="text-muted-foreground">{t("trackFinancialPerformance", lang)}</p>
+            </div>
+          </div>
         </div>
 
         {isLoading ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="bg-muted/30 border-border">
+                <Card key={i} className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-3">
-                      <Skeleton className="h-10 w-10 rounded-lg" />
-                      <Skeleton className="h-5 w-28" />
+                      <Skeleton className="h-12 w-12 rounded-xl" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-8 w-32" />
+                      </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Skeleton className="h-8 w-28" />
-                    <Skeleton className="h-3 w-20" />
+                  <CardContent>
+                    <Skeleton className="h-3 w-28" />
                   </CardContent>
                 </Card>
               ))}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-card border-border">
+            <div className="grid grid-cols-1 gap-6">
+              <Card className="bg-gradient-to-br from-card to-card/80 border-border/50">
                 <CardHeader>
                   <Skeleton className="h-6 w-52" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-[300px] w-full rounded-lg" />
+                  <Skeleton className="h-[350px] w-full rounded-lg" />
                 </CardContent>
               </Card>
-              <Card className="bg-card border-border">
+              <Card className="bg-gradient-to-br from-card to-card/80 border-border/50">
                 <CardHeader>
-                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-6 w-64" />
                 </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-[300px] w-full rounded-lg" />
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-9 w-32" />
+                  </div>
+                  <Skeleton className="h-[350px] w-full rounded-lg" />
                 </CardContent>
               </Card>
             </div>
@@ -339,41 +352,47 @@ export default function Analytics() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-primary/5 border-primary/20">
+              <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group">
                 <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <ArrowUp className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-sm text-muted-foreground">{t("income", lang).toUpperCase()}</CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                      <ArrowUp className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("income", lang)}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-primary">{formatCurrency(totalIncome, curr)}</p>
+                  <p className="text-3xl font-bold text-primary mb-1">{formatCurrency(totalIncome, curr)}</p>
                   <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-destructive/5 border-destructive/20">
+              <Card className="bg-gradient-to-br from-destructive/10 via-destructive/5 to-transparent border-destructive/20 hover:shadow-xl hover:shadow-destructive/10 transition-all duration-300 group">
                 <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    <ArrowDown className="h-5 w-5 text-destructive" />
-                    <CardTitle className="text-sm text-muted-foreground">{t("expense", lang).toUpperCase()}</CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-destructive/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                      <ArrowDown className="h-6 w-6 text-destructive" />
+                    </div>
+                    <CardTitle className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("expense", lang)}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-destructive">{formatCurrency(totalExpenses, curr)}</p>
+                  <p className="text-3xl font-bold text-destructive mb-1">{formatCurrency(totalExpenses, curr)}</p>
                   <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
                 </CardContent>
               </Card>
 
-          <Card className="bg-muted/30 border-border">
+          <Card className="bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent border-green-500/20 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 group">
             <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-                <CardTitle className="text-sm text-muted-foreground">{t("netSavings", lang).toUpperCase()}</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-green-500/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="h-6 w-6 text-green-500" />
+                </div>
+                <CardTitle className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("netSavings", lang)}</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
-              <p className={`text-3xl font-bold ${netFlow >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+              <p className={`text-3xl font-bold mb-1 ${netFlow >= 0 ? 'text-green-500' : 'text-destructive'}`}>
                 {formatCurrency(netFlow, curr)}
               </p>
               <p className="text-sm text-muted-foreground">{t("positiveFlow", lang)}</p>
@@ -381,9 +400,14 @@ export default function Analytics() {
           </Card>
         </div>
 
-        <Card className="bg-card border-border">
+        <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-foreground">{t("monthlyOverview", lang)}</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <CardTitle className="text-foreground">{t("monthlyOverview", lang)}</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
@@ -447,9 +471,14 @@ export default function Analytics() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border">
+        <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-foreground">Set Your Monthly Savings Target</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <CardTitle className="text-foreground">Set Your Monthly Savings Target</CardTitle>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
@@ -485,8 +514,10 @@ export default function Analytics() {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                💡 Your actual average saving: <span className="font-semibold">{formatCurrency(averageMonthlySaving, curr)}/month</span>
-                <span className="block text-xs mt-0.5 opacity-70">(Income minus expenses over the last 6 months)</span>
+                <span className="inline-flex items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-full text-primary font-medium">
+                  💡 Your actual average saving: <span className="font-bold">{formatCurrency(averageMonthlySaving, curr)}/month</span>
+                </span>
+                <span className="block text-xs mt-2 text-muted-foreground/70">(Income minus expenses over the last 6 months)</span>
               </p>
             </div>
 
@@ -539,16 +570,16 @@ export default function Analytics() {
               return (
                 <>
                   {/* Compact Summary Card */}
-                  <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                  <Card className="bg-gradient-to-br from-primary/15 via-primary/10 to-primary/5 border-primary/30 shadow-lg shadow-primary/5">
                     <CardContent className="py-6 px-6">
                       <div className="grid grid-cols-2 gap-6 mb-5">
                         {/* Goal Section */}
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-primary/10 rounded-lg">
+                            <div className="p-2 bg-primary/20 rounded-xl shadow-sm">
                               <Target className="h-5 w-5 text-primary" />
                             </div>
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Your Goal</span>
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Goal</span>
                           </div>
                           <p className="text-3xl font-bold text-foreground">{formatCurrency(activeGoal.targetAmount, curr)}</p>
                         </div>
@@ -556,16 +587,16 @@ export default function Analytics() {
                         {/* Current Progress Section */}
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-primary/10 rounded-lg">
+                            <div className="p-2 bg-primary/20 rounded-xl shadow-sm">
                               <Wallet className="h-5 w-5 text-primary" />
                             </div>
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Progress</span>
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Progress</span>
                           </div>
                           <div className="flex items-baseline gap-2">
                             <p className="text-3xl font-bold text-primary">
                               {formatCurrency(initialAmount, curr)}
                             </p>
-                            <span className="text-xl font-semibold text-primary/60">
+                            <span className="text-xl font-semibold text-primary/70">
                               {Math.round((initialAmount / activeGoal.targetAmount) * 100)}%
                             </span>
                           </div>
@@ -573,28 +604,31 @@ export default function Analytics() {
                       </div>
                       
                       {wiseBalance > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-green-500/10 px-2 py-1 rounded mb-4">
-                          <Wallet className="h-3 w-3 text-green-500" />
-                          Includes Wise balance: {formatCurrency(wiseBalance, curr)}
+                        <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-500/15 border border-green-500/30 px-3 py-2 rounded-lg mb-4 shadow-sm">
+                          <Wallet className="h-4 w-4" />
+                          <span className="font-medium">Includes Wise balance: {formatCurrency(wiseBalance, curr)}</span>
                         </div>
                       )}
                       
-                      <div className="border-t border-border/50 pt-4 space-y-3">
-                        <div className="text-sm font-semibold text-foreground">Time to reach goal:</div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-primary/10 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground mb-1">Expected Target</div>
-                            <div className="text-lg font-bold text-primary">{monthsToGoalTarget} months</div>
+                      <div className="border-t border-primary/20 pt-5 space-y-4">
+                        <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                          <div className="h-1 w-1 bg-primary rounded-full"></div>
+                          Time to reach goal:
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl p-4 border border-primary/30 shadow-sm hover:shadow-md transition-all">
+                            <div className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">Expected Target</div>
+                            <div className="text-2xl font-bold text-primary mb-1">{monthsToGoalTarget} months</div>
                             <div className="text-xs text-muted-foreground">({new Date(now.getFullYear(), now.getMonth() + (monthsToGoalTarget || 0), 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})</div>
                           </div>
-                          <div className="bg-blue-500/10 rounded-lg p-3">
-                            <div className="text-xs text-muted-foreground mb-1">Actual Average</div>
-                            <div className="text-lg font-bold text-blue-500">{monthsToGoalAvg} months</div>
+                          <div className="bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-xl p-4 border border-blue-500/30 shadow-sm hover:shadow-md transition-all">
+                            <div className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">Actual Average</div>
+                            <div className="text-2xl font-bold text-blue-500 mb-1">{monthsToGoalAvg} months</div>
                             <div className="text-xs text-muted-foreground">({new Date(now.getFullYear(), now.getMonth() + (monthsToGoalAvg || 0), 1).toLocaleString('en-US', { month: 'short', year: 'numeric' })})</div>
                           </div>
                         </div>
                         {monthsToGoalTarget && monthsToGoalAvg && monthsToGoalTarget !== monthsToGoalAvg && (
-                          <div className="text-xs text-center py-1 px-2 bg-primary/5 rounded">
+                          <div className="text-xs text-center py-2 px-3 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg font-medium">
                             {monthsToGoalTarget < monthsToGoalAvg 
                               ? `⚡ Your target plan is ${Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months faster!`
                               : `⏳ Average pace is ${Math.abs(monthsToGoalAvg - monthsToGoalTarget)} months faster`
