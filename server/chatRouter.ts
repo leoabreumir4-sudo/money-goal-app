@@ -4,6 +4,7 @@ import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { convertCurrency } from "./_core/currency";
 import { getProfiles, getBalances } from "./_core/wise";
+import { searchWeb, formatSearchResults } from "./_core/webSearch";
 
 /**
  * Detect language from user message using simple keyword matching and character patterns
@@ -795,19 +796,12 @@ Examples:
 - "Gostaria de analisar alguma categoria específica?"
 - "Quer que eu crie um plano para atingir sua meta de poupança?"
 
-🌐 **PRICE ESTIMATES FOR TRAVEL & EXPENSES**:
-When user asks about travel costs, hotel prices, or expense estimates:
-- Use your general knowledge to provide REALISTIC estimates based on ${new Date().getFullYear()}
-- Always provide a RANGE (min-max) instead of exact values
-- Mention that prices vary by season, booking time, and specific choices
-- Be transparent that these are estimates, not live prices
-- Suggest the user check specific booking sites for current rates
-
-Example response format:
-"Com base em estimativas típicas para ${new Date().getFullYear()}:
-- Passagem aérea: $300-600 (varia por data e antecedência)
-- Hotel (10 noites): $500-1200 (depende da localização)
-- Total estimado: $1500-2500"
+🌐 **WEB SEARCH RESULTS**:
+When search results are provided in the user message (marked with 📊 **Resultados da Pesquisa na Web:**):
+- Use these results to provide ACCURATE, UP-TO-DATE information
+- Cite the sources when mentioning specific prices or facts
+- Combine multiple sources to give a realistic range
+- Always mention that prices can vary and suggest checking directly
 
 IMPORTANT: Base ALL calculations and advice on the financial data provided above. Do not make assumptions beyond what's in the profile.`;
 
@@ -820,6 +814,25 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
         })),
         { role: "user" as const, content: input.message },
       ];
+
+      // Detect if user is asking for prices/budgets that need web search
+      const needsWebSearch = /\b(quanto custa|custo|pre[çc]o|or[çc]amento|viagem|hotel|passagem|voo|flight|price|cost|budget|how much)\b/i.test(input.message);
+      
+      // Perform web search if needed
+      if (needsWebSearch) {
+        console.log("[Chat] Performing web search for:", input.message);
+        const searchResults = await searchWeb(input.message);
+        
+        if (searchResults.length > 0) {
+          const formattedResults = formatSearchResults(searchResults);
+          // Add search results to the last user message
+          messages[messages.length - 1] = {
+            role: "user" as const,
+            content: `${input.message}\n\n📊 **Resultados da Pesquisa na Web:**\n${formattedResults}\n\nUse estas informações para fornecer uma resposta precisa e atualizada.`
+          };
+          console.log("[Chat] Added search results to context");
+        }
+      }
 
       // Call LLM
       const response = await invokeLLM({
