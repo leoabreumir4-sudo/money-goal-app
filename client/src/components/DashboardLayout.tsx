@@ -179,7 +179,15 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-2">
+            <SidebarMenu className="px-2 py-2 relative">
+              {/* Active indicator background with smooth transition */}
+              <div 
+                className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg transition-all duration-300 ease-out pointer-events-none"
+                style={{
+                  top: `${menuItems.findIndex(item => location === item.path) * 48 + 8}px`,
+                  opacity: menuItems.some(item => location === item.path) ? 1 : 0
+                }}
+              />
               {menuItems.map((item, index) => {
                 const isActive = location === item.path;
                 const label = 'labelKey' in item ? t(item.labelKey, preferences?.language || 'en') : item.label;
@@ -188,23 +196,21 @@ function DashboardLayoutContent({
                   <div key={item.path}>
                     <SidebarMenuItem>
                       <SidebarMenuButton
-                        isActive={isActive}
                         onClick={() => setLocation(item.path)}
                         tooltip={label}
-                        className={`h-11 mb-1 transition-all duration-300 font-medium rounded-lg group relative overflow-hidden ${
-                          isActive 
-                            ? "bg-primary/10 border-l-2 border-primary" 
-                            : "hover:bg-primary/5"
-                        }`}
+                        className="h-11 mb-1 transition-all duration-200 font-medium rounded-lg group relative z-10 hover:bg-transparent"
                       >
+                        {isActive && (
+                          <div className="absolute left-0 w-0.5 h-6 bg-primary rounded-full" />
+                        )}
                         <item.icon
-                          className={`h-4 w-4 transition-all duration-300 ${
+                          className={`h-4 w-4 transition-colors duration-200 ${
                             isActive 
                               ? "text-primary" 
                               : "text-muted-foreground group-hover:text-primary"
                           }`}
                         />
-                        <span className={`transition-all duration-300 ${
+                        <span className={`transition-colors duration-200 ${
                           isActive 
                             ? "text-primary font-semibold" 
                             : "text-muted-foreground group-hover:text-white"

@@ -175,7 +175,7 @@ export function BankSync({ goalId }: BankSyncProps) {
   return (
     <>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <Card className="border border-border/50 bg-gradient-to-br from-background to-secondary/20 hover:border-primary/30 transition-all duration-300">
+        <Card className="border border-border/50 bg-gradient-to-br from-background to-secondary/20 transition-all duration-300">
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer hover:bg-secondary/30 transition-colors rounded-t-lg">
               <div className="flex items-center justify-between">
@@ -209,7 +209,7 @@ export function BankSync({ goalId }: BankSyncProps) {
           <CollapsibleContent>
             <CardContent className="space-y-4 pt-4">
               {/* Wise Integration */}
-              <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-background/50 backdrop-blur-sm hover:border-primary/20 transition-colors">
+              <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-background/50 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
@@ -246,14 +246,14 @@ export function BankSync({ goalId }: BankSyncProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     {convertedBalances.filter((b: any) => b.originalAmount > 0).map((balance: any) => (
                       <div key={balance.currency} className="p-4 bg-gradient-to-br from-secondary/80 to-secondary/50 rounded-lg border border-border/30 hover:border-primary/30 transition-colors">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-semibold text-base">{balance.currency}</div>
-                          <div className="text-sm px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                        <div className="flex items-baseline gap-2">
+                          <div className="font-semibold text-sm text-muted-foreground">{balance.currency}</div>
+                          <div className="text-lg font-bold text-foreground">
                             {(balance.originalAmount / 100).toFixed(2)}
                           </div>
                         </div>
                         {balance.currency !== balance.targetCurrency && (
-                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1.5">
                             <span>≈</span>
                             <span className="text-purple-400 font-medium">
                               {balance.targetCurrency} {(balance.convertedAmount / 100).toFixed(2)}
@@ -267,7 +267,7 @@ export function BankSync({ goalId }: BankSyncProps) {
               </div>
 
               {/* CSV Import */}
-              <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-background/50 backdrop-blur-sm hover:border-primary/20 transition-colors">
+              <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-background/50 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
