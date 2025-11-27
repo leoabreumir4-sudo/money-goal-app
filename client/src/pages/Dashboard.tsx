@@ -74,7 +74,7 @@ export default function Dashboard() {
       setIsNewGoalModalOpen(false);
       setNewGoalName("");
       newGoalTargetInput.reset();
-      toast.success("Goal created successfully!");
+      toast.success(t("goalCreatedSuccess", preferences.language as "en" | "pt" | "es"));
     },
   });
 
@@ -147,7 +147,7 @@ export default function Dashboard() {
 
   const handleAddIncome = () => {
     if (!activeGoal) {
-      toast.error("Please create a goal first!");
+      toast.error(t("pleaseCreateGoalFirst", preferences.language as "en" | "pt" | "es"));
       return;
     }
     
@@ -158,7 +158,7 @@ export default function Dashboard() {
     }
     
     if (!incomeReason.trim()) {
-      toast.error("Please enter a reason");
+      toast.error(t("pleaseEnterReason", preferences.language as "en" | "pt" | "es"));
       return;
     }
 
@@ -173,7 +173,7 @@ export default function Dashboard() {
 
   const handleAddExpense = () => {
     if (!activeGoal) {
-      toast.error("Please create a goal first!");
+      toast.error(t("pleaseCreateGoalFirst", preferences.language as "en" | "pt" | "es"));
       return;
     }
     
@@ -184,7 +184,7 @@ export default function Dashboard() {
     }
     
     if (!expenseReason.trim()) {
-      toast.error("Please enter a reason");
+      toast.error(t("pleaseEnterReason", preferences.language as "en" | "pt" | "es"));
       return;
     }
 
@@ -232,12 +232,11 @@ export default function Dashboard() {
       return;
     }
 
+    
     if (!editTransactionReason.trim()) {
-      toast.error("Please enter a reason");
+      toast.error(t("pleaseEnterReason", preferences.language as "en" | "pt" | "es"));
       return;
-    }
-
-    updateTransactionMutation.mutate({
+    }    updateTransactionMutation.mutate({
       id: editingTransaction.id,
       amount,
       reason: editTransactionReason,
@@ -266,7 +265,7 @@ export default function Dashboard() {
     }
     
     if (!editGoalName.trim()) {
-      toast.error("Please enter a goal name");
+      toast.error(t("pleaseEnterGoalName", preferences.language as "en" | "pt" | "es"));
       return;
     }
 
@@ -363,14 +362,14 @@ export default function Dashboard() {
                       <ArrowUp className="h-5 w-5" />
                     </div>
                     <div>
-                      <DialogTitle className="text-xl">Add Income</DialogTitle>
-                      <DialogDescription className="text-sm">Record a new income transaction</DialogDescription>
+                      <DialogTitle className="text-xl">{t('addIncome', preferences.language as "en" | "pt" | "es")}</DialogTitle>
+                      <DialogDescription className="text-sm">{t('recordNewIncome', preferences.language as "en" | "pt" | "es")}</DialogDescription>
                     </div>
                   </div>
                 </DialogHeader>
                 <div className="space-y-4 px-6 pb-2">
                   <div className="space-y-2">
-                    <Label htmlFor="income-amount">Amount ({preferences.currency})</Label>
+                    <Label htmlFor="income-amount">{t('amount', preferences.language as "en" | "pt" | "es")} ({preferences.currency})</Label>
                     <Input
                       id="income-amount"
                       type="text"
@@ -382,19 +381,19 @@ export default function Dashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="income-reason">Description</Label>
+                    <Label htmlFor="income-reason">{t('description', preferences.language as "en" | "pt" | "es")}</Label>
                     <Input
                       id="income-reason"
-                      placeholder="e.g., Salary, Freelance work"
+                      placeholder={t('incomeExample', preferences.language as "en" | "pt" | "es")}
                       value={incomeReason}
                       onChange={(e) => setIncomeReason(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="income-category">Category (optional)</Label>
+                    <Label htmlFor="income-category">{t('categoryOptional', preferences.language as "en" | "pt" | "es")}</Label>
                     <Select value={incomeCategory} onValueChange={setIncomeCategory}>
                       <SelectTrigger id="income-category">
-                        <SelectValue placeholder="Auto-detect or select..." />
+                        <SelectValue placeholder={t('autoDetectOrSelect', preferences.language as "en" | "pt" | "es")} />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((cat) => (
@@ -415,10 +414,10 @@ export default function Dashboard() {
                 </div>
                 <DialogFooter className="gap-2 sm:gap-2">
                   <Button variant="outline" onClick={() => setIsIncomeModalOpen(false)}>
-                    Cancel
+                    {t('cancel', preferences.language as "en" | "pt" | "es")}
                   </Button>
                   <Button onClick={handleAddIncome} disabled={createTransactionMutation.isPending} className="bg-primary hover:bg-primary/90">
-                    {createTransactionMutation.isPending ? "Adding..." : "Add Income"}
+                    {createTransactionMutation.isPending ? t('adding', preferences.language as "en" | "pt" | "es") : t('addIncome', preferences.language as "en" | "pt" | "es")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -432,14 +431,14 @@ export default function Dashboard() {
                       <ArrowDown className="h-5 w-5" />
                     </div>
                     <div>
-                      <DialogTitle className="text-xl">Add Expense</DialogTitle>
-                      <DialogDescription className="text-sm">Record a new expense transaction</DialogDescription>
+                      <DialogTitle className="text-xl">{t('addExpense', preferences.language as "en" | "pt" | "es")}</DialogTitle>
+                      <DialogDescription className="text-sm">{t('recordNewExpense', preferences.language as "en" | "pt" | "es")}</DialogDescription>
                     </div>
                   </div>
                 </DialogHeader>
                 <div className="space-y-4 px-6 pb-2">
                   <div className="space-y-2">
-                    <Label htmlFor="expense-amount">Amount ({preferences.currency})</Label>
+                    <Label htmlFor="expense-amount">{t('amount', preferences.language as "en" | "pt" | "es")} ({preferences.currency})</Label>
                     <Input
                       id="expense-amount"
                       type="text"
@@ -451,19 +450,19 @@ export default function Dashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="expense-reason">Description</Label>
+                    <Label htmlFor="expense-reason">{t('description', preferences.language as "en" | "pt" | "es")}</Label>
                     <Input
                       id="expense-reason"
-                      placeholder="e.g., Shopping, Bills"
+                      placeholder={t('expenseExample', preferences.language as "en" | "pt" | "es")}
                       value={expenseReason}
                       onChange={(e) => setExpenseReason(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="expense-category">Category (optional)</Label>
+                    <Label htmlFor="expense-category">{t('categoryOptional', preferences.language as "en" | "pt" | "es")}</Label>
                     <Select value={expenseCategory} onValueChange={setExpenseCategory}>
                       <SelectTrigger id="expense-category">
-                        <SelectValue placeholder="Auto-detect or select..." />
+                        <SelectValue placeholder={t('autoDetectOrSelect', preferences.language as "en" | "pt" | "es")} />
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((cat) => (
@@ -484,10 +483,10 @@ export default function Dashboard() {
                 </div>
                 <DialogFooter className="gap-2 sm:gap-2">
                   <Button variant="outline" onClick={() => setIsExpenseModalOpen(false)}>
-                    Cancel
+                    {t('cancel', preferences.language as "en" | "pt" | "es")}
                   </Button>
                   <Button onClick={handleAddExpense} disabled={createTransactionMutation.isPending} className="bg-red-600 hover:bg-red-700">
-                    {createTransactionMutation.isPending ? "Adding..." : "Add Expense"}
+                    {createTransactionMutation.isPending ? t('adding', preferences.language as "en" | "pt" | "es") : t('addExpense', preferences.language as "en" | "pt" | "es")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -703,7 +702,7 @@ export default function Dashboard() {
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex-1">
                         <h3 className="text-2xl font-bold text-foreground mb-1">{activeGoal.name}</h3>
-                        <p className="text-sm text-muted-foreground">Saving for your dream</p>
+                        <p className="text-sm text-muted-foreground">{t('savingForDream', preferences.language as "en" | "pt" | "es")}</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -772,7 +771,7 @@ export default function Dashboard() {
                           <span className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
                             {progressPercentage}%
                           </span>
-                          <span className="text-xs text-muted-foreground mt-1">complete</span>
+                          <span className="text-xs text-muted-foreground mt-1">{t('complete', preferences.language as "en" | "pt" | "es")}</span>
                         </div>
                       </div>
                     </div>
@@ -785,7 +784,7 @@ export default function Dashboard() {
                           <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
                             <Sparkles className="h-4 w-4 text-primary" />
                           </div>
-                          <span className="text-xs font-medium text-muted-foreground">Current</span>
+                          <span className="text-xs font-medium text-muted-foreground">{t('current', preferences.language as "en" | "pt" | "es")}</span>
                         </div>
                         <p className="text-xl font-bold text-foreground mb-1">
                           {formatCurrency(activeGoal.currentAmount, preferences.currency)}
@@ -794,7 +793,7 @@ export default function Dashboard() {
                           <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
                             <Wallet className="h-3 w-3" />
                             <span>+{formatCurrency(wiseBalance, preferences.currency)}</span>
-                            <span className="text-muted-foreground">• Wise Balance</span>
+                            <span className="text-muted-foreground">• {t('wiseBalance', preferences.language as "en" | "pt" | "es")}</span>
                           </div>
                         )}
                       </div>
@@ -805,13 +804,13 @@ export default function Dashboard() {
                           <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
                             <Target className="h-4 w-4 text-purple-500" />
                           </div>
-                          <span className="text-xs font-medium text-muted-foreground">Target</span>
+                          <span className="text-xs font-medium text-muted-foreground">{t('target', preferences.language as "en" | "pt" | "es")}</span>
                         </div>
                         <p className="text-xl font-bold text-foreground mb-1">
                           {formatCurrency(activeGoal.targetAmount, preferences.currency)}
                         </p>
                         <p className="text-xs text-primary font-medium">
-                          {formatCurrency(Math.max(0, activeGoal.targetAmount - activeGoal.currentAmount), preferences.currency)} left
+                          {formatCurrency(Math.max(0, activeGoal.targetAmount - activeGoal.currentAmount), preferences.currency)} {t('left', preferences.language as "en" | "pt" | "es")}
                         </p>
                       </div>
                     </div>
@@ -820,7 +819,7 @@ export default function Dashboard() {
                     {progressPercentage >= 100 && (
                       <div className="mt-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-2xl p-3 text-center">
                         <p className="text-sm font-semibold text-green-600 dark:text-green-400">
-                          🎉 Goal Achieved! Congratulations!
+                          {t('goalAchieved', preferences.language as "en" | "pt" | "es")}
                         </p>
                       </div>
                     )}
@@ -834,42 +833,42 @@ export default function Dashboard() {
                     className="bg-gradient-to-r from-green-600 to-green-700 hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-white font-medium"
                   >
                     <ArrowUp className="mr-2 h-4 w-4" />
-                    Add Income
+                    {t('addIncome', preferences.language as "en" | "pt" | "es")}
                   </Button>
                   <Button 
                     onClick={() => setIsExpenseModalOpen(true)}
                     className="bg-gradient-to-r from-red-600 to-red-700 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300 text-white font-medium"
                   >
                     <ArrowDown className="mr-2 h-4 w-4" />
-                    Add Expense
+                    {t('addExpense', preferences.language as "en" | "pt" | "es")}
                   </Button>
                 </div>
               </>
             ) : (
               <Card className="bg-card border-border">
                 <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">No active goal</p>
+                  <p className="text-muted-foreground mb-4">{t('noActiveGoal', preferences.language as "en" | "pt" | "es")}</p>
                   <Dialog open={isNewGoalModalOpen} onOpenChange={setIsNewGoalModalOpen}>
                     <DialogTrigger asChild>
-                      <Button>Create Goal</Button>
+                      <Button>{t('createGoal', preferences.language as "en" | "pt" | "es")}</Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Create New Goal</DialogTitle>
-                        <DialogDescription>Set a new financial goal to start tracking your progress.</DialogDescription>
+                        <DialogTitle>{t('createNewGoal', preferences.language as "en" | "pt" | "es")}</DialogTitle>
+                        <DialogDescription>{t('setNewGoal', preferences.language as "en" | "pt" | "es")}</DialogDescription>
                       </DialogHeader>
                       <div className="space-y-5 px-6">
                         <div className="space-y-2">
-                          <Label htmlFor="goal-name">Goal Name</Label>
+                          <Label htmlFor="goal-name">{t('goalName', preferences.language as "en" | "pt" | "es")}</Label>
                           <Input
                             id="goal-name"
-                            placeholder="e.g., Ohio Trip 2026"
+                            placeholder={t('goalNameExample', preferences.language as "en" | "pt" | "es")}
                             value={newGoalName}
                             onChange={(e) => setNewGoalName(e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="goal-target">Target Amount ($)</Label>
+                          <Label htmlFor="goal-target">{t('targetAmount', preferences.language as "en" | "pt" | "es")} ($)</Label>
                           <Input
                             id="goal-target"
                             type="text"
@@ -882,10 +881,10 @@ export default function Dashboard() {
                       </div>
                       <DialogFooter>
                         <Button variant="outline" onClick={() => setIsNewGoalModalOpen(false)}>
-                          Cancel
+                          {t('cancel', preferences.language as "en" | "pt" | "es")}
                         </Button>
                         <Button onClick={handleCreateGoal} disabled={createGoalMutation.isPending}>
-                          Create Goal
+                          {t('createGoal', preferences.language as "en" | "pt" | "es")}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -900,21 +899,21 @@ export default function Dashboard() {
         <Dialog open={isEditGoalModalOpen} onOpenChange={setIsEditGoalModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Goal</DialogTitle>
-              <DialogDescription>Update your goal name and target amount.</DialogDescription>
+              <DialogTitle>{t('editGoal', preferences.language as "en" | "pt" | "es")}</DialogTitle>
+              <DialogDescription>{t('updateGoalDetails', preferences.language as "en" | "pt" | "es")}</DialogDescription>
             </DialogHeader>
             <div className="space-y-5 px-6">
               <div className="space-y-2">
-                <Label htmlFor="edit-goal-name">Goal Name</Label>
+                <Label htmlFor="edit-goal-name">{t('goalName', preferences.language as "en" | "pt" | "es")}</Label>
                 <Input
                   id="edit-goal-name"
-                  placeholder="e.g., Ohio Trip 2026"
+                  placeholder={t('goalNameExample', preferences.language as "en" | "pt" | "es")}
                   value={editGoalName}
                   onChange={(e) => setEditGoalName(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-goal-target">Target Amount ($)</Label>
+                <Label htmlFor="edit-goal-target">{t('targetAmount', preferences.language as "en" | "pt" | "es")} ($)</Label>
                 <Input
                   id="edit-goal-target"
                   type="text"
@@ -927,10 +926,10 @@ export default function Dashboard() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditGoalModalOpen(false)}>
-                Cancel
+                {t('cancel', preferences.language as "en" | "pt" | "es")}
               </Button>
               <Button onClick={handleEditGoal} disabled={updateGoalMutation.isPending}>
-                Save Changes
+                {t('saveChanges', preferences.language as "en" | "pt" | "es")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -940,14 +939,14 @@ export default function Dashboard() {
         <Dialog open={isCongratulationsModalOpen} onOpenChange={setIsCongratulationsModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-2xl text-center">🎉 Congratulations!</DialogTitle>
+              <DialogTitle className="text-2xl text-center">{t('congratulations', preferences.language as "en" | "pt" | "es")}</DialogTitle>
               <DialogDescription className="text-center pt-4">
-                You've reached your goal! Your goal has been archived.
+                {t('goalReached', preferences.language as "en" | "pt" | "es")}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button onClick={() => setIsCongratulationsModalOpen(false)} className="w-full">
-                Create New Goal
+                {t('createNewGoal', preferences.language as "en" | "pt" | "es")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -973,7 +972,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1">
                   <DialogTitle className="text-xl mb-1">
-                    {editingTransaction?.type === "income" ? "Income" : "Expense"} Transaction
+                    {editingTransaction?.type === "income" ? t('income', preferences.language as "en" | "pt" | "es") : t('expense', preferences.language as "en" | "pt" | "es")} {t('transaction', preferences.language as "en" | "pt" | "es")}
                   </DialogTitle>
                   <div className="flex items-center gap-2 flex-wrap">
                     {editingTransaction?.createdDate && (
@@ -998,7 +997,7 @@ export default function Dashboard() {
             </DialogHeader>
             <div className="space-y-4 px-6 pb-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-transaction-amount">Amount ({editingTransaction?.currency || preferences.currency})</Label>
+                <Label htmlFor="edit-transaction-amount">{t('amount', preferences.language as "en" | "pt" | "es")} ({editingTransaction?.currency || preferences.currency})</Label>
                 <Input
                   id="edit-transaction-amount"
                   type="text"
@@ -1010,19 +1009,19 @@ export default function Dashboard() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-transaction-reason">Description</Label>
+                <Label htmlFor="edit-transaction-reason">{t('description', preferences.language as "en" | "pt" | "es")}</Label>
                 <Input
                   id="edit-transaction-reason"
-                  placeholder="e.g., Shopping, Bills"
+                  placeholder={t('expenseExample', preferences.language as "en" | "pt" | "es")}
                   value={editTransactionReason}
                   onChange={(e) => setEditTransactionReason(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-transaction-category">Category</Label>
+                <Label htmlFor="edit-transaction-category">{t('category', preferences.language as "en" | "pt" | "es")}</Label>
                 <Select value={editTransactionCategory} onValueChange={setEditTransactionCategory}>
                   <SelectTrigger id="edit-transaction-category">
-                    <SelectValue placeholder="Select category..." />
+                    <SelectValue placeholder={t('selectCategory', preferences.language as "en" | "pt" | "es")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
@@ -1048,17 +1047,17 @@ export default function Dashboard() {
                 disabled={deleteTransactionMutation.isPending}
                 className="sm:flex-initial"
               >
-                Delete
+                {t('delete', preferences.language as "en" | "pt" | "es")}
               </Button>
               <div className="flex-1" />
               <Button variant="outline" onClick={() => setIsEditTransactionModalOpen(false)}>
-                Cancel
+                {t('cancel', preferences.language as "en" | "pt" | "es")}
               </Button>
               <Button 
                 onClick={handleUpdateTransaction} 
                 disabled={updateTransactionMutation.isPending}
               >
-                {updateTransactionMutation.isPending ? "Updating..." : "Update"}
+                {updateTransactionMutation.isPending ? t('updating', preferences.language as "en" | "pt" | "es") : t('update', preferences.language as "en" | "pt" | "es")}
               </Button>
             </DialogFooter>
           </DialogContent>
