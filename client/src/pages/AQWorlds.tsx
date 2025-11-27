@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
-import { Calculator, Plus, Pencil, Trash2, Check, Edit } from "lucide-react";
+import { Calculator, Plus, Pencil, Trash2, Check, Edit, Briefcase, Calendar, TrendingUp, Target, DollarSign } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -420,16 +420,21 @@ export default function AQWorlds() {
     <DashboardLayout>
       <div className="p-8 space-y-6">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
-            <p className="text-muted-foreground">{user?.name || 'Artist'} - Artist Projects</p>
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
+              <Briefcase className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
+              <p className="text-muted-foreground">{user?.name || 'Artist'} - Artist Projects</p>
+            </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsCalculatorModalOpen(true)}>
+            <Button variant="outline" onClick={() => setIsCalculatorModalOpen(true)} className="hover:bg-blue-500/10 hover:border-blue-500/50 transition-all">
               <Calculator className="mr-2 h-4 w-4" />
               Calculator
             </Button>
-            <Button onClick={() => setIsAddProjectModalOpen(true)} className="bg-purple-600 hover:bg-purple-700">
+            <Button onClick={() => setIsAddProjectModalOpen(true)} className="bg-gradient-to-r from-purple-600 to-purple-700 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300">
               <Plus className="mr-2 h-4 w-4" />
               Add Project
             </Button>
@@ -440,49 +445,72 @@ export default function AQWorlds() {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="bg-muted/30 border-border">
+              <Card key={i} className="bg-gradient-to-br from-card to-card/80 border-border/50">
                 <CardHeader className="pb-3">
-                  <Skeleton className="h-4 w-36" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-10 w-10 rounded-xl" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Skeleton className="h-9 w-20" />
-                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-3 w-20" />
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="bg-purple-500/10 border-purple-500/20">
+            <Card className="bg-gradient-to-br from-purple-500/15 via-purple-500/10 to-purple-500/5 border-purple-500/30 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 group">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Projects ({selectedYear})</CardTitle>
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-purple-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                    <Briefcase className="h-5 w-5 text-purple-500" />
+                  </div>
+                  <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Total Projects ({selectedYear})</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{totalProjects}</div>
+                <div className="text-3xl font-bold text-purple-500">{totalProjects}</div>
               </CardContent>
             </Card>
 
-          <Card className="bg-green-500/10 border-green-500/20">
+          <Card className="bg-gradient-to-br from-green-500/15 via-green-500/10 to-green-500/5 border-green-500/30 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 group">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Annual</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-green-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <DollarSign className="h-5 w-5 text-green-500" />
+                </div>
+                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Total Annual</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-500">${formatNumber(totalAnnual / 100, 0)}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-blue-500/10 border-blue-500/20">
+          <Card className="bg-gradient-to-br from-blue-500/15 via-blue-500/10 to-blue-500/5 border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 group">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Average</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="h-5 w-5 text-blue-500" />
+                </div>
+                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Monthly Average</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-500">${formatNumber(monthlyAverage / 100, 0)}</div>
             </CardContent>
           </Card>
 
-          <Card className="bg-pink-500/10 border-pink-500/20">
+          <Card className="bg-gradient-to-br from-pink-500/15 via-pink-500/10 to-pink-500/5 border-pink-500/30 hover:shadow-xl hover:shadow-pink-500/10 transition-all duration-300 group">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Projected Annual</CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-pink-500/20 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <Target className="h-5 w-5 text-pink-500" />
+                </div>
+                <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Projected Annual</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-pink-500">${formatNumber(projectedAnnual / 100, 0)}</div>
@@ -495,9 +523,12 @@ export default function AQWorlds() {
         {isLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="bg-muted/20 border-border">
+              <Card key={i} className="bg-gradient-to-br from-card to-card/80 border-border/50">
                 <CardHeader>
-                  <Skeleton className="h-6 w-40" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                    <Skeleton className="h-6 w-36" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2.5">
@@ -512,9 +543,14 @@ export default function AQWorlds() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Next Month */}
-            <Card>
+            <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
               <CardHeader>
-                <CardTitle>Next Month: {nextMonthName}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Calendar className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <CardTitle>Next Month: {nextMonthName}</CardTitle>
+                </div>
               </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -532,9 +568,14 @@ export default function AQWorlds() {
           </Card>
 
           {/* Goal Analysis */}
-          <Card>
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
             <CardHeader>
-              <CardTitle>Goal Analysis</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <Target className="h-5 w-5 text-green-500" />
+                </div>
+                <CardTitle>Goal Analysis</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -555,10 +596,15 @@ export default function AQWorlds() {
           </Card>
 
           {/* Monthly Status */}
-          <Card>
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle>Monthly Status</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-purple-500/10 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-purple-500" />
+                  </div>
+                  <CardTitle>Monthly Status</CardTitle>
+                </div>
                 <Select value={monthlyStatusYear.toString()} onValueChange={(v) => setMonthlyStatusYear(parseInt(v))}>
                   <SelectTrigger className="w-24">
                     <SelectValue />
@@ -580,7 +626,7 @@ export default function AQWorlds() {
                   <p className="text-muted-foreground text-sm">No projects for this year</p>
                 ) : (
                   monthlyStatus.map(status => (
-                    <div key={status.month} className="flex justify-between items-center p-2 rounded border">
+                    <div key={status.month} className="flex justify-between items-center p-3 rounded-lg border border-border/50 bg-gradient-to-r from-card to-card/80 hover:shadow-md transition-all">
                       <div>
                         <div className="font-medium">{status.monthName}-{monthlyStatusYear}</div>
                         <div className="text-xs text-muted-foreground">
@@ -603,14 +649,17 @@ export default function AQWorlds() {
 
         {/* Event Calendar */}
         {isLoading ? (
-          <Card>
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50">
             <CardHeader>
-              <Skeleton className="h-7 w-72" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-8 rounded-lg" />
+                <Skeleton className="h-7 w-64" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 12 }).map((_, i) => (
-                  <Card key={i} className="bg-muted/20 border-border">
+                  <Card key={i} className="bg-gradient-to-br from-card to-card/80 border-border/50">
                     <CardHeader className="pb-3">
                       <Skeleton className="h-5 w-28" />
                     </CardHeader>
@@ -627,9 +676,14 @@ export default function AQWorlds() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
             <CardHeader>
-              <CardTitle>📅 Event Calendar - {selectedYear}</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Calendar className="h-5 w-5 text-blue-500" />
+                </div>
+                <CardTitle>Event Calendar - {selectedYear}</CardTitle>
+              </div>
             </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -642,8 +696,8 @@ export default function AQWorlds() {
                 return (
                   <Card 
                     key={month} 
-                    className={`cursor-pointer transition-all hover:scale-105 ${
-                      isCurrentMonth ? 'ring-2 ring-blue-500' : ''
+                    className={`cursor-pointer bg-gradient-to-br from-card to-card/80 border-border/50 transition-all hover:scale-105 hover:shadow-lg ${
+                      isCurrentMonth ? 'ring-2 ring-blue-500 shadow-blue-500/20' : ''
                     }`}
                     onClick={() => openEventModal(monthIndex)}
                   >
@@ -681,14 +735,17 @@ export default function AQWorlds() {
 
         {/* Project Logs */}
         {isLoading ? (
-          <Card>
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50">
             <CardHeader>
-              <Skeleton className="h-7 w-40" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-8 rounded-lg" />
+                <Skeleton className="h-7 w-40" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex justify-between items-center p-4 rounded-lg border border-border bg-muted/20">
+                  <div key={i} className="flex justify-between items-center p-4 rounded-lg border border-border/50 bg-gradient-to-r from-card to-card/80">
                     <div className="flex-1 space-y-2">
                       <Skeleton className="h-4 w-36" />
                       <Skeleton className="h-3 w-28" />
@@ -700,9 +757,14 @@ export default function AQWorlds() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
             <CardHeader>
-              <CardTitle>📝 Project Logs</CardTitle>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Briefcase className="h-5 w-5 text-purple-500" />
+                </div>
+                <CardTitle>Project Logs</CardTitle>
+              </div>
             </CardHeader>
           <CardContent>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
@@ -718,7 +780,7 @@ export default function AQWorlds() {
                   .map((project) => (
                     <div 
                       key={project.id} 
-                      className="flex justify-between items-center p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer"
+                      className="flex justify-between items-center p-4 rounded-lg border border-border/50 bg-gradient-to-r from-card to-card/80 hover:shadow-md hover:border-purple-500/30 transition-all cursor-pointer"
                       onClick={() => {
                         setEditingProject(project);
                         editProjectAmountInput.setValue((project.amount / 100).toString());
@@ -822,7 +884,7 @@ export default function AQWorlds() {
                   {monthEvents.filter(event => event && event.id).map((event) => (
                     <div
                       key={event.id}
-                      className="relative flex items-center gap-3 p-3 rounded-lg border transition-colors group min-h-[52px]"
+                      className="relative flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-gradient-to-r from-card to-card/80 hover:shadow-md transition-all group min-h-[52px]"
                       onMouseEnter={() => setHoveredEventId(event.id)}
                       onMouseLeave={() => setHoveredEventId(null)}
                     >
@@ -895,7 +957,7 @@ export default function AQWorlds() {
                     placeholder="Enter event name"
                     className="flex-1"
                   />
-                  <Button onClick={handleAddEvent} className="bg-purple-600 hover:bg-purple-700">
+                  <Button onClick={handleAddEvent} className="bg-gradient-to-r from-purple-600 to-purple-700 hover:shadow-lg hover:shadow-purple-500/30 transition-all">
                     <Plus className="h-4 w-4 mr-2" />
                     Add
                   </Button>
