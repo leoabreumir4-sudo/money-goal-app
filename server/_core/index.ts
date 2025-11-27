@@ -11,6 +11,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startRecurringExpenseScheduler } from "./scheduler";
+import { ENV } from "./env";
 
 /**
  * Utility: check if a TCP port is available on this machine.
