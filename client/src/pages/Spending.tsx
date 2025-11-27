@@ -44,7 +44,6 @@ export default function Spending() {
   const [isAddRecurringModalOpen, setIsAddRecurringModalOpen] = useState(false);
   const [isEditRecurringModalOpen, setIsEditRecurringModalOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<any>(null);
-  const { preferences } = usePreferences();
   const [selectedPeriod, setSelectedPeriod] = useState("This Month");
   const [recurringName, setRecurringName] = useState("");
   const recurringAmountInput = useCurrencyInput('', preferences.numberFormat);
