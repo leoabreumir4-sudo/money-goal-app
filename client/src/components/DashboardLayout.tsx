@@ -96,6 +96,7 @@ function DashboardLayoutContent({
   // Calculate active indicator position
   const activeIndicatorPosition = useMemo(() => {
     const activeIndex = menuItems.findIndex(item => location === item.path);
+    console.log('Active page:', location, 'Index:', activeIndex);
     if (activeIndex === -1) return 0;
     
     let position = 0;
@@ -106,6 +107,7 @@ function DashboardLayoutContent({
         position += 20; // my-2 (16px) + h-px
       }
     }
+    console.log('Calculated position:', position);
     return position;
   }, [location]);
 
