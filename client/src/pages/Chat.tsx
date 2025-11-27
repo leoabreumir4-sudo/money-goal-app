@@ -215,10 +215,6 @@ export default function Chat() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const suggestedQuestions = [
     "Can I travel to Orlando in 2026?",
     "How are my spending habits?",
