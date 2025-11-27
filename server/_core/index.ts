@@ -88,18 +88,32 @@ async function startServer() {
 
   // WhatsApp webhook verification (GET)
   app.get("/api/webhooks/whatsapp", (req, res) => {
-    const mode = req.query["hub.mode"];
-    const token = req.query["hub.verify_token"];
-    const challenge = req.query["hub.challenge"];
-    
-    console.log("[WhatsApp Webhook] Verification request:", { mode, token: token ? "***" : "none" });
-    
-    if (mode === "subscribe" && token === ENV.whatsappWebhookToken) {
-      console.log("[WhatsApp Webhook] Verification successful");
-      return res.status(200).send(challenge);
-    } else {
-      console.log("[WhatsApp Webhook] Verification failed");
-      return res.status(403).send("Forbidden");
+    try {
+      const mode = req.query["hub.mode"];
+      const token = req.query["hub.verify_token"];
+      const challenge = req.query["hub.challenge"];
+      
+      console.log("[WhatsApp Webhook] Verification request:", { 
+        mode, 
+        token: token ? "***" : "none",
+        envToken: ENV.whatsappWebhookToken ? "***" : "MISSING",
+        hasEnv: !!ENV,
+      });
+      
+      if (mode === "subscribe" && token === ENV.whatsappWebhookToken) {
+        console.log("[WhatsApp Webhook] Verification successful");
+        return res.status(200).send(challenge);
+      } else {
+        console.log("[WhatsApp Webhook] Verification failed", {
+          modeMatch: mode === "subscribe",
+          tokenMatch: token === ENV.whatsappWebhookToken,
+          expectedToken: ENV.whatsappWebhookToken ? "EXISTS" : "MISSING",
+        });
+        return res.status(403).send("Forbidden");
+      }
+    } catch (error: any) {
+      console.error("[WhatsApp Webhook] Verification error:", error.message);
+      return res.status(500).send("Internal Server Error");
     }
   });
 
