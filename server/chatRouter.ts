@@ -245,8 +245,9 @@ async function buildUserFinancialContext(userId: string, userName?: string | nul
   const totalSalaryIncome = artixIncomeTransactions.reduce((sum: number, t: any) => sum + t.amount, 0);
   const avgMonthlySalary = hasSalary && monthsCount > 0 ? Math.round(totalSalaryIncome / monthsCount) : 0;
   
-  // Get user's preferred currency
+  // Get user's preferred currency from settings
   const preferredCurrency = settings?.currency || "USD";
+  console.log(`[Financial Context] Using currency: ${preferredCurrency} from user settings`);
   
   // Convert all transactions to preferred currency before summing
   const incomePromises = recentTransactions
@@ -645,16 +646,9 @@ export const chatRouter = router({
         .join(" ");
       
       const textToAnalyze = input.message + " " + recentUserMessages;
-      let detectedLanguage = detectLanguage(textToAnalyze);
+      const detectedLanguage = detectLanguage(textToAnalyze);
       
-      // Get user's preferred language from settings
-      const userSettings = await db.getUserSettings(userId);
-      const preferredLanguage = userSettings?.language;
-      
-      // Override detection with user preference if set
-      if (preferredLanguage && ['en', 'pt', 'es'].includes(preferredLanguage)) {
-        detectedLanguage = preferredLanguage as "en" | "pt" | "es";
-      }
+      console.log(`[Chat] Detected language: ${detectedLanguage} from message: "${input.message}"`);
 
       // Build system prompt with context
       const baseSystemPrompt = getSystemPrompt(detectedLanguage);
@@ -715,12 +709,17 @@ YOUR ROLE & PERSONALITY:
 - Consider income, expenses, savings rate, and financial goals
 - Prioritize financial health and realistic planning
 
-💰 **CURRENCY RULE - CRITICAL**:
-- The user's current preferred currency is: **${financialContext.currency}**
-- **ALWAYS use ${financialContext.currency} in ALL your calculations and responses**
+💰 **MOEDA/CURRENCY RULE - ABSOLUTE PRIORITY**:
+- User's preferred currency (from settings): **${financialContext.currency}**
+- **YOU MUST USE ${financialContext.currency} IN EVERY SINGLE AMOUNT YOU MENTION**
 - Currency symbols: USD = $, BRL = R$, EUR = €, GBP = £
-- If you previously mentioned amounts in a different currency, ignore them - use ONLY ${financialContext.currency} now
-- Example: If user changed from USD to BRL, recalculate everything in BRL (R$) not dollars ($)
+- ALL financial data below is ALREADY CONVERTED to ${financialContext.currency}
+- DO NOT convert or recalculate - values are ready to use
+- Examples:
+  * If currency is BRL: use "R$1.000" NOT "$1000"
+  * If currency is USD: use "$1,000" NOT "R$5000"
+  * If currency is EUR: use "€1.000" NOT "$1000"
+- **NEVER use a different currency symbol than ${financialContext.currency}**
 
 💬 **CONVERSATION HISTORY AWARENESS**:
 - You have access to recent conversation history
