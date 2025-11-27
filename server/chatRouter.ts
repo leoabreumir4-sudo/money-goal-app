@@ -251,16 +251,22 @@ async function buildUserFinancialContext(userId: string) {
   // Active goal
   const activeGoal = goals.find((g: any) => g.status === "active");
 
-  // Category breakdown (top 5)
-  const categorySpending = new Map<number, number>();
-  recentTransactions
-    .filter((t: any) => t.type === "expense" && t.categoryId)
-    .forEach((t: any) => {
-      const current = categorySpending.get(t.categoryId!) || 0;
-      categorySpending.set(t.categoryId!, current + t.amount);
-    });
+  // Category breakdown (top 5) - WITH CURRENCY CONVERSION
+  const categorySpendingMap = new Map<number, number>();
+  
+  // Convert each transaction to preferred currency before categorizing
+  for (const t of recentTransactions.filter((t: any) => t.type === "expense" && t.categoryId)) {
+    const converted = await convertCurrency(
+      t.amount,
+      t.currency || "USD",
+      preferredCurrency,
+      t.exchangeRate
+    );
+    const current = categorySpendingMap.get(t.categoryId!) || 0;
+    categorySpendingMap.set(t.categoryId!, current + converted);
+  }
 
-  const topCategories = Array.from(categorySpending.entries())
+  const topCategories = Array.from(categorySpendingMap.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([categoryId, amount]) => {
