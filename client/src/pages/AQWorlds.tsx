@@ -100,7 +100,6 @@ export default function AQWorlds() {
   const calcAvgValueInput = useCurrencyInput();
   const calcNumProjectsInput = useCurrencyInput();
   const editProjectAmountInput = useCurrencyInput();
-  const editProjectAmountInput = useCurrencyInput();
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [monthlyStatusYear, setMonthlyStatusYear] = useState(new Date().getFullYear());
