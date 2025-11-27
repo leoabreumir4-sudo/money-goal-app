@@ -3,14 +3,14 @@ import { useState, useCallback } from 'react';
 /**
  * Hook for currency input formatting
  * - Allows typing with comma or dot as decimal separator
- * - Auto-formats as user types (adds thousand separators)
+ * - Auto-formats with thousand separators as user types
  * - Returns formatted display value and raw numeric value
  */
 export function useCurrencyInput(initialValue: string = '') {
   const [displayValue, setDisplayValue] = useState(initialValue);
 
   const formatCurrency = useCallback((value: string): string => {
-    // Remove all non-digit and non-comma/dot characters
+    // Remove all non-digit characters except comma and dot
     let cleaned = value.replace(/[^\d,.]/g, '');
     
     // Replace comma with dot for internal processing
@@ -27,7 +27,16 @@ export function useCurrencyInput(initialValue: string = '') {
       cleaned = parts[0] + '.' + parts[1].slice(0, 2);
     }
     
-    return cleaned;
+    // Format with thousand separators
+    const [integerPart, decimalPart] = cleaned.split('.');
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    // Return formatted value
+    if (decimalPart !== undefined) {
+      return formattedInteger + '.' + decimalPart;
+    }
+    
+    return formattedInteger;
   }, []);
 
   const handleChange = useCallback((inputValue: string) => {
@@ -36,13 +45,15 @@ export function useCurrencyInput(initialValue: string = '') {
   }, [formatCurrency]);
 
   const getNumericValue = useCallback((): number => {
-    const numeric = parseFloat(displayValue.replace(',', '.'));
+    // Remove thousand separators and convert to number
+    const cleaned = displayValue.replace(/,/g, '');
+    const numeric = parseFloat(cleaned);
     return isNaN(numeric) ? 0 : numeric;
   }, [displayValue]);
 
   const setValue = useCallback((value: string | number) => {
     if (typeof value === 'number') {
-      setDisplayValue(value.toString());
+      setDisplayValue(formatCurrency(value.toString()));
     } else {
       setDisplayValue(formatCurrency(value));
     }
