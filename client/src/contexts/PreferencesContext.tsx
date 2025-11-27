@@ -73,7 +73,6 @@ export const usePreferences = () => {
         currency: "USD",
         numberFormat: "pt-BR",
         theme: "dark",
-      },theme: "dark",
       },
       isLoading: true,
       updatePreferences: () => {},
