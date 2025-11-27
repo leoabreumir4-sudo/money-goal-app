@@ -3,8 +3,6 @@ import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 import { convertCurrency } from "./_core/currency";
-import { sql } from "drizzle-orm";
-import { bankAccounts } from "../drizzle/schema";
 
 /**
  * Detect language from user message using simple keyword matching and character patterns
@@ -312,18 +310,8 @@ async function buildUserFinancialContext(userId: string) {
   // Get user's monthly savings target
   const monthlySavingTarget = settings?.monthlySavingTarget || 0;
 
-  // Get Wise account balance if available
-  let wiseBalance = 0;
-  if (dbInstance) {
-    const wiseAccounts = await dbInstance
-      .select()
-      .from(bankAccounts)
-      .where(sql`${bankAccounts.userId} = ${userId} AND ${bankAccounts.provider} = 'wise'`);
-    
-    if (wiseAccounts.length > 0) {
-      wiseBalance = wiseAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
-    }
-  }
+  // Wise balance would come from API (not implemented yet)
+  const wiseBalance = 0; // TODO: Implement Wise API integration
 
   // Create simplified context WITHOUT raw cent values to prevent AI confusion
   const simplifiedContext = {
