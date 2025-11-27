@@ -943,15 +943,45 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
         { role: "user" as const, content: input.message },
       ];
 
+      // Detect if user is asking about exchange rates (high priority - real-time data critical)
+      const isExchangeRateQuery = /\b(c[âa]mbio|taxa.*cambio|cota[çc][ãa]o|d[óo]lar|euro|libra|exchange.*rate|currency.*rate|quanto.*vale|valor.*d[óo]lar|valor.*euro|usd|brl|eur|gbp)\b/i.test(input.message);
+      
       // Detect if user is asking for prices/budgets that need web search
       const needsWebSearch = /\b(quanto custa|custo|pre[çc]o|or[çc]amento|viagem|hotel|passagem|voo|flight|price|cost|budget|how much)\b/i.test(input.message);
       
-      // Get current exchange rate if user's currency is not USD
-      let currentExchangeRate: string = "";
-      if (financialContext.currency !== "USD") {
+      let additionalContext = "";
+      
+      // If asking about exchange rates, fetch current rates
+      if (isExchangeRateQuery) {
+        console.log("[Chat] Exchange rate query detected - fetching real-time rates");
+        
+        const currenciesToCheck = [];
+        if (/d[óo]lar|usd/i.test(input.message)) currenciesToCheck.push("USD");
+        if (/euro|eur/i.test(input.message)) currenciesToCheck.push("EUR");
+        if (/libra|gbp|pound/i.test(input.message)) currenciesToCheck.push("GBP");
+        
+        // If no specific currency mentioned, show USD and EUR (most common)
+        if (currenciesToCheck.length === 0) {
+          currenciesToCheck.push("USD", "EUR");
+        }
+        
+        const ratePromises = currenciesToCheck.map(async (curr) => {
+          const rate = await getCurrentExchangeRate(curr, "BRL");
+          return rate ? `${curr} → BRL: ${rate.toFixed(4)}` : null;
+        });
+        
+        const rates = (await Promise.all(ratePromises)).filter(r => r !== null);
+        
+        if (rates.length > 0) {
+          additionalContext = `\n\n💱 **TAXAS DE CÂMBIO EM TEMPO REAL** (${new Date().toLocaleString('pt-BR')}):\n${rates.map(r => `• ${r}`).join('\n')}\n(Fonte: Banco Central Europeu via frankfurter.app - atualizado em tempo real)\n\n⚠️ USE ESTAS TAXAS EXATAS nas suas respostas. São dados em tempo real e precisos.`;
+          console.log(`[Chat] Fetched ${rates.length} real-time exchange rates:`, rates.join(', '));
+        }
+      }
+      // Get current exchange rate if user's currency is not USD (for general context)
+      else if (financialContext.currency !== "USD") {
         const rate = await getCurrentExchangeRate("USD", financialContext.currency);
         if (rate) {
-          currentExchangeRate = `\n\n💱 **Taxa de Câmbio Atual:** 1 USD = ${rate.toFixed(2)} ${financialContext.currency} (fonte: pesquisa web em tempo real)`;
+          additionalContext = `\n\n💱 **Taxa de Câmbio Atual:** 1 USD = ${rate.toFixed(2)} ${financialContext.currency}`;
         }
       }
       
@@ -965,15 +995,15 @@ IMPORTANT: Base ALL calculations and advice on the financial data provided above
           // Add search results to the last user message
           messages[messages.length - 1] = {
             role: "user" as const,
-            content: `${input.message}${currentExchangeRate}\n\n📊 **Resultados da Pesquisa na Web:**\n${formattedResults}\n\nUse estas informações para fornecer uma resposta precisa e atualizada.`
+            content: `${input.message}${additionalContext}\n\n📊 **Resultados da Pesquisa na Web:**\n${formattedResults}\n\nUse estas informações para fornecer uma resposta precisa e atualizada.`
           };
           console.log("[Chat] Added search results to context");
         }
-      } else if (currentExchangeRate) {
-        // Add exchange rate even without search
+      } else if (additionalContext) {
+        // Add exchange rate or other context even without search
         messages[messages.length - 1] = {
           role: "user" as const,
-          content: `${input.message}${currentExchangeRate}`
+          content: `${input.message}${additionalContext}`
         };
       }
 

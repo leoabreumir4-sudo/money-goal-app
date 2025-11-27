@@ -7,37 +7,72 @@ export interface SearchResult {
 }
 
 /**
- * Get current exchange rate using free API (no auth required)
+ * Get current exchange rate with multiple fallback sources for accuracy
  */
 export async function getCurrentExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
+  const from = fromCurrency.toUpperCase();
+  const to = toCurrency.toUpperCase();
+  
+  // Try primary source: frankfurter.app (European Central Bank data - very accurate and free)
   try {
-    // Use exchangerate-api.com (free, no auth required)
-    const url = `https://api.exchangerate-api.com/v4/latest/${fromCurrency.toUpperCase()}`;
-    
-    console.log(`[Exchange Rate] Fetching ${fromCurrency}/${toCurrency} from exchangerate-api.com`);
+    const url = `https://api.frankfurter.app/latest?from=${from}&to=${to}`;
+    console.log(`[Exchange Rate] Fetching ${from}/${to} from frankfurter.app (ECB data)`);
     
     const response = await fetch(url);
     
-    if (!response.ok) {
-      console.error(`[Exchange Rate] API error: ${response.status}`);
-      return null;
+    if (response.ok) {
+      const data = await response.json();
+      if (data.rates && data.rates[to]) {
+        const rate = data.rates[to];
+        console.log(`[Exchange Rate] ✅ ${from}/${to}: ${rate} (source: ECB via frankfurter.app)`);
+        return rate;
+      }
     }
-
-    const data = await response.json();
-    
-    if (!data.rates || !data.rates[toCurrency.toUpperCase()]) {
-      console.error(`[Exchange Rate] Currency ${toCurrency} not found`);
-      return null;
-    }
-
-    const rate = data.rates[toCurrency.toUpperCase()];
-    console.log(`[Exchange Rate] ${fromCurrency}/${toCurrency}: ${rate}`);
-    
-    return rate;
   } catch (error) {
-    console.error("[Exchange Rate] Error:", error);
-    return null;
+    console.warn("[Exchange Rate] Frankfurter.app failed, trying fallback...");
   }
+  
+  // Fallback 1: exchangerate-api.com
+  try {
+    const url = `https://api.exchangerate-api.com/v4/latest/${from}`;
+    console.log(`[Exchange Rate] Trying fallback: exchangerate-api.com`);
+    
+    const response = await fetch(url);
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.rates && data.rates[to]) {
+        const rate = data.rates[to];
+        console.log(`[Exchange Rate] ✅ ${from}/${to}: ${rate} (source: exchangerate-api.com)`);
+        return rate;
+      }
+    }
+  } catch (error) {
+    console.warn("[Exchange Rate] Exchangerate-api.com failed, trying final fallback...");
+  }
+  
+  // Fallback 2: fawazahmed0 (community-driven, updated daily)
+  try {
+    const url = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${from.toLowerCase()}.json`;
+    console.log(`[Exchange Rate] Trying final fallback: fawazahmed0 API`);
+    
+    const response = await fetch(url);
+    
+    if (response.ok) {
+      const data = await response.json();
+      const rates = data[from.toLowerCase()];
+      if (rates && rates[to.toLowerCase()]) {
+        const rate = rates[to.toLowerCase()];
+        console.log(`[Exchange Rate] ✅ ${from}/${to}: ${rate} (source: fawazahmed0)`);
+        return rate;
+      }
+    }
+  } catch (error) {
+    console.error("[Exchange Rate] All sources failed:", error);
+  }
+  
+  console.error(`[Exchange Rate] ❌ Could not fetch rate for ${from}/${to} from any source`);
+  return null;
 }
 
 /**
