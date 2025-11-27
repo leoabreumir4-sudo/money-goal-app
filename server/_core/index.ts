@@ -86,6 +86,35 @@ async function startServer() {
   // Register OAuth routes
   registerOAuthRoutes(app);
 
+  // WhatsApp webhook endpoint (Twilio)
+  app.post("/api/webhooks/whatsapp", express.urlencoded({ extended: true }), async (req, res) => {
+    try {
+      console.log("[WhatsApp Webhook] Received request:", JSON.stringify(req.body, null, 2));
+      
+      // Twilio sends data as application/x-www-form-urlencoded
+      const { From, Body, ProfileName } = req.body;
+      
+      if (!From || !Body) {
+        console.error("[WhatsApp Webhook] Missing From or Body");
+        return res.status(400).send("Missing required fields");
+      }
+
+      // Call the whatsappRouter webhook procedure
+      const { whatsappRouter } = await import("../whatsappRouter");
+      const caller = whatsappRouter.createCaller({} as any); // No auth needed for webhook
+      
+      const result = await caller.webhook({ From, Body, ProfileName });
+      
+      console.log("[WhatsApp Webhook] Processed:", result);
+      
+      // Twilio expects empty 200 response
+      res.status(200).send("");
+    } catch (error) {
+      console.error("[WhatsApp Webhook] Error:", error);
+      res.status(500).send("Internal server error");
+    }
+  });
+
   // Wise webhook endpoint (raw body needed for signature validation)
   // URL format: /api/webhooks/wise/:userId
   // This endpoint bypasses CORS since it's server-to-server from Wise
