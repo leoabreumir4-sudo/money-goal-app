@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "migrate": "tsx server/_core/migrate.ts",
-    "start": "sh -lc 'if [ \"$MIGRATE\" = \"1\" ]; then pnpm run migrate; fi && NODE_ENV=production tsx server/_core/index.ts'",
+    "start": "tsx server/_core/start.ts",
     "start:no-migrate": "NODE_ENV=production tsx server/_core/index.ts",
     "dev": "tsx watch server/_core/index.ts"
   },

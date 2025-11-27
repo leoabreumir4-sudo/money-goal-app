@@ -84,6 +84,11 @@ async function startServer() {
     })
   );
 
+  // Health check endpoint (must be before other routes for Render)
+  app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // Register OAuth routes
   registerOAuthRoutes(app);
 

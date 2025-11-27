@@ -3,11 +3,7 @@ services:
     name: money-goal-app
     env: node
     plan: free
-    buildCommand: |
-      echo "🚀 Installing dependencies with cache..."
-      pnpm install --frozen-lockfile --prefer-offline
-      echo "📦 Building client..."
-      cd client && pnpm install --frozen-lockfile --prefer-offline && pnpm run build
+    buildCommand: pnpm install && cd client && pnpm install --prod=false && pnpm run build
     startCommand: pnpm start
     envVars:
       - key: NODE_ENV
@@ -23,6 +19,5 @@ services:
         sync: false
       - key: SESSION_SECRET
         sync: false
-    # Build optimizations
     autoDeploy: true
-    healthCheckPath: /
+    healthCheckPath: /health
