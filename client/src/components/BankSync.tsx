@@ -175,47 +175,59 @@ export function BankSync({ goalId }: BankSyncProps) {
   return (
     <>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <Card>
+        <Card className="border border-border/50 bg-gradient-to-br from-background to-secondary/20 hover:border-primary/30 transition-all duration-300">
           <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer transition-colors">
+            <CardHeader className="cursor-pointer hover:bg-secondary/30 transition-colors rounded-t-lg">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-[#9fe870]/20 flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-[#9fe870]" />
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#9fe870]/20 to-[#9fe870]/10 flex items-center justify-center border border-[#9fe870]/30">
+                    <Building2 className="h-6 w-6 text-[#9fe870]" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{t('bankSynchronization', preferences.language)}</CardTitle>
-                    <CardDescription className="text-sm">
+                    <CardTitle className="text-lg font-semibold">{t('bankSynchronization', preferences.language)}</CardTitle>
+                    <CardDescription className="text-sm mt-1">
                       {t('syncWiseOrImportBankCSV', preferences.language)}
                     </CardDescription>
                   </div>
                 </div>
-                {isOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                )}
+                <div className="flex items-center gap-2">
+                  {!isWiseNotConfigured && convertedBalances.length > 0 && (
+                    <div className="text-right mr-2">
+                      <div className="text-xs text-muted-foreground">{balances.filter((b: any) => b.amount > 0).length} balances</div>
+                    </div>
+                  )}
+                  {isOpen ? (
+                    <ChevronUp className="h-5 w-5 text-primary transition-transform duration-200" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200" />
+                  )}
+                </div>
               </div>
             </CardHeader>
           </CollapsibleTrigger>
           
           <CollapsibleContent>
-            <CardContent className="space-y-4 pt-0">
+            <CardContent className="space-y-4 pt-4">
               {/* Wise Integration */}
-              <div className="border rounded-lg p-4 space-y-3">
+              <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-background/50 backdrop-blur-sm hover:border-primary/20 transition-colors">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">Wise</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {isWiseNotConfigured 
-                        ? t('tokenNotConfigured', preferences.language)
-                        : `${balances.filter((b: any) => b.amount > 0).length} ${t('wiseBalances', preferences.language)}`}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
+                      <RefreshCw className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-base">Wise</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {isWiseNotConfigured 
+                          ? t('tokenNotConfigured', preferences.language)
+                          : `${balances.filter((b: any) => b.amount > 0).length} ${t('wiseBalances', preferences.language)}`}
+                      </p>
+                    </div>
                   </div>
                   {isWiseNotConfigured ? (
                     <Link href="/settings">
-                      <Button size="sm" variant="outline">
-                        <Settings className="h-4 w-4 mr-2" />
+                      <Button size="sm" variant="outline" className="gap-2">
+                        <Settings className="h-4 w-4" />
                         {t('goToSettings', preferences.language)}
                       </Button>
                     </Link>
@@ -223,23 +235,29 @@ export function BankSync({ goalId }: BankSyncProps) {
                     <Button
                       onClick={handleWiseSync}
                       size="sm"
+                      className="gap-2 bg-green-600 hover:bg-green-700"
                     >
-                      <RefreshCw className="h-4 w-4 mr-2" />
+                      <RefreshCw className="h-4 w-4" />
                       {t('syncWise', preferences.language)}
                     </Button>
                   )}
                 </div>
                 {!isWiseNotConfigured && convertedBalances.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     {convertedBalances.filter((b: any) => b.originalAmount > 0).map((balance: any) => (
-                      <div key={balance.currency} className="text-sm p-3 bg-secondary/50 rounded space-y-1">
-                        <div className="font-medium">{balance.currency}</div>
-                        <div className="text-muted-foreground">
-                          {(balance.originalAmount / 100).toFixed(2)}
+                      <div key={balance.currency} className="p-4 bg-gradient-to-br from-secondary/80 to-secondary/50 rounded-lg border border-border/30 hover:border-primary/30 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-semibold text-base">{balance.currency}</div>
+                          <div className="text-sm px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                            {(balance.originalAmount / 100).toFixed(2)}
+                          </div>
                         </div>
                         {balance.currency !== balance.targetCurrency && (
-                          <div className="text-xs text-purple-400">
-                            ≈ {balance.targetCurrency} {(balance.convertedAmount / 100).toFixed(2)}
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span>≈</span>
+                            <span className="text-purple-400 font-medium">
+                              {balance.targetCurrency} {(balance.convertedAmount / 100).toFixed(2)}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -249,13 +267,18 @@ export function BankSync({ goalId }: BankSyncProps) {
               </div>
 
               {/* CSV Import */}
-              <div className="border rounded-lg p-4 space-y-3">
+              <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-background/50 backdrop-blur-sm hover:border-primary/20 transition-colors">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{t('bankCSV', preferences.language)}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t('importFromCSV', preferences.language)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
+                      <Upload className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-base">{t('bankCSV', preferences.language)}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {t('importFromCSV', preferences.language)}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -263,6 +286,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                       size="sm"
                       variant="destructive"
                       disabled={clearWiseMutation.isPending}
+                      className="gap-2"
                     >
                       {preferences.language === 'pt' ? 'Limpar Wise' : 'Clear Wise'}
                     </Button>
@@ -270,8 +294,9 @@ export function BankSync({ goalId }: BankSyncProps) {
                       onClick={() => fileInputRef.current?.click()}
                       size="sm"
                       variant="outline"
+                      className="gap-2"
                     >
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Upload className="h-4 w-4" />
                       {t('uploadCSV', preferences.language)}
                     </Button>
                   </div>
@@ -283,7 +308,7 @@ export function BankSync({ goalId }: BankSyncProps) {
                     onChange={handleCsvUpload}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3 border border-border/30">
                   {t('csvExpectedFormat', preferences.language)}
                 </p>
               </div>

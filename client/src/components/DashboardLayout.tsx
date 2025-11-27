@@ -191,27 +191,24 @@ function DashboardLayoutContent({
                         isActive={isActive}
                         onClick={() => setLocation(item.path)}
                         tooltip={label}
-                        className={`h-11 mb-1 transition-all duration-200 font-medium rounded-lg group relative overflow-hidden ${
+                        className={`h-11 mb-1 transition-all duration-300 font-medium rounded-lg group relative overflow-hidden ${
                           isActive 
-                            ? "bg-gradient-to-r from-primary/20 to-primary/10 border-l-2 border-primary shadow-sm" 
-                            : "hover:bg-gradient-to-r hover:from-primary/10 hover:to-transparent hover:translate-x-0.5"
+                            ? "bg-primary/10 border-l-2 border-primary" 
+                            : "hover:bg-primary/5"
                         }`}
                       >
                         <item.icon
-                          className={`h-4 w-4 transition-all duration-200 ${
+                          className={`h-4 w-4 transition-all duration-300 ${
                             isActive 
-                              ? "text-primary scale-110" 
-                              : "text-muted-foreground group-hover:text-primary group-hover:scale-105"
+                              ? "text-primary" 
+                              : "text-muted-foreground group-hover:text-primary"
                           }`}
                         />
-                        <span className={`transition-all duration-200 ${
+                        <span className={`transition-all duration-300 ${
                           isActive 
                             ? "text-primary font-semibold" 
-                            : "text-muted-foreground group-hover:text-foreground"
+                            : "text-muted-foreground group-hover:text-white"
                         }`}>{label}</span>
-                        {isActive && (
-                          <span className="absolute right-2 w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                     {showDivider && (

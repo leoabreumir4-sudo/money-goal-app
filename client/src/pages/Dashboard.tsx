@@ -349,8 +349,8 @@ export default function Dashboard() {
           <div className="flex flex-wrap gap-3">
             <Dialog open={isIncomeModalOpen} onOpenChange={setIsIncomeModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-200 hover:scale-105 font-semibold">
-                  <ArrowUp className="mr-2 h-5 w-5" />
+                <Button className="bg-green-600 hover:bg-green-700 text-white font-medium">
+                  <ArrowUp className="mr-2 h-4 w-4" />
                   {t('addIncome', preferences.language)}
                 </Button>
               </DialogTrigger>
@@ -409,8 +409,8 @@ export default function Dashboard() {
 
             <Dialog open={isExpenseModalOpen} onOpenChange={setIsExpenseModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-200 hover:scale-105 font-semibold">
-                  <ArrowDown className="mr-2 h-5 w-5" />
+                <Button className="bg-red-600 hover:bg-red-700 text-white font-medium">
+                  <ArrowDown className="mr-2 h-4 w-4" />
                   {t('addExpense', preferences.language)}
                 </Button>
               </DialogTrigger>
@@ -691,9 +691,8 @@ export default function Dashboard() {
                           />
                           <defs>
                             <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stopColor="rgb(59, 130, 246)" />
-                              <stop offset="50%" stopColor="rgb(96, 165, 250)" />
-                              <stop offset="100%" stopColor="rgb(34, 211, 238)" />
+                              <stop offset="0%" stopColor="#252645" />
+                              <stop offset="100%" stopColor="#252645" />
                             </linearGradient>
                           </defs>
                         </svg>
