@@ -335,13 +335,13 @@ export default function Chat() {
           {showScrollButton && messages.length > 0 && (
             <button
               onClick={scrollToBottom}
-              className="absolute bottom-24 right-4 bg-primary/90 hover:bg-primary text-primary-foreground rounded-full p-3 shadow-lg transition-all duration-200 z-20"
+              className="absolute bottom-32 right-6 bg-primary/90 hover:bg-primary text-primary-foreground rounded-full p-2.5 shadow-lg transition-all duration-200 z-20"
               aria-label="Scroll to bottom"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

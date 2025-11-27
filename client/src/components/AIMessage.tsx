@@ -110,9 +110,9 @@ function InlineChart({ type, data }: { type: string; data: any }) {
           <span className="text-sm font-medium">{data.label || 'Progress'}</span>
           <span className="text-sm text-muted-foreground">{percentage}%</span>
         </div>
-        <div className="w-full bg-secondary rounded-full h-3">
+        <div className="w-full bg-muted/30 rounded-full h-3 relative">
           <div 
-            className="bg-primary h-3 rounded-full transition-all duration-500"
+            className="bg-primary h-3 rounded-full transition-all duration-500 absolute top-0 left-0"
             style={{ width: `${percentage}%` }}
           />
         </div>
@@ -194,13 +194,13 @@ export default function AIMessage({ content }: AIMessageProps) {
             remarkPlugins={[remarkGfm]}
             components={{
               // Custom styling for markdown elements
-              h1: ({ children }) => <h1 className="text-xl font-semibold mt-4 mb-2 text-white">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-lg font-semibold mt-3 mb-2 text-white">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-base font-medium mt-2 mb-1 text-white">{children}</h3>,
-              p: ({ children }) => <p className="my-2 leading-relaxed font-normal text-gray-200">{children}</p>,
-              ul: ({ children }) => <ul className="list-disc ml-6 my-2 space-y-1 font-normal text-gray-200">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal ml-6 my-2 space-y-1 font-normal text-gray-200">{children}</ol>,
-              li: ({ children }) => <li className="pl-2 font-normal text-gray-200">{children}</li>,
+              h1: ({ children }) => <h1 className="text-xl font-semibold mt-4 mb-2 text-white tracking-wide">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-lg font-semibold mt-3 mb-2 text-white tracking-wide">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-base font-medium mt-2 mb-1 text-white tracking-wide">{children}</h3>,
+              p: ({ children }) => <p className="my-2 leading-relaxed font-light text-gray-200 tracking-wide">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc ml-6 my-2 space-y-1 font-light text-gray-200 tracking-wide">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal ml-6 my-2 space-y-1 font-light text-gray-200 tracking-wide">{children}</ol>,
+              li: ({ children }) => <li className="pl-2 font-light text-gray-200 tracking-wide">{children}</li>,
               strong: ({ children }) => {
                 // Check if content contains money values or percentages
                 const content = String(children);
