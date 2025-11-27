@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { Calculator, Plus, Pencil, Trash2, Check, Edit } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -397,6 +398,7 @@ export default function AQWorlds() {
       
       items.splice(result.destination.index, 0, reorderedItem);
       
+  const isLoading = projectsLoading || eventsLoading;
       // Update sortOrder for all items
       for (let i = 0; i < items.length; i++) {
         if (!items[i] || !items[i].id) continue;
@@ -451,15 +453,29 @@ export default function AQWorlds() {
         </div>
 
         {/* Statistics Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-purple-500/10 border-purple-500/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Projects ({selectedYear})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{totalProjects}</div>
-            </CardContent>
-          </Card>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="bg-muted/30 border-border">
+                <CardHeader className="pb-3">
+                  <Skeleton className="h-4 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-9 w-24" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-purple-500/10 border-purple-500/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Projects ({selectedYear})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{totalProjects}</div>
+              </CardContent>
+            </Card>
 
           <Card className="bg-green-500/10 border-green-500/20">
             <CardHeader className="pb-3">
@@ -488,14 +504,33 @@ export default function AQWorlds() {
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* Second Row: Next Month, Goal Analysis, Monthly Status */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Next Month */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Next Month: {nextMonthName}</CardTitle>
-            </CardHeader>
+        {isLoading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Next Month */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Next Month: {nextMonthName}</CardTitle>
+              </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {nextMonthEvents.length === 0 ? (
@@ -579,12 +614,37 @@ export default function AQWorlds() {
             </CardContent>
           </Card>
         </div>
+        )}
 
         {/* Event Calendar */}
-        <Card>
-          <CardHeader>
-            <CardTitle>📅 Event Calendar - {selectedYear}</CardTitle>
-          </CardHeader>
+        {isLoading ? (
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-64" />
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader className="pb-2">
+                      <Skeleton className="h-5 w-24" />
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-2">
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-3/4" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>📅 Event Calendar - {selectedYear}</CardTitle>
+            </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {months.map((month, index) => {
@@ -631,12 +691,33 @@ export default function AQWorlds() {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Project Logs */}
-        <Card>
-          <CardHeader>
-            <CardTitle>📝 Project Logs</CardTitle>
-          </CardHeader>
+        {isLoading ? (
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex justify-between items-center p-3 rounded-lg border">
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <Skeleton className="h-6 w-20" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>📝 Project Logs</CardTitle>
+            </CardHeader>
           <CardContent>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {projects.length === 0 ? (
@@ -673,6 +754,7 @@ export default function AQWorlds() {
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Add Project Modal */}
         <Dialog open={isAddProjectModalOpen} onOpenChange={setIsAddProjectModalOpen}>
