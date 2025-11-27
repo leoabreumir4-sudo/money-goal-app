@@ -135,7 +135,7 @@ async function startServer() {
 
       // Verify phone if not verified
       if (!user.phoneVerified) {
-        await db.verifyUserPhone(user.openId);
+        await db.verifyUserPhone(user.id);
       }
 
       // Handle commands
@@ -216,7 +216,7 @@ If invalid, return: {"error": "invalid"}`
       }
 
       // Create transaction
-      const activeGoal = await db.getActiveGoal(user.openId);
+      const activeGoal = await db.getActiveGoal(user.id);
       if (!activeGoal) {
         if (twilioClient && ENV.twilioWhatsappNumber) {
           await twilioClient.messages.create({
@@ -229,7 +229,7 @@ If invalid, return: {"error": "invalid"}`
       }
 
       await db.createTransaction({
-        userId: user.openId,
+        userId: user.id,
         goalId: activeGoal.id,
         reason: parsed.description,
         amount: parsed.amount,
@@ -242,7 +242,7 @@ If invalid, return: {"error": "invalid"}`
 
       // Send confirmation
       if (twilioClient && ENV.twilioWhatsappNumber) {
-        const goals = await db.getActiveGoals(user.openId);
+        const goals = await db.getActiveGoals(user.id);
         const totalSaved = goals.reduce((sum: number, g: any) => sum + g.currentAmount, 0);
 
         await twilioClient.messages.create({
