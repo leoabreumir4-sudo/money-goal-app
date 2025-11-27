@@ -14,6 +14,7 @@ import { BankSync } from "@/components/BankSync";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
+import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 
 export default function Dashboard() {
   const { preferences } = usePreferences();
@@ -23,16 +24,19 @@ export default function Dashboard() {
   const [isEditGoalModalOpen, setIsEditGoalModalOpen] = useState(false);
   const [isCongratulationsModalOpen, setIsCongratulationsModalOpen] = useState(false);
   
-  const [incomeAmount, setIncomeAmount] = useState("");
+  // Currency inputs
+  const incomeAmountInput = useCurrencyInput();
+  const expenseAmountInput = useCurrencyInput();
+  const newGoalTargetInput = useCurrencyInput();
+  const editGoalTargetInput = useCurrencyInput();
+  const editTransactionAmountInput = useCurrencyInput();
+  
   const [incomeReason, setIncomeReason] = useState("");
   const [incomeCategory, setIncomeCategory] = useState<string>("");
-  const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseReason, setExpenseReason] = useState("");
   const [expenseCategory, setExpenseCategory] = useState<string>("");
   const [newGoalName, setNewGoalName] = useState("");
-  const [newGoalTarget, setNewGoalTarget] = useState("");
   const [editGoalName, setEditGoalName] = useState("");
-  const [editGoalTarget, setEditGoalTarget] = useState("");
   
   // Transaction filters
   const [filterMonth, setFilterMonth] = useState<string>("all");
@@ -42,7 +46,6 @@ export default function Dashboard() {
   // Edit transaction modal
   const [isEditTransactionModalOpen, setIsEditTransactionModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
-  const [editTransactionAmount, setEditTransactionAmount] = useState("");
   const [editTransactionReason, setEditTransactionReason] = useState("");
   const [editTransactionCategory, setEditTransactionCategory] = useState<string>("");
 
@@ -86,7 +89,7 @@ export default function Dashboard() {
       utils.goals.getActive.invalidate();
       setIsEditTransactionModalOpen(false);
       setEditingTransaction(null);
-      setEditTransactionAmount("");
+      editTransactionAmountInput.reset();
       setEditTransactionReason("");
       setEditTransactionCategory("");
       toast.success("Transaction updated successfully!");
@@ -110,12 +113,12 @@ export default function Dashboard() {
       
       if (variables.type === "income") {
         setIsIncomeModalOpen(false);
-        setIncomeAmount("");
+        incomeAmountInput.reset();
         setIncomeReason("");
         setIncomeCategory("");
       } else {
         setIsExpenseModalOpen(false);
-        setExpenseAmount("");
+        expenseAmountInput.reset();
         setExpenseReason("");
         setExpenseCategory("");
       }
@@ -145,7 +148,7 @@ export default function Dashboard() {
       return;
     }
     
-    const amount = Math.round(parseFloat(incomeAmount) * 100);
+    const amount = Math.round(incomeAmountInput.getNumericValue() * 100);
     if (isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid amount");
       return;
@@ -171,7 +174,7 @@ export default function Dashboard() {
       return;
     }
     
-    const amount = Math.round(parseFloat(expenseAmount) * 100);
+    const amount = Math.round(expenseAmountInput.getNumericValue() * 100);
     if (isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid amount");
       return;
@@ -192,7 +195,7 @@ export default function Dashboard() {
   };
 
   const handleCreateGoal = () => {
-    const targetAmount = Math.round(parseFloat(newGoalTarget) * 100);
+    const targetAmount = Math.round(newGoalTargetInput.getNumericValue() * 100);
     if (isNaN(targetAmount) || targetAmount <= 0) {
       toast.error(t("pleaseEnterValidTarget", preferences.language));
       return;
@@ -211,7 +214,7 @@ export default function Dashboard() {
 
   const handleEditTransaction = (transaction: any) => {
     setEditingTransaction(transaction);
-    setEditTransactionAmount((transaction.amount / 100).toString());
+    editTransactionAmountInput.setValue((transaction.amount / 100).toString());
     setEditTransactionReason(transaction.reason);
     setEditTransactionCategory(transaction.categoryId?.toString() || "");
     setIsEditTransactionModalOpen(true);
@@ -220,7 +223,7 @@ export default function Dashboard() {
   const handleUpdateTransaction = () => {
     if (!editingTransaction) return;
 
-    const amount = Math.round(parseFloat(editTransactionAmount) * 100);
+    const amount = Math.round(editTransactionAmountInput.getNumericValue() * 100);
     if (isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid amount");
       return;
@@ -250,7 +253,7 @@ export default function Dashboard() {
   const handleEditGoal = () => {
     if (!activeGoal) return;
     
-    const targetAmount = Math.round(parseFloat(editGoalTarget) * 100);
+    const targetAmount = Math.round(editGoalTargetInput.getNumericValue() * 100);
     if (isNaN(targetAmount) || targetAmount <= 0) {
       toast.error("Please enter a valid target amount");
       return;
@@ -271,7 +274,7 @@ export default function Dashboard() {
   const openEditGoalModal = () => {
     if (activeGoal) {
       setEditGoalName(activeGoal.name);
-      setEditGoalTarget((activeGoal.targetAmount / 100).toString());
+      editGoalTargetInput.setValue((activeGoal.targetAmount / 100).toString());
       setIsEditGoalModalOpen(true);
     }
   };
@@ -364,11 +367,11 @@ export default function Dashboard() {
                     <Label htmlFor="income-amount">Amount ($)</Label>
                     <Input
                       id="income-amount"
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
                       placeholder="0.00"
-                      value={incomeAmount}
-                      onChange={(e) => setIncomeAmount(e.target.value)}
+                      value={incomeAmountInput.displayValue}
+                      onChange={(e) => incomeAmountInput.handleChange(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -424,11 +427,11 @@ export default function Dashboard() {
                     <Label htmlFor="expense-amount">Amount ($)</Label>
                     <Input
                       id="expense-amount"
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
                       placeholder="0.00"
-                      value={expenseAmount}
-                      onChange={(e) => setExpenseAmount(e.target.value)}
+                      value={expenseAmountInput.displayValue}
+                      onChange={(e) => expenseAmountInput.handleChange(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -784,11 +787,11 @@ export default function Dashboard() {
                           <Label htmlFor="goal-target">Target Amount ($)</Label>
                           <Input
                             id="goal-target"
-                            type="number"
-                            step="0.01"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="0.00"
-                            value={newGoalTarget}
-                            onChange={(e) => setNewGoalTarget(e.target.value)}
+                            value={newGoalTargetInput.displayValue}
+                            onChange={(e) => newGoalTargetInput.handleChange(e.target.value)}
                           />
                         </div>
                       </div>
@@ -829,11 +832,11 @@ export default function Dashboard() {
                 <Label htmlFor="edit-goal-target">Target Amount ($)</Label>
                 <Input
                   id="edit-goal-target"
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="0.00"
-                  value={editGoalTarget}
-                  onChange={(e) => setEditGoalTarget(e.target.value)}
+                  value={editGoalTargetInput.displayValue}
+                  onChange={(e) => editGoalTargetInput.handleChange(e.target.value)}
                 />
               </div>
             </div>
@@ -877,11 +880,11 @@ export default function Dashboard() {
                 <Label htmlFor="edit-transaction-amount">Amount ({editingTransaction?.currency || preferences.currency})</Label>
                 <Input
                   id="edit-transaction-amount"
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="0.00"
-                  value={editTransactionAmount}
-                  onChange={(e) => setEditTransactionAmount(e.target.value)}
+                  value={editTransactionAmountInput.displayValue}
+                  onChange={(e) => editTransactionAmountInput.handleChange(e.target.value)}
                 />
               </div>
               <div className="space-y-2">

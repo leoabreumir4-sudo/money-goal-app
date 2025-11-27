@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatNumber } from "@/lib/currency";
+import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 
 const months = [
   "January", "February", "March", "April", "May", "June",
@@ -91,13 +92,15 @@ export default function AQWorlds() {
   const [selectedMonthForEvents, setSelectedMonthForEvents] = useState<number | null>(null);
   
   const [projectName, setProjectName] = useState("");
-  const [projectAmount, setProjectAmount] = useState("");
+  const projectAmountInput = useCurrencyInput();
   const [projectMonth, setProjectMonth] = useState<number | undefined>(undefined);
   const [projectYear, setProjectYear] = useState(new Date().getFullYear());
   
   const [newEventName, setNewEventName] = useState("");
-  const [calcAvgValue, setCalcAvgValue] = useState("");
-  const [calcNumProjects, setCalcNumProjects] = useState("");
+  const calcAvgValueInput = useCurrencyInput();
+  const calcNumProjectsInput = useCurrencyInput();
+  const editProjectAmountInput = useCurrencyInput();
+  const editProjectAmountInput = useCurrencyInput();
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [monthlyStatusYear, setMonthlyStatusYear] = useState(new Date().getFullYear());
@@ -181,7 +184,7 @@ export default function AQWorlds() {
       utils.projects.getAll.invalidate();
       setIsAddProjectModalOpen(false);
       setProjectName("");
-      setProjectAmount("");
+      projectAmountInput.reset();
       setProjectMonth(undefined);
       setProjectYear(new Date().getFullYear());
       toast.success("Project added successfully!");
@@ -310,14 +313,14 @@ export default function AQWorlds() {
   }, [projects, monthlyStatusYear]);
 
   const handleAddProject = () => {
-    if (!projectName || !projectAmount || !projectMonth) {
+    if (!projectName || !projectAmountInput.displayValue || !projectMonth) {
       toast.error("Please fill in all fields");
       return;
     }
 
     createProjectMutation.mutate({
       name: projectName,
-      amount: Math.round(parseFloat(projectAmount) * 100),
+      amount: Math.round(projectAmountInput.getNumericValue() * 100),
       month: projectMonth,
       year: projectYear,
     });
@@ -421,10 +424,10 @@ export default function AQWorlds() {
 
   // Calculator total
   const calculatorTotal = useMemo(() => {
-    const avg = parseFloat(calcAvgValue) || 0;
-    const num = parseInt(calcNumProjects) || 0;
+    const avg = calcAvgValueInput.getNumericValue();
+    const num = calcNumProjectsInput.getNumericValue();
     return avg * num;
-  }, [calcAvgValue, calcNumProjects]);
+  }, [calcAvgValueInput.displayValue, calcNumProjectsInput.displayValue]);
 
   return (
     <DashboardLayout>
@@ -650,6 +653,7 @@ export default function AQWorlds() {
                       className="flex justify-between items-center p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer"
                       onClick={() => {
                         setEditingProject(project);
+                        editProjectAmountInput.setValue((project.amount / 100).toString());
                         setIsEditProjectModalOpen(true);
                       }}
                     >
@@ -690,10 +694,10 @@ export default function AQWorlds() {
                 <Label htmlFor="projectAmount">Amount ($)</Label>
                 <Input
                   id="projectAmount"
-                  type="number"
-                  step="0.01"
-                  value={projectAmount}
-                  onChange={(e) => setProjectAmount(e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  value={projectAmountInput.displayValue}
+                  onChange={(e) => projectAmountInput.handleChange(e.target.value)}
                   placeholder="0.00"
                 />
               </div>
@@ -852,10 +856,10 @@ export default function AQWorlds() {
                 <Label htmlFor="calcAvg">Average Value per Project (USD)</Label>
                 <Input
                   id="calcAvg"
-                  type="number"
-                  step="0.01"
-                  value={calcAvgValue}
-                  onChange={(e) => setCalcAvgValue(e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  value={calcAvgValueInput.displayValue}
+                  onChange={(e) => calcAvgValueInput.handleChange(e.target.value)}
                   placeholder="0.00"
                 />
               </div>
@@ -864,9 +868,10 @@ export default function AQWorlds() {
                 <Label htmlFor="calcNum">Number of Projects</Label>
                 <Input
                   id="calcNum"
-                  type="number"
-                  value={calcNumProjects}
-                  onChange={(e) => setCalcNumProjects(e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  value={calcNumProjectsInput.displayValue}
+                  onChange={(e) => calcNumProjectsInput.handleChange(e.target.value)}
                   placeholder="0"
                 />
               </div>
@@ -904,10 +909,10 @@ export default function AQWorlds() {
                   <Label htmlFor="editProjectAmount">Amount ($)</Label>
                   <Input
                     id="editProjectAmount"
-                    type="number"
-                    step="0.01"
-                    value={(editingProject.amount / 100).toFixed(2)}
-                    onChange={(e) => setEditingProject({ ...editingProject, amount: Math.round(parseFloat(e.target.value || "0") * 100) })}
+                    type="text"
+                    inputMode="decimal"
+                    value={editProjectAmountInput.displayValue}
+                    onChange={(e) => editProjectAmountInput.handleChange(e.target.value)}
                     placeholder="0.00"
                   />
                 </div>
@@ -956,7 +961,7 @@ export default function AQWorlds() {
                 updateProjectMutation.mutate({
                   id: editingProject.id,
                   name: editingProject.name,
-                  amount: editingProject.amount,
+                  amount: Math.round(editProjectAmountInput.getNumericValue() * 100),
                   month: editingProject.month,
                   year: editingProject.year,
                 });

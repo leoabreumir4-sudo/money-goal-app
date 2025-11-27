@@ -14,6 +14,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } fro
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
+import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 
 const COLORS = ['#3b82f6', '#22c55e', '#14b8a6', '#ec4899', '#8b5cf6', '#f59e0b', '#06b6d4', '#f97316'];
 
@@ -45,7 +46,7 @@ export default function Spending() {
   const [editingRecurring, setEditingRecurring] = useState<any>(null);
   const [selectedPeriod, setSelectedPeriod] = useState("This Month");
   const [recurringName, setRecurringName] = useState("");
-  const [recurringAmount, setRecurringAmount] = useState("");
+  const recurringAmountInput = useCurrencyInput();
   const [recurringFrequency, setRecurringFrequency] = useState<"monthly" | "daily" | "weekly" | "yearly">("monthly");
   const [recurringDayOfMonth, setRecurringDayOfMonth] = useState(1);
   const [recurringCategoryId, setRecurringCategoryId] = useState<number>(1);
@@ -84,7 +85,7 @@ export default function Spending() {
       utils.recurringExpenses.getAll.invalidate();
       setIsAddRecurringModalOpen(false);
       setRecurringName("");
-      setRecurringAmount("");
+      recurringAmountInput.reset();
       setRecurringFrequency("monthly");
       setRecurringDayOfMonth(1);
       setRecurringCategoryId(categories[0]?.id || 1);
@@ -100,7 +101,7 @@ export default function Spending() {
       setIsEditRecurringModalOpen(false);
       setEditingRecurring(null);
       setRecurringName("");
-      setRecurringAmount("");
+      recurringAmountInput.reset();
       setRecurringFrequency("monthly");
       setRecurringDayOfMonth(1);
       setRecurringCategoryId(categories[0]?.id || 1);
@@ -120,7 +121,7 @@ export default function Spending() {
   const handleEditRecurring = (expense: any) => {
     setEditingRecurring(expense);
     setRecurringName(expense.name);
-    setRecurringAmount((expense.amount / 100).toString());
+    recurringAmountInput.setValue((expense.amount / 100).toString());
     setRecurringFrequency(expense.frequency);
     setRecurringDayOfMonth(expense.dayOfMonth || 1);
     setRecurringCategoryId(expense.categoryId);
@@ -138,7 +139,7 @@ export default function Spending() {
   };
 
   const handleUpdateRecurring = () => {
-    const amount = Math.round(parseFloat(recurringAmount.replace(',', '.')) * 100);
+    const amount = Math.round(recurringAmountInput.getNumericValue() * 100);
     if (isNaN(amount) || amount <= 0) {
       toast.error(t("pleaseEnterValidAmount", preferences.language));
       return;
@@ -162,7 +163,7 @@ export default function Spending() {
   };
 
   const handleAddRecurring = () => {
-    const amount = Math.round(parseFloat(recurringAmount.replace(',', '.')) * 100);
+    const amount = Math.round(recurringAmountInput.getNumericValue() * 100);
     if (isNaN(amount) || amount <= 0) {
       toast.error(t("pleaseEnterValidAmount", preferences.language));
       return;
@@ -708,8 +709,9 @@ export default function Spending() {
                 <Input
                   id="recurringAmount"
                   type="text"
-                  value={recurringAmount}
-                  onChange={(e) => setRecurringAmount(e.target.value)}
+                  inputMode="decimal"
+                  value={recurringAmountInput.displayValue}
+                  onChange={(e) => recurringAmountInput.handleChange(e.target.value)}
                   placeholder="0.00"
                 />
               </div>
@@ -821,8 +823,9 @@ export default function Spending() {
                 <Input
                   id="editRecurringAmount"
                   type="text"
-                  value={recurringAmount}
-                  onChange={(e) => setRecurringAmount(e.target.value)}
+                  inputMode="decimal"
+                  value={recurringAmountInput.displayValue}
+                  onChange={(e) => recurringAmountInput.handleChange(e.target.value)}
                   placeholder="0.00"
                 />
               </div>
