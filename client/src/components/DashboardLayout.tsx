@@ -179,22 +179,42 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-2">
+            <SidebarMenu className="px-2 py-2 relative">
+              {/* Sliding active indicator */}
+              <div 
+                className="absolute left-2 w-[calc(100%-1rem)] h-11 bg-primary/10 rounded-lg pointer-events-none transition-all duration-300 ease-out"
+                style={{
+                  transform: `translateY(${(() => {
+                    const activeIndex = menuItems.findIndex(item => location === item.path);
+                    if (activeIndex === -1) return 0;
+                    
+                    let position = 0;
+                    for (let i = 0; i < activeIndex; i++) {
+                      position += 48; // h-11 (44px) + mb-1 (4px)
+                      // Add divider height
+                      if (i === 1 || i === 4) {
+                        position += 20; // my-2 (16px) + h-px
+                      }
+                    }
+                    return position;
+                  })()}px)`,
+                  opacity: menuItems.some(item => location === item.path) ? 1 : 0
+                }}
+              />
+              
               {menuItems.map((item, index) => {
                 const isActive = location === item.path;
                 const label = 'labelKey' in item ? t(item.labelKey, preferences?.language || 'en') : item.label;
-                const showDivider = index === 1 || index === 4; // After AQWorlds and after Analytics
+                const showDivider = index === 1 || index === 4;
                 return (
                   <div key={item.path}>
                     <SidebarMenuItem>
                       <button
                         onClick={() => setLocation(item.path)}
-                        className={`sidebar-menu-item h-11 mb-1 w-full font-medium rounded-lg relative flex items-center gap-2 px-3 transition-all duration-300 ease-in-out ${
-                          isActive ? 'bg-primary/10' : 'bg-transparent'
-                        }`}
+                        className="sidebar-menu-item h-11 mb-1 w-full font-medium rounded-lg relative z-10 flex items-center gap-2 px-3 transition-colors duration-200"
                       >
                         {isActive && (
-                          <div className="absolute left-0 w-0.5 h-6 bg-primary rounded-full transition-opacity duration-300" />
+                          <div className="absolute left-0 w-0.5 h-6 bg-primary rounded-full" />
                         )}
                         <item.icon
                           className={`h-4 w-4 transition-colors duration-200 ${
