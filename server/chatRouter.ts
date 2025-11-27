@@ -255,6 +255,13 @@ async function buildUserFinancialContext(userId: string) {
   // Active goal
   const activeGoal = goals.find((g: any) => g.status === "active");
 
+  // Format currency helper (defined early to be used throughout)
+  const formatMoney = (cents: number) => {
+    const currency = settings?.currency || "USD";
+    const symbol = currency === "BRL" ? "R$" : currency === "EUR" ? "€" : "$";
+    return `${symbol}${(cents / 100).toFixed(2)}`;
+  };
+
   // Category breakdown (top 5) - WITH CURRENCY CONVERSION
   const categorySpendingMap = new Map<number, number>();
   
@@ -300,13 +307,6 @@ async function buildUserFinancialContext(userId: string) {
 
   // Current balance (from active goal)
   const currentBalance = activeGoal?.currentAmount || 0;
-
-  // Format currency helper
-  const formatMoney = (cents: number) => {
-    const currency = settings?.currency || "USD";
-    const symbol = currency === "BRL" ? "R$" : currency === "EUR" ? "€" : "$";
-    return `${symbol}${(cents / 100).toFixed(2)}`;
-  };
 
   // Parse chat memories from settings
   const memories: string[] = settings?.chatMemory ? JSON.parse(settings.chatMemory) : [];
