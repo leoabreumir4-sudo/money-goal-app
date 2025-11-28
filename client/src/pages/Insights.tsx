@@ -81,34 +81,34 @@ export default function InsightsPage() {
       <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">AI Financial Insights</h1>
-          <p className="text-muted-foreground">AI-powered analysis and predictions</p>
+          <h1 className="text-3xl font-bold">Insights Financeiros com IA</h1>
+          <p className="text-muted-foreground">Análise e predições geradas por IA</p>
         </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => generateAlerts.mutate()}
             disabled={generateAlerts.isPending || !dataAvailability?.canGenerateAlerts}
-            title={!dataAvailability?.canGenerateAlerts ? `Need ${3 - (dataAvailability?.transactionCount || 0)} more transactions` : ""}
+            title={!dataAvailability?.canGenerateAlerts ? `Precisa de mais ${3 - (dataAvailability?.transactionCount || 0)} transações` : ""}
           >
-            {generateAlerts.isPending ? "Generating..." : "Check Alerts"}
+            {generateAlerts.isPending ? "Gerando..." : "Verificar Alertas"}
           </Button>
           <Button
             variant="outline"
             onClick={() => generateAchievements.mutate()}
             disabled={generateAchievements.isPending || !dataAvailability?.canGenerateAchievements}
-            title={!dataAvailability?.canGenerateAchievements ? "Create your first goal to unlock achievements" : ""}
+            title={!dataAvailability?.canGenerateAchievements ? "Crie sua primeira meta para desbloquear conquistas" : ""}
           >
-            {generateAchievements.isPending ? "Checking..." : "Check Achievements"}
+            {generateAchievements.isPending ? "Verificando..." : "Verificar Conquistas"}
           </Button>
           <Button
             onClick={handleGenerateForecast}
             disabled={isGenerating || !dataAvailability?.canGenerateForecast}
             className="gap-2"
-            title={!dataAvailability?.canGenerateForecast ? `Need ${5 - (dataAvailability?.transactionCount || 0)} more transactions` : ""}
+            title={!dataAvailability?.canGenerateForecast ? `Precisa de mais ${5 - (dataAvailability?.transactionCount || 0)} transações` : ""}
           >
             <Sparkles className="h-4 w-4" />
-            {isGenerating ? "Generating..." : "Generate Forecast"}
+            {isGenerating ? "Gerando..." : "Gerar Previsão"}
           </Button>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default function InsightsPage() {
         <Card className="border-purple-500/20 bg-purple-500/5">
           <CardContent className="pt-6">
             <p className="text-sm">
-              <span className="font-semibold">{unread.length}</span> new insight{unread.length !== 1 ? "s" : ""} waiting for you
+              <span className="font-semibold">{unread.length}</span> {unread.length !== 1 ? "novos insights esperando por você" : "novo insight esperando por você"}
             </p>
           </CardContent>
         </Card>
@@ -145,7 +145,7 @@ export default function InsightsPage() {
             >
               {isUnread && (
                 <div className="absolute top-3 right-3">
-                  <Badge variant="secondary" className="bg-purple-500 text-white">New</Badge>
+                  <Badge variant="secondary" className="bg-purple-500 text-white">Novo</Badge>
                 </div>
               )}
               <CardHeader>
@@ -155,7 +155,7 @@ export default function InsightsPage() {
                     <div>
                       <CardTitle className="text-lg">{insight.title}</CardTitle>
                       <CardDescription>
-                        {format(new Date(insight.createdDate), "MMM dd, yyyy 'at' h:mm a")}
+                        {format(new Date(insight.createdDate), "dd 'de' MMM, yyyy 'às' HH:mm")}
                       </CardDescription>
                     </div>
                   </div>
@@ -163,6 +163,7 @@ export default function InsightsPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => deleteInsight.mutate({ id: insight.id })}
+                    title="Excluir insight"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -177,21 +178,21 @@ export default function InsightsPage() {
                 {insight.type === "forecast" && parsedData && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
                     <div>
-                      <p className="text-xs text-muted-foreground">Monthly Income</p>
+                      <p className="text-xs text-muted-foreground">Receita Mensal</p>
                       <p className="text-lg font-semibold">${parsedData.avgMonthlyIncome?.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Monthly Expenses</p>
+                      <p className="text-xs text-muted-foreground">Despesas Mensais</p>
                       <p className="text-lg font-semibold">${parsedData.avgMonthlyExpense?.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Monthly Savings</p>
+                      <p className="text-xs text-muted-foreground">Poupança Mensal</p>
                       <p className="text-lg font-semibold text-green-500">
                         ${parsedData.monthlySavings?.toFixed(2)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Annual Projection</p>
+                      <p className="text-xs text-muted-foreground">Projeção Anual</p>
                       <p className="text-lg font-semibold text-green-500">
                         ${parsedData.projectedAnnualSavings?.toFixed(2)}
                       </p>
@@ -205,7 +206,7 @@ export default function InsightsPage() {
                     size="sm"
                     onClick={() => markAsRead.mutate({ id: insight.id })}
                   >
-                    Mark as Read
+                    Marcar como Lido
                   </Button>
                 )}
               </CardContent>
@@ -223,9 +224,9 @@ export default function InsightsPage() {
                 <AlertTriangle className="h-5 w-5 text-yellow-500" />
               </div>
               <div className="space-y-2 flex-1">
-                <h3 className="font-semibold text-yellow-700 dark:text-yellow-400">Getting Started with AI Insights</h3>
+                <h3 className="font-semibold text-yellow-700 dark:text-yellow-400">Começando com Insights de IA</h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  You have <span className="font-semibold">{dataAvailability.transactionCount}</span> transactions. Here's what you need to unlock all features:
+                  Você tem <span className="font-semibold">{dataAvailability.transactionCount}</span> transações. Aqui está o que você precisa para desbloquear todos os recursos:
                 </p>
                 <div className="space-y-1">
                   {dataAvailability.recommendations.map((rec, idx) => (
@@ -237,11 +238,11 @@ export default function InsightsPage() {
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button size="sm" asChild>
-                    <a href="/spending">Add Transactions</a>
+                    <a href="/spending">Adicionar Transações</a>
                   </Button>
                   {!dataAvailability.hasGoals && (
                     <Button size="sm" variant="outline" asChild>
-                      <a href="/goals">Create Goals</a>
+                      <a href="/goals">Criar Metas</a>
                     </Button>
                   )}
                 </div>
@@ -255,13 +256,13 @@ export default function InsightsPage() {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">No insights yet</p>
+            <p className="text-muted-foreground mb-4">Nenhum insight ainda</p>
             {dataAvailability?.canGenerateForecast ? (
               <Button onClick={handleGenerateForecast} disabled={isGenerating}>
-                Generate Your First Forecast
+                Gerar Sua Primeira Previsão
               </Button>
             ) : (
-              <p className="text-xs text-muted-foreground">Add more transactions to unlock forecasts</p>
+              <p className="text-xs text-muted-foreground">Adicione mais transações para desbloquear previsões</p>
             )}
           </CardContent>
         </Card>
