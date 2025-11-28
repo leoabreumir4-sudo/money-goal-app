@@ -2,6 +2,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* PWA Mobile Optimizations */
+@media (display-mode: standalone) {
+  /* Hide address bar space when installed as PWA */
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Prevent text selection on touch devices for better app feel */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection in specific areas */
+input, textarea, [contenteditable] {
+  -webkit-touch-callout: default;
+}
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
