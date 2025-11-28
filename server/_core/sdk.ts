@@ -43,6 +43,10 @@ class SDKServer {
     openId: string,
     options: { expiresInMs?: number; name?: string } = {}
   ): Promise<string> {
+    console.log(`[SDK] Creating session token for openId: ${openId}`);
+    console.log(`[SDK] JWT_SECRET available: ${!!ENV.cookieSecret}`);
+    console.log(`[SDK] APP_ID: ${ENV.appId}`);
+    
     return this.signSession(
       {
         openId,
@@ -57,19 +61,29 @@ class SDKServer {
     payload: SessionPayload,
     options: { expiresInMs?: number } = {}
   ): Promise<string> {
-    const issuedAt = Date.now();
-    const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
-    const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
-    const secretKey = this.getSessionSecret();
+    try {
+      const issuedAt = Date.now();
+      const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
+      const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
+      const secretKey = this.getSessionSecret();
 
-    return new SignJWT({
-      openId: payload.openId,
-      appId: payload.appId,
-      name: payload.name,
-    })
-      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setExpirationTime(expirationSeconds)
-      .sign(secretKey);
+      console.log(`[SDK] Signing session for ${payload.openId}`);
+      
+      const token = await new SignJWT({
+        openId: payload.openId,
+        appId: payload.appId,
+        name: payload.name,
+      })
+        .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+        .setExpirationTime(expirationSeconds)
+        .sign(secretKey);
+
+      console.log(`[SDK] Token created successfully`);
+      return token;
+    } catch (error) {
+      console.error(`[SDK] Error signing session:`, error);
+      throw error;
+    }
   }
 
   async verifySession(
