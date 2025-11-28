@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, TrendingUp, AlertTriangle, Trophy } from "lucide-react";
+import { Sparkles, TrendingUp, AlertTriangle, Trophy, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -14,6 +14,7 @@ export default function InsightsPage() {
 
   const { data: insights, isLoading } = trpc.aiInsights.getAll.useQuery({ limit: 20 });
   const { data: unread } = trpc.aiInsights.getUnread.useQuery();
+  const { data: dataAvailability, isLoading: dataCheckLoading } = trpc.aiInsights.checkDataAvailability.useQuery();
 
   const generateForecast = trpc.aiInsights.generateForecast.useMutation({
     onSuccess: () => {
@@ -63,7 +64,7 @@ export default function InsightsPage() {
     generateForecast.mutate();
   };
 
-  if (isLoading) {
+  if (isLoading || dataCheckLoading) {
     return (
       <DashboardLayout>
         <div className="container mx-auto p-6 flex items-center justify-center min-h-screen">
@@ -87,21 +88,24 @@ export default function InsightsPage() {
           <Button
             variant="outline"
             onClick={() => generateAlerts.mutate()}
-            disabled={generateAlerts.isPending}
+            disabled={generateAlerts.isPending || !dataAvailability?.canGenerateAlerts}
+            title={!dataAvailability?.canGenerateAlerts ? `Need ${3 - (dataAvailability?.transactionCount || 0)} more transactions` : ""}
           >
             {generateAlerts.isPending ? "Generating..." : "Check Alerts"}
           </Button>
           <Button
             variant="outline"
             onClick={() => generateAchievements.mutate()}
-            disabled={generateAchievements.isPending}
+            disabled={generateAchievements.isPending || !dataAvailability?.canGenerateAchievements}
+            title={!dataAvailability?.canGenerateAchievements ? "Create your first goal to unlock achievements" : ""}
           >
             {generateAchievements.isPending ? "Checking..." : "Check Achievements"}
           </Button>
           <Button
             onClick={handleGenerateForecast}
-            disabled={isGenerating}
+            disabled={isGenerating || !dataAvailability?.canGenerateForecast}
             className="gap-2"
+            title={!dataAvailability?.canGenerateForecast ? `Need ${5 - (dataAvailability?.transactionCount || 0)} more transactions` : ""}
           >
             <Sparkles className="h-4 w-4" />
             {isGenerating ? "Generating..." : "Generate Forecast"}
@@ -210,14 +214,56 @@ export default function InsightsPage() {
         })}
       </div>
 
+      {/* Data Availability Status */}
+      {dataAvailability && !dataAvailability.canGenerateForecast && (
+        <Card className="border-yellow-500/30 bg-yellow-500/5">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-yellow-500/10 rounded-lg">
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              </div>
+              <div className="space-y-2 flex-1">
+                <h3 className="font-semibold text-yellow-700 dark:text-yellow-400">Getting Started with AI Insights</h3>
+                <p className="text-sm text-muted-foreground">
+                  You have <span className="font-semibold">{dataAvailability.transactionCount}</span> transactions. 
+                  Add <span className="font-semibold">{5 - dataAvailability.transactionCount}</span> more to unlock AI-powered forecasts!
+                </p>
+                <div className="space-y-1">
+                  {dataAvailability.recommendations.map((rec, idx) => (
+                    <div key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
+                      <div className="w-1 h-1 bg-yellow-500 rounded-full" />
+                      {rec}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" asChild>
+                    <a href="/spending">Add Transactions</a>
+                  </Button>
+                  {!dataAvailability.hasGoals && (
+                    <Button size="sm" variant="outline" asChild>
+                      <a href="/goals">Create Goals</a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {allInsights.length === 0 && (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground mb-4">No insights yet</p>
-            <Button onClick={handleGenerateForecast} disabled={isGenerating}>
-              Generate Your First Forecast
-            </Button>
+            {dataAvailability?.canGenerateForecast ? (
+              <Button onClick={handleGenerateForecast} disabled={isGenerating}>
+                Generate Your First Forecast
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground">Add more transactions to unlock forecasts</p>
+            )}
           </CardContent>
         </Card>
       )}
