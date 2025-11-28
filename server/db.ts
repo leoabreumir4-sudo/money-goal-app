@@ -35,18 +35,31 @@ import {
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: Pool | null = null;
 
 export function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
       console.log(`[Database] Attempting connection with URL: ${process.env.DATABASE_URL?.substring(0, 50)}...`);
-      const pool = new Pool({ 
+      console.log(`[Database] Full connection string length: ${process.env.DATABASE_URL?.length}`);
+      
+      // Force close any existing connection
+      if (_pool) {
+        console.log(`[Database] Closing existing pool`);
+        _pool.end().catch(console.warn);
+        _pool = null;
+        _db = null;
+      }
+      
+      _pool = new Pool({ 
         connectionString: process.env.DATABASE_URL,
         connectionTimeoutMillis: 30000,
         ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+        max: 10, // Maximum number of clients in the pool
+        idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
       });
-      _db = drizzle(pool, { schema });
-      console.log(`[Database] Connection established successfully`);
+      _db = drizzle(_pool, { schema });
+      console.log(`[Database] New connection pool created successfully`);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       throw error;
