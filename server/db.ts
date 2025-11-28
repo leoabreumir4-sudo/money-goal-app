@@ -727,7 +727,23 @@ export async function getBudgetsByUserId(userId: string) {
   const db = getDb();
   if (!db) return [];
   
-  return await db.select().from(budgets).where(eq(budgets.userId, userId)).orderBy(asc(budgets.createdDate));
+  try {
+    console.log(`[Database] Getting budgets for userId: ${userId}`);
+    const result = await db.select().from(budgets).where(eq(budgets.userId, userId)).orderBy(asc(budgets.createdDate));
+    console.log(`[Database] Found ${result.length} budgets`);
+    return result;
+  } catch (error) {
+    console.error(`[Database] Error getting budgets for user ${userId}:`, error);
+    if (error instanceof Error && (
+      error.message.includes('relation "budgets" does not exist') ||
+      error.message.includes('column') ||
+      error.message.includes('authentication failed')
+    )) {
+      console.warn(`[Database] Budgets table issue, returning empty array`);
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function getBudgetById(id: number, userId: string) {
