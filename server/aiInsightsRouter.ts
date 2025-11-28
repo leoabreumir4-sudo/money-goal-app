@@ -149,29 +149,56 @@ Keep it concise (<300 words), encouraging, actionable. Use ${currency} amounts.`
       },
       pt: {
         title: "Sua Previsão Financeira",
-        systemPrompt: "Você é um consultor financeiro profissional. Forneça conselhos claros e acionáveis baseados nos dados do usuário. Seja encorajador mas honesto sobre áreas para melhorar. Mantenha respostas concisas com menos de 300 palavras.",
-        prompt: `Analise estes dados financeiros e forneça uma previsão breve:
+        systemPrompt: "Você é um consultor financeiro profissional brasileiro. Forneça conselhos ESPECÍFICOS e PERSONALIZADOS baseados nos dados reais do usuário. Use números concretos, mencione categorias específicas, e dê recomendações práticas e diretas. Seja encorajador mas realista. NUNCA use frases genéricas ou clichês.",
+        prompt: `Analise estes dados financeiros REAIS e forneça insights ESPECÍFICOS e PRÁTICOS:
 
-Receita (últimos 3 meses): ${formatMoney(totalIncome)}
-Despesas (últimos 3 meses): ${formatMoney(totalExpenses)}
-Média Mensal de Receita: ${formatMoney(avgMonthlyIncome)}
-Média Mensal de Despesas: ${formatMoney(avgMonthlyExpense)}
-Poupança Mensal: ${formatMoney(monthlySavings)}
+📊 **DADOS FINANCEIROS (últimos 3 meses):**
+• Receita Total: ${formatMoney(totalIncome)}
+• Despesas Total: ${formatMoney(totalExpenses)}
+• Média Mensal de Receita: ${formatMoney(avgMonthlyIncome)}
+• Média Mensal de Despesas: ${formatMoney(avgMonthlyExpense)}
+• Poupança Mensal: ${formatMoney(monthlySavings)}
+• Taxa de Poupança: ${savingsRate > 0 ? Math.round((monthlySavings / avgMonthlyIncome) * 100) : 0}%
 
-Principais Categorias de Gastos:
-${categorySpending.map(c => `- ${c.name}: ${formatMoney(c.amount)} (${c.percentage.toFixed(1)}%)`).join('\n')}
+💰 **PRINCIPAIS GASTOS (categorias reais):**
+${categorySpending.map(c => `• ${c.name}: ${formatMoney(c.amount)} (${c.percentage.toFixed(1)}% do total)`).join('\n')}
 
-Metas Ativas:
-${goals.map(g => `- ${g.name}: ${formatMoney(g.currentAmount)} / ${formatMoney(g.targetAmount)} (${((g.currentAmount / g.targetAmount) * 100).toFixed(1)}%)`).join('\n')}
+🎯 **METAS ATIVAS:**
+${goals.length > 0 ? goals.map(g => `• ${g.name}: ${formatMoney(g.currentAmount)} de ${formatMoney(g.targetAmount)} (${((g.currentAmount / g.targetAmount) * 100).toFixed(1)}% completo)`).join('\n') : '• Nenhuma meta ativa'}
 
-Forneça em PORTUGUÊS:
-1. **Avaliação de Saúde Financeira:** (1 frase)
-2. **Análise de Padrões de Gastos:** (1 frase)
-3. **Previsão de Conquista de Metas:** Quando atingirão as metas no ritmo atual? (IMPORTANTE: conte meses corretamente - de Novembro 2025 até meta)
-4. **Recomendações Acionáveis:** 3 ações específicas com números
-5. **Projeção de Poupança Anual:** No ritmo atual
+⚠️ **INSTRUÇÕES CRÍTICAS:**
+1. Mencione NÚMEROS ESPECÍFICOS dos dados acima
+2. Cite CATEGORIAS REAIS pelo nome (ex: "${categorySpending[0]?.name}")
+3. Use a TAXA DE POUPANÇA EXATA nos cálculos
+4. Se houver meta, calcule QUANDO será atingida no ritmo atual (conte meses de Nov 2025 corretamente)
+5. Dê recomendações COM VALORES CONCRETOS (ex: "reduza ${categorySpending[0]?.name} em ${formatMoney(Math.round(categorySpending[0]?.amount * 0.2))}")
 
-Mantenha conciso (<300 palavras), encorajador, acionável. Use valores em ${currency}.`,
+📝 **FORMATO DA RESPOSTA (use EXATAMENTE esta estrutura):**
+
+**1. Avaliação de Saúde Financeira:**
+[1 frase mencionando taxa de poupança EXATA e se está acima/abaixo da média brasileira de 15%]
+
+**2. Análise de Padrões de Gastos:**
+[1-2 frases sobre as categorias TOP 3 ESPECÍFICAS e percentuais REAIS. Não seja genérico!]
+
+**3. Previsão de Conquista de Metas:**
+${goals.length > 0 ? `[Calcule meses até atingir "${goals[0].name}" no ritmo de ${formatMoney(monthlySavings)}/mês. Conte meses corretamente de Nov 2025]` : '[Sugira criar uma meta específica]'}
+
+**4. Recomendações Acionáveis:**
+• [Ação 1: mencione categoria específica e valor em ${currency}]
+• [Ação 2: use número concreto das finanças acima]
+• [Ação 3: recomendação prática com meta numérica]
+
+**5. Projeção de Poupança Anual:**
+[Mostre ${formatMoney(monthlySavings * 12)} e o que isso representa para as metas]
+
+🚫 **EVITE ABSOLUTAMENTE:**
+- Frases genéricas: "você está no caminho certo", "continue assim"
+- Usar "suas despesas" sem especificar QUAL categoria
+- Dar valores arredondados - use os valores EXATOS
+- Esquecer de mencionar categorias pelo nome
+
+Máximo: 250 palavras. Seja direto, específico e acionável!`,
       },
       es: {
         title: "Tu Pronóstico Financiero",

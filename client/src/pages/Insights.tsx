@@ -141,19 +141,21 @@ export default function InsightsPage() {
           return (
             <Card
               key={insight.id}
-              className={`relative ${isUnread ? "border-purple-500/30 shadow-lg" : ""} ${getTypeColor(insight.type)}`}
+              className={`relative ${isUnread ? "border-purple-500/30 shadow-lg bg-purple-500/5" : ""} ${getTypeColor(insight.type)}`}
             >
-              {isUnread && (
-                <div className="absolute top-3 right-3">
-                  <Badge variant="secondary" className="bg-purple-500 text-white">Novo</Badge>
-                </div>
-              )}
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    {getTypeIcon(insight.type)}
-                    <div>
-                      <CardTitle className="text-lg">{insight.title}</CardTitle>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="mt-0.5">
+                      {getTypeIcon(insight.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CardTitle className="text-lg">{insight.title}</CardTitle>
+                        {isUnread && (
+                          <Badge variant="secondary" className="bg-purple-500 text-white text-xs px-2 py-0.5">Novo</Badge>
+                        )}
+                      </div>
                       <CardDescription>
                         {format(new Date(insight.createdDate), "dd 'de' MMM, yyyy 'às' HH:mm")}
                       </CardDescription>
@@ -162,6 +164,7 @@ export default function InsightsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="shrink-0"
                     onClick={() => deleteInsight.mutate({ id: insight.id })}
                     title="Excluir insight"
                   >
@@ -177,24 +180,44 @@ export default function InsightsPage() {
                 {/* Show data if it's a forecast */}
                 {insight.type === "forecast" && parsedData && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Receita Mensal</p>
-                      <p className="text-lg font-semibold">${parsedData.avgMonthlyIncome?.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Despesas Mensais</p>
-                      <p className="text-lg font-semibold">${parsedData.avgMonthlyExpense?.toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Poupança Mensal</p>
-                      <p className="text-lg font-semibold text-green-500">
-                        ${parsedData.monthlySavings?.toFixed(2)}
+                    <div className="text-center md:text-left">
+                      <p className="text-xs text-muted-foreground mb-1">Receita Mensal</p>
+                      <p className="text-xl font-bold text-blue-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 2,
+                        }).format(parsedData.avgMonthlyIncome || 0)}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Projeção Anual</p>
-                      <p className="text-lg font-semibold text-green-500">
-                        ${parsedData.projectedAnnualSavings?.toFixed(2)}
+                    <div className="text-center md:text-left">
+                      <p className="text-xs text-muted-foreground mb-1">Despesas Mensais</p>
+                      <p className="text-xl font-bold text-red-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 2,
+                        }).format(parsedData.avgMonthlyExpense || 0)}
+                      </p>
+                    </div>
+                    <div className="text-center md:text-left">
+                      <p className="text-xs text-muted-foreground mb-1">Poupança Mensal</p>
+                      <p className="text-xl font-bold text-green-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 2,
+                        }).format(parsedData.monthlySavings || 0)}
+                      </p>
+                    </div>
+                    <div className="text-center md:text-left">
+                      <p className="text-xs text-muted-foreground mb-1">Projeção Anual</p>
+                      <p className="text-xl font-bold text-emerald-500">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 2,
+                        }).format(parsedData.projectedAnnualSavings || 0)}
                       </p>
                     </div>
                   </div>
