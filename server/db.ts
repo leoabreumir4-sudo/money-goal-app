@@ -1,4 +1,4 @@
-import { eq, and, or, desc, asc, gte, lte } from "drizzle-orm";
+import { eq, and, or, desc, asc, gte, lte, isNull, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "../drizzle/schema";
@@ -279,7 +279,7 @@ export async function getActiveGoal(userId: string) {
   const result = await db
     .select()
     .from(goals)
-    .where(and(eq(goals.userId, userId), eq(goals.status, "active")))
+    .where(and(eq(goals.userId, userId), isNull(goals.archivedDate), isNull(goals.completedDate)))
     .limit(1);
   return result[0] ?? null;
 }
@@ -291,7 +291,7 @@ export async function getActiveGoals(userId: string) {
   return await db
     .select()
     .from(goals)
-    .where(and(eq(goals.userId, userId), eq(goals.status, "active")))
+    .where(and(eq(goals.userId, userId), isNull(goals.archivedDate), isNull(goals.completedDate)))
     .orderBy(asc(goals.priority)); // Order by priority
 }
 
@@ -303,7 +303,8 @@ export async function getEmergencyFund(userId: string) {
     .where(and(
       eq(goals.userId, userId), 
       eq(goals.goalType, "emergency"),
-      eq(goals.status, "active")
+      isNull(goals.archivedDate),
+      isNull(goals.completedDate)
     ))
     .limit(1);
   return result[0] ?? null;
@@ -319,7 +320,8 @@ export async function getSavingsGoals(userId: string) {
     .where(and(
       eq(goals.userId, userId),
       eq(goals.goalType, "savings"),
-      eq(goals.status, "active")
+      isNull(goals.archivedDate),
+      isNull(goals.completedDate)
     ))
     .orderBy(asc(goals.priority));
 }
@@ -339,7 +341,7 @@ export async function getArchivedGoals(userId: string) {
   if (!db) return [];
   
   return await db.select().from(goals)
-    .where(and(eq(goals.userId, userId), eq(goals.status, "archived")))
+    .where(and(eq(goals.userId, userId), isNotNull(goals.archivedDate)))
     .orderBy(desc(goals.archivedDate));
 }
 
