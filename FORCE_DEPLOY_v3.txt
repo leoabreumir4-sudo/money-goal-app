@@ -1,0 +1,2 @@
+Force deploy trigger v3 - 2025-11-28 - DATABASE CREDENTIALS UPDATE
+This file forces a complete redeploy to ensure DATABASE_URL environment variable is properly loaded.
