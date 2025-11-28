@@ -39,12 +39,14 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
+      console.log(`[Database] Attempting connection with URL: ${process.env.DATABASE_URL?.substring(0, 50)}...`);
       const pool = new Pool({ 
         connectionString: process.env.DATABASE_URL,
         connectionTimeoutMillis: 30000,
         ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
       });
       _db = drizzle(pool, { schema });
+      console.log(`[Database] Connection established successfully`);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       throw error;
