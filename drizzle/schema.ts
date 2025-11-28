@@ -4,10 +4,14 @@ import { relations } from "drizzle-orm";
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
 export const goalStatusEnum = pgEnum("goal_status", ["active", "archived"]);
+export const goalTypeEnum = pgEnum("goal_type", ["savings", "emergency", "general"]);
 export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense"]);
 export const themeEnum = pgEnum("theme", ["dark", "light"]);
 export const frequencyEnum = pgEnum("frequency", ["daily", "weekly", "monthly", "yearly"]);
 export const chatRoleEnum = pgEnum("chat_role", ["user", "assistant", "system"]);
+export const budgetPeriodEnum = pgEnum("budget_period", ["weekly", "monthly", "yearly"]);
+export const billStatusEnum = pgEnum("bill_status", ["pending", "paid", "overdue"]);
+export const insightTypeEnum = pgEnum("insight_type", ["forecast", "alert", "suggestion", "achievement"]);
 
 /**
  * Core user table backing auth flow.
@@ -36,9 +40,13 @@ export const goals = pgTable("goals", {
   id: serial("id").primaryKey(),
   userId: uuid("userId").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
+  goalType: goalTypeEnum("goalType").default("savings").notNull(),
   targetAmount: integer("targetAmount").notNull(), // Store as cents to avoid decimal issues
   currentAmount: integer("currentAmount").notNull().default(0),
   status: goalStatusEnum("status").default("active").notNull(),
+  priority: integer("priority").default(0).notNull(), // 0 = highest priority
+  monthlyContribution: integer("monthlyContribution"), // Suggested monthly amount
+  targetDate: timestamp("targetDate"), // Optional target completion date
   createdDate: timestamp("createdDate").defaultNow().notNull(),
   archivedDate: timestamp("archivedDate"),
   completedDate: timestamp("completedDate"),
@@ -46,6 +54,7 @@ export const goals = pgTable("goals", {
   userIdIdx: index("goals_userId_idx").on(table.userId),
   statusIdx: index("goals_status_idx").on(table.status),
   userStatusIdx: index("goals_userId_status_idx").on(table.userId, table.status),
+  goalTypeIdx: index("goals_goalType_idx").on(table.goalType),
 }));
 
 export type Goal = typeof goals.$inferSelect;
@@ -225,6 +234,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   events: many(events),
   chatMessages: many(chatMessages),
   monthlyPayments: many(monthlyPayments),
+  budgets: many(budgets),
+  billReminders: many(billReminders),
+  aiInsights: many(aiInsights),
+  categoryLearning: many(categoryLearning),
 }));
 
 export const goalsRelations = relations(goals, ({ one, many }) => ({
@@ -308,5 +321,142 @@ export const monthlyPaymentsRelations = relations(monthlyPayments, ({ one }) => 
     references: [transactions.id],
   }),
 }));
+
+/**
+ * Budgets - Budget planning with alerts
+ */
+export const budgets = pgTable("budgets", {
+  id: serial("id").primaryKey(),
+  userId: uuid("userId").notNull(),
+  categoryId: integer("categoryId").notNull(),
+  period: budgetPeriodEnum("period").default("monthly").notNull(),
+  limitAmount: integer("limitAmount").notNull(), // Store as cents
+  currentSpent: integer("currentSpent").default(0).notNull(),
+  alertThreshold: integer("alertThreshold").default(75).notNull(), // Alert at 75%, 90%, 100%
+  isActive: boolean("isActive").default(true).notNull(),
+  startDate: timestamp("startDate").defaultNow().notNull(),
+  endDate: timestamp("endDate"),
+  createdDate: timestamp("createdDate").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("budgets_userId_idx").on(table.userId),
+  categoryIdIdx: index("budgets_categoryId_idx").on(table.categoryId),
+  userCategoryIdx: index("budgets_userId_categoryId_idx").on(table.userId, table.categoryId),
+}));
+
+export type Budget = typeof budgets.$inferSelect;
+export type InsertBudget = typeof budgets.$inferInsert;
+
+/**
+ * Bill Reminders - Recurring bill tracking
+ */
+export const billReminders = pgTable("billReminders", {
+  id: serial("id").primaryKey(),
+  userId: uuid("userId").notNull(),
+  categoryId: integer("categoryId"),
+  name: varchar("name", { length: 255 }).notNull(),
+  amount: integer("amount").notNull(), // Store as cents
+  dueDay: integer("dueDay").notNull(), // Day of month (1-31)
+  frequency: frequencyEnum("frequency").default("monthly").notNull(),
+  status: billStatusEnum("status").default("pending").notNull(),
+  lastPaidDate: timestamp("lastPaidDate"),
+  nextDueDate: timestamp("nextDueDate").notNull(),
+  reminderDaysBefore: integer("reminderDaysBefore").default(3).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  autoCreateTransaction: boolean("autoCreateTransaction").default(false).notNull(),
+  createdDate: timestamp("createdDate").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("billReminders_userId_idx").on(table.userId),
+  nextDueDateIdx: index("billReminders_nextDueDate_idx").on(table.nextDueDate),
+  statusIdx: index("billReminders_status_idx").on(table.status),
+}));
+
+export type BillReminder = typeof billReminders.$inferSelect;
+export type InsertBillReminder = typeof billReminders.$inferInsert;
+
+/**
+ * AI Insights - Financial forecasting and suggestions
+ */
+export const aiInsights = pgTable("aiInsights", {
+  id: serial("id").primaryKey(),
+  userId: uuid("userId").notNull(),
+  type: insightTypeEnum("type").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  data: text("data"), // JSON data for charts, calculations, etc.
+  isRead: boolean("isRead").default(false).notNull(),
+  priority: integer("priority").default(0).notNull(), // Higher = more important
+  validUntil: timestamp("validUntil"), // Expiration date for time-sensitive insights
+  createdDate: timestamp("createdDate").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("aiInsights_userId_idx").on(table.userId),
+  typeIdx: index("aiInsights_type_idx").on(table.type),
+  isReadIdx: index("aiInsights_isRead_idx").on(table.isRead),
+  createdDateIdx: index("aiInsights_createdDate_idx").on(table.createdDate),
+}));
+
+export type AIInsight = typeof aiInsights.$inferSelect;
+export type InsertAIInsight = typeof aiInsights.$inferInsert;
+
+/**
+ * Category Learning - Auto-suggestion improvements
+ */
+export const categoryLearning = pgTable("categoryLearning", {
+  id: serial("id").primaryKey(),
+  userId: uuid("userId").notNull(),
+  keyword: varchar("keyword", { length: 255 }).notNull(),
+  categoryId: integer("categoryId").notNull(),
+  confidence: integer("confidence").default(1).notNull(), // How many times user confirmed
+  lastUsed: timestamp("lastUsed").defaultNow().notNull(),
+  createdDate: timestamp("createdDate").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("categoryLearning_userId_idx").on(table.userId),
+  keywordIdx: index("categoryLearning_keyword_idx").on(table.keyword),
+  userKeywordIdx: index("categoryLearning_userId_keyword_idx").on(table.userId, table.keyword),
+}));
+
+export type CategoryLearning = typeof categoryLearning.$inferSelect;
+export type InsertCategoryLearning = typeof categoryLearning.$inferInsert;
+
+// Relations for new tables
+export const budgetsRelations = relations(budgets, ({ one }) => ({
+  user: one(users, {
+    fields: [budgets.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [budgets.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const billRemindersRelations = relations(billReminders, ({ one }) => ({
+  user: one(users, {
+    fields: [billReminders.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [billReminders.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const aiInsightsRelations = relations(aiInsights, ({ one }) => ({
+  user: one(users, {
+    fields: [aiInsights.userId],
+    references: [users.id],
+  }),
+}));
+
+export const categoryLearningRelations = relations(categoryLearning, ({ one }) => ({
+  user: one(users, {
+    fields: [categoryLearning.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [categoryLearning.categoryId],
+    references: [categories.id],
+  }),
+}));
+
 
 

@@ -12,6 +12,10 @@ import { webhookRouter } from "./webhookRouter";
 import { categoryRouter } from "./categoryRouter";
 import { chatRouter } from "./chatRouter";
 import { whatsappRouter } from "./whatsappRouter";
+import { budgetRouter } from "./budgetRouter";
+import { billReminderRouter } from "./billReminderRouter";
+import { aiInsightsRouter } from "./aiInsightsRouter";
+import { categoryLearningRouter } from "./categoryLearningRouter";
 
 export const appRouter = router({
   system: systemRouter,
@@ -22,6 +26,10 @@ export const appRouter = router({
   categories: categoryRouter, // Category management with auto-categorization
   chat: chatRouter, // AI Financial Advisor
   whatsapp: whatsappRouter, // WhatsApp integration
+  budgets: budgetRouter, // Budget planning with alerts
+  billReminders: billReminderRouter, // Bill tracking and reminders
+  aiInsights: aiInsightsRouter, // AI-powered financial forecasting
+  categoryLearning: categoryLearningRouter, // Smart auto-categorization with learning
 
   // Logout procedure
   logout: publicProcedure.mutation(() => {
@@ -37,6 +45,10 @@ export const appRouter = router({
       .input(z.object({
         name: z.string().min(1, "Name is required").max(255, "Name too long"),
         targetAmount: z.number().int().positive("Target amount must be positive"),
+        goalType: z.enum(["savings", "emergency", "general"]).default("savings"),
+        priority: z.number().int().min(1).max(10).default(5),
+        monthlyContribution: z.number().int().positive().optional(),
+        targetDate: z.date().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         await db.createGoal({
@@ -45,9 +57,17 @@ export const appRouter = router({
           targetAmount: input.targetAmount,
           currentAmount: 0,
           status: "active",
+          goalType: input.goalType,
+          priority: input.priority,
+          monthlyContribution: input.monthlyContribution,
+          targetDate: input.targetDate,
         });
         return { success: true };
       }),
+
+    getAll: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getAllGoals(ctx.user.id);
+    }),
 
     getActive: protectedProcedure.query(async ({ ctx }) => {
       const goal = await db.getActiveGoal(ctx.user.id);
@@ -109,6 +129,14 @@ export const appRouter = router({
       return goal;
     }),
 
+    getSavings: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getSavingsGoals(ctx.user.id);
+    }),
+
+    getEmergencyFund: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getEmergencyFund(ctx.user.id);
+    }),
+
     getArchived: protectedProcedure.query(async ({ ctx }) => {
       return await db.getArchivedGoals(ctx.user.id);
     }),
@@ -120,6 +148,10 @@ export const appRouter = router({
         targetAmount: z.number().optional(),
         currentAmount: z.number().optional(),
         status: z.enum(["active", "archived"]).optional(),
+        goalType: z.enum(["savings", "emergency", "general"]).optional(),
+        priority: z.number().int().min(1).max(10).optional(),
+        monthlyContribution: z.number().int().positive().optional(),
+        targetDate: z.date().optional(),
         archivedDate: z.date().optional(),
         completedDate: z.date().optional(),
       }))

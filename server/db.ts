@@ -22,7 +22,15 @@ import {
   chatMessages,
   InsertChatMessage,
   monthlyPayments,
-  InsertMonthlyPayment
+  InsertMonthlyPayment,
+  budgets,
+  InsertBudget,
+  billReminders,
+  InsertBillReminder,
+  aiInsights,
+  InsertAIInsight,
+  categoryLearning,
+  InsertCategoryLearning,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -283,7 +291,37 @@ export async function getActiveGoals(userId: string) {
   return await db
     .select()
     .from(goals)
-    .where(and(eq(goals.userId, userId), eq(goals.status, "active")));
+    .where(and(eq(goals.userId, userId), eq(goals.status, "active")))
+    .orderBy(asc(goals.priority)); // Order by priority
+}
+
+export async function getEmergencyFund(userId: string) {
+  const db = getDb();
+  const result = await db
+    .select()
+    .from(goals)
+    .where(and(
+      eq(goals.userId, userId), 
+      eq(goals.goalType, "emergency"),
+      eq(goals.status, "active")
+    ))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function getSavingsGoals(userId: string) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db
+    .select()
+    .from(goals)
+    .where(and(
+      eq(goals.userId, userId),
+      eq(goals.goalType, "savings"),
+      eq(goals.status, "active")
+    ))
+    .orderBy(asc(goals.priority));
 }
 
 export async function getGoalById(id: number, userId: string) {
@@ -647,6 +685,242 @@ export async function deleteMonthlyPayment(id: number, userId: string) {
   if (!db) throw new Error("Database not available");
   
   await db.delete(monthlyPayments).where(and(eq(monthlyPayments.id, id), eq(monthlyPayments.userId, userId)));
+}
+
+// ============================================================================
+// BUDGETS - Budget Planning & Alerts
+// ============================================================================
+
+export async function createBudget(budget: InsertBudget) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(budgets).values(budget).returning();
+  return result[0];
+}
+
+export async function getBudgetsByUserId(userId: string) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db.select().from(budgets).where(eq(budgets.userId, userId)).orderBy(asc(budgets.createdDate));
+}
+
+export async function getBudgetById(id: number, userId: string) {
+  const db = getDb();
+  const result = await db.select().from(budgets).where(and(eq(budgets.id, id), eq(budgets.userId, userId))).limit(1);
+  return result[0] ?? null;
+}
+
+export async function updateBudget(id: number, userId: string, data: Partial<InsertBudget>) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(budgets).set(data).where(and(eq(budgets.id, id), eq(budgets.userId, userId)));
+}
+
+export async function deleteBudget(id: number, userId: string) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(budgets).where(and(eq(budgets.id, id), eq(budgets.userId, userId)));
+}
+
+// ============================================================================
+// BILL REMINDERS
+// ============================================================================
+
+export async function createBillReminder(bill: InsertBillReminder) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(billReminders).values(bill).returning();
+  return result[0];
+}
+
+export async function getBillRemindersByUserId(userId: string) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db.select().from(billReminders).where(eq(billReminders.userId, userId)).orderBy(asc(billReminders.nextDueDate));
+}
+
+export async function getUpcomingBills(userId: string, daysAhead: number = 7) {
+  const db = getDb();
+  if (!db) return [];
+  
+  const futureDate = new Date();
+  futureDate.setDate(futureDate.getDate() + daysAhead);
+  
+  return await db.select().from(billReminders).where(
+    and(
+      eq(billReminders.userId, userId),
+      eq(billReminders.isActive, true),
+      lte(billReminders.nextDueDate, futureDate)
+    )
+  ).orderBy(asc(billReminders.nextDueDate));
+}
+
+export async function updateBillReminder(id: number, userId: string, data: Partial<InsertBillReminder>) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(billReminders).set(data).where(and(eq(billReminders.id, id), eq(billReminders.userId, userId)));
+}
+
+export async function deleteBillReminder(id: number, userId: string) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(billReminders).where(and(eq(billReminders.id, id), eq(billReminders.userId, userId)));
+}
+
+// ============================================================================
+// AI INSIGHTS - Financial Forecasting
+// ============================================================================
+
+export async function createAIInsight(insight: InsertAIInsight) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(aiInsights).values(insight).returning();
+  return result[0];
+}
+
+export async function getAIInsightsByUserId(userId: string, limit: number = 10) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db.select().from(aiInsights)
+    .where(eq(aiInsights.userId, userId))
+    .orderBy(desc(aiInsights.priority), desc(aiInsights.createdDate))
+    .limit(limit);
+}
+
+export async function getUnreadInsights(userId: string) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db.select().from(aiInsights)
+    .where(and(eq(aiInsights.userId, userId), eq(aiInsights.isRead, false)))
+    .orderBy(desc(aiInsights.priority), desc(aiInsights.createdDate));
+}
+
+export async function markInsightAsRead(id: number, userId: string) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(aiInsights).set({ isRead: true }).where(and(eq(aiInsights.id, id), eq(aiInsights.userId, userId)));
+}
+
+export async function deleteAIInsight(id: number, userId: string) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(aiInsights).where(and(eq(aiInsights.id, id), eq(aiInsights.userId, userId)));
+}
+
+// ============================================================================
+// CATEGORY LEARNING - Auto-suggestion improvements
+// ============================================================================
+
+export async function learnCategoryMapping(userId: string, keyword: string, categoryId: number) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Check if mapping exists
+  const existing = await db.select().from(categoryLearning)
+    .where(and(
+      eq(categoryLearning.userId, userId),
+      eq(categoryLearning.keyword, keyword.toLowerCase())
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    // Update confidence and category
+    await db.update(categoryLearning)
+      .set({ 
+        categoryId, 
+        confidence: existing[0].confidence + 1,
+        lastUsed: new Date()
+      })
+      .where(eq(categoryLearning.id, existing[0].id));
+  } else {
+    // Create new mapping
+    await db.insert(categoryLearning).values({
+      userId,
+      keyword: keyword.toLowerCase(),
+      categoryId,
+      confidence: 1,
+    });
+  }
+}
+
+export async function suggestCategory(userId: string, description: string): Promise<number | null> {
+  const db = getDb();
+  if (!db) return null;
+  
+  const keywords = description.toLowerCase().split(/\s+/);
+  
+  // Find best matching learned keyword
+  const matches = await db.select().from(categoryLearning)
+    .where(and(
+      eq(categoryLearning.userId, userId)
+    ))
+    .orderBy(desc(categoryLearning.confidence));
+  
+  for (const match of matches) {
+    if (keywords.includes(match.keyword)) {
+      // Update last used
+      await db.update(categoryLearning)
+        .set({ lastUsed: new Date() })
+        .where(eq(categoryLearning.id, match.id));
+      
+      return match.categoryId;
+    }
+  }
+  
+  return null;
+}
+
+export async function getAllCategoryLearning(userId: string) {
+  const db = getDb();
+  if (!db) return [];
+  
+  return await db.select().from(categoryLearning)
+    .where(eq(categoryLearning.userId, userId))
+    .orderBy(desc(categoryLearning.confidence), desc(categoryLearning.lastUsed));
+}
+
+export async function getCategoryLearningByPattern(userId: string, pattern: string) {
+  const db = getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(categoryLearning)
+    .where(and(
+      eq(categoryLearning.userId, userId),
+      eq(categoryLearning.keyword, pattern.toLowerCase())
+    ))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function updateCategoryLearning(id: number, userId: string, data: Partial<typeof categoryLearning.$inferInsert>) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(categoryLearning)
+    .set(data)
+    .where(and(eq(categoryLearning.id, id), eq(categoryLearning.userId, userId)));
+}
+
+export async function deleteCategoryLearning(id: number, userId: string) {
+  const db = getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(categoryLearning)
+    .where(and(eq(categoryLearning.id, id), eq(categoryLearning.userId, userId)));
 }
 
 // Bank Accounts functions removed - now using Wise API integration instead
