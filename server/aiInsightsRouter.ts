@@ -62,10 +62,27 @@ export const aiInsightsRouter = router({
     const transactions = await db.getAllTransactionsByUserId(ctx.user.id);
     const goals = await db.getActiveGoals(ctx.user.id);
     const categories = await db.getAllCategories(ctx.user.id);
+    const settings = await db.getUserSettings(ctx.user.id);
     
     if (transactions.length < 5) {
       throw new Error(`Insufficient data: You have ${transactions.length} transactions, but need at least 5 to generate meaningful forecasts. Add ${5 - transactions.length} more transactions first!`);
     }
+
+    // Detect user's preferred language and currency
+    const language = settings?.language || "en";
+    const currency = settings?.currency || "USD";
+    const currencySymbol = currency === "BRL" ? "R$" : currency === "EUR" ? "€" : "$";
+    
+    // Format money based on currency
+    const formatMoney = (cents: number) => {
+      if (currency === "BRL") {
+        return `${currencySymbol} ${(cents / 100).toFixed(2).replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}`;
+      } else if (currency === "EUR") {
+        return `${currencySymbol}${(cents / 100).toFixed(2).replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.")}`;
+      } else {
+        return `${currencySymbol}${(cents / 100).toFixed(2).replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")}`;
+      }
+    };
 
     // Calculate statistics
     const last3Months = new Date();
@@ -102,36 +119,97 @@ export const aiInsightsRouter = router({
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5);
 
-    // Prepare prompt for AI
-    const prompt = `Analyze this financial data and provide insights:
+    // Translate based on language
+    const translations = {
+      en: {
+        title: "Your Financial Forecast",
+        systemPrompt: "You are a professional financial advisor. Provide clear, actionable advice based on user data. Be encouraging but honest about areas for improvement. Keep responses concise and under 300 words.",
+        prompt: `Analyze this financial data and provide a brief forecast:
 
-Income (last 3 months): $${(totalIncome / 100).toFixed(2)}
-Expenses (last 3 months): $${(totalExpenses / 100).toFixed(2)}
-Monthly Average Income: $${(avgMonthlyIncome / 100).toFixed(2)}
-Monthly Average Expenses: $${(avgMonthlyExpense / 100).toFixed(2)}
-Monthly Savings: $${(monthlySavings / 100).toFixed(2)}
+Income (last 3 months): ${formatMoney(totalIncome)}
+Expenses (last 3 months): ${formatMoney(totalExpenses)}
+Monthly Average Income: ${formatMoney(avgMonthlyIncome)}
+Monthly Average Expenses: ${formatMoney(avgMonthlyExpense)}
+Monthly Savings: ${formatMoney(monthlySavings)}
 
 Top Spending Categories:
-${categorySpending.map(c => `- ${c.name}: $${(c.amount / 100).toFixed(2)} (${c.percentage.toFixed(1)}%)`).join('\n')}
+${categorySpending.map(c => `- ${c.name}: ${formatMoney(c.amount)} (${c.percentage.toFixed(1)}%)`).join('\n')}
 
 Active Goals:
-${goals.map(g => `- ${g.name}: $${(g.currentAmount / 100).toFixed(2)} / $${(g.targetAmount / 100).toFixed(2)} (${((g.currentAmount / g.targetAmount) * 100).toFixed(1)}%)`).join('\n')}
+${goals.map(g => `- ${g.name}: ${formatMoney(g.currentAmount)} / ${formatMoney(g.targetAmount)} (${((g.currentAmount / g.targetAmount) * 100).toFixed(1)}%)`).join('\n')}
 
-Provide:
-1. Financial health assessment (1-2 sentences)
-2. Spending pattern analysis (1-2 sentences)
-3. Goal achievement forecast (when will they reach their goals at current pace)
-4. 3 specific, actionable recommendations to improve finances
-5. Projected annual savings at current rate
+Provide in ENGLISH:
+1. **Financial Health Assessment:** (1 sentence)
+2. **Spending Pattern Analysis:** (1 sentence)  
+3. **Goal Achievement Forecast:** When will they reach goals at current pace?
+4. **Actionable Recommendations:** 3 specific actions with numbers
+5. **Projected Annual Savings:** At current rate
 
-Keep it concise, encouraging, and actionable. Use dollar amounts and percentages.`;
+Keep it concise (<300 words), encouraging, actionable. Use ${currency} amounts.`,
+      },
+      pt: {
+        title: "Sua Previsão Financeira",
+        systemPrompt: "Você é um consultor financeiro profissional. Forneça conselhos claros e acionáveis baseados nos dados do usuário. Seja encorajador mas honesto sobre áreas para melhorar. Mantenha respostas concisas com menos de 300 palavras.",
+        prompt: `Analise estes dados financeiros e forneça uma previsão breve:
+
+Receita (últimos 3 meses): ${formatMoney(totalIncome)}
+Despesas (últimos 3 meses): ${formatMoney(totalExpenses)}
+Média Mensal de Receita: ${formatMoney(avgMonthlyIncome)}
+Média Mensal de Despesas: ${formatMoney(avgMonthlyExpense)}
+Poupança Mensal: ${formatMoney(monthlySavings)}
+
+Principais Categorias de Gastos:
+${categorySpending.map(c => `- ${c.name}: ${formatMoney(c.amount)} (${c.percentage.toFixed(1)}%)`).join('\n')}
+
+Metas Ativas:
+${goals.map(g => `- ${g.name}: ${formatMoney(g.currentAmount)} / ${formatMoney(g.targetAmount)} (${((g.currentAmount / g.targetAmount) * 100).toFixed(1)}%)`).join('\n')}
+
+Forneça em PORTUGUÊS:
+1. **Avaliação de Saúde Financeira:** (1 frase)
+2. **Análise de Padrões de Gastos:** (1 frase)
+3. **Previsão de Conquista de Metas:** Quando atingirão as metas no ritmo atual? (IMPORTANTE: conte meses corretamente - de Novembro 2025 até meta)
+4. **Recomendações Acionáveis:** 3 ações específicas com números
+5. **Projeção de Poupança Anual:** No ritmo atual
+
+Mantenha conciso (<300 palavras), encorajador, acionável. Use valores em ${currency}.`,
+      },
+      es: {
+        title: "Tu Pronóstico Financiero",
+        systemPrompt: "Eres un asesor financiero profesional. Proporciona consejos claros y accionables basados en los datos del usuario. Sé alentador pero honesto sobre áreas para mejorar. Mantén respuestas concisas con menos de 300 palabras.",
+        prompt: `Analiza estos datos financieros y proporciona un pronóstico breve:
+
+Ingresos (últimos 3 meses): ${formatMoney(totalIncome)}
+Gastos (últimos 3 meses): ${formatMoney(totalExpenses)}
+Promedio Mensual de Ingresos: ${formatMoney(avgMonthlyIncome)}
+Promedio Mensual de Gastos: ${formatMoney(avgMonthlyExpense)}
+Ahorros Mensuales: ${formatMoney(monthlySavings)}
+
+Principales Categorías de Gastos:
+${categorySpending.map(c => `- ${c.name}: ${formatMoney(c.amount)} (${c.percentage.toFixed(1)}%)`).join('\n')}
+
+Metas Activas:
+${goals.map(g => `- ${g.name}: ${formatMoney(g.currentAmount)} / ${formatMoney(g.targetAmount)} (${((g.currentAmount / g.targetAmount) * 100).toFixed(1)}%)`).join('\n')}
+
+Proporciona en ESPAÑOL:
+1. **Evaluación de Salud Financiera:** (1 oración)
+2. **Análisis de Patrones de Gastos:** (1 oración)
+3. **Pronóstico de Logro de Metas:** ¿Cuándo alcanzarán las metas al ritmo actual?
+4. **Recomendaciones Accionables:** 3 acciones específicas con números
+5. **Proyección de Ahorros Anuales:** Al ritmo actual
+
+Mantén conciso (<300 palabras), alentador, accionable. Usa valores en ${currency}.`,
+      },
+    };
+
+    const lang = (language === "pt" || language === "es") ? language : "en";
+    const { title, systemPrompt, prompt } = translations[lang];
 
     try {
       const aiResponse = await invokeLLM({
         messages: [
           {
             role: "system",
-            content: "You are a professional financial advisor. Provide clear, actionable advice based on user data. Be encouraging but honest about areas for improvement.",
+            content: systemPrompt,
           },
           {
             role: "user",
@@ -162,7 +240,7 @@ Keep it concise, encouraging, and actionable. Use dollar amounts and percentages
       const insight = await db.createAIInsight({
         userId: ctx.user.id,
         type: "forecast",
-        title: "Your Financial Forecast",
+        title: title,
         message,
         data: JSON.stringify({
           avgMonthlyIncome: avgMonthlyIncome / 100,
