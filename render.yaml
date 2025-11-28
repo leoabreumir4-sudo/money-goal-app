@@ -8,8 +8,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: MIGRATE
-        value: "1"
       # Add your other env vars from Render dashboard here
       - key: DATABASE_URL
         sync: false
