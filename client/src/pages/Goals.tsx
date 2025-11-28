@@ -25,9 +25,7 @@ export default function GoalsPage() {
     targetDate: "",
   });
 
-  const { data: activeGoals, isLoading } = trpc.goals.getActive.useQuery();
-  const { data: savingsGoals } = trpc.goals.getSavings.useQuery();
-  const { data: emergencyFund } = trpc.goals.getEmergencyFund.useQuery();
+  const { data: activeGoals, isLoading } = trpc.goals.getAll.useQuery();
   const { data: archivedGoals } = trpc.goals.getArchived.useQuery();
 
   const createGoal = trpc.goals.create.useMutation({
@@ -102,7 +100,10 @@ export default function GoalsPage() {
     );
   }
 
-  const allActiveGoals = [activeGoals, ...(savingsGoals || []), emergencyFund].filter(Boolean);
+  const allActiveGoals = activeGoals?.filter(g => g.status === 'active') || [];
+  const emergencyFund = allActiveGoals.find(g => g.goalType === 'emergency');
+  const savingsGoals = allActiveGoals.filter(g => g.goalType === 'savings');
+  const generalGoals = allActiveGoals.filter(g => g.goalType === 'general');
 
   return (
     <DashboardLayout>
@@ -240,6 +241,59 @@ export default function GoalsPage() {
       {/* Active Goals Grid */}
       <div className="grid gap-4 md:grid-cols-2">
         {savingsGoals?.map((goal) => {
+          const percentage = (goal.currentAmount / goal.targetAmount) * 100;
+          
+          return (
+            <Card key={goal.id} className={getGoalColor(goal.goalType)}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    {getGoalIcon(goal.goalType)}
+                    <div>
+                      <CardTitle className="text-lg">{goal.name}</CardTitle>
+                      <CardDescription className="capitalize">{goal.goalType} Goal</CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Badge variant="outline">P{goal.priority}</Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => archiveGoal(goal.id)}
+                    >
+                      <Archive className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="font-semibold">
+                      ${(goal.currentAmount / 100).toFixed(2)} / ${(goal.targetAmount / 100).toFixed(2)}
+                    </span>
+                  </div>
+                  <Progress value={percentage} className="h-2" />
+                  <p className="text-xs text-muted-foreground">{percentage.toFixed(1)}% complete</p>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  {goal.monthlyContribution && (
+                    <span className="text-muted-foreground">
+                      Monthly: ${(goal.monthlyContribution / 100).toFixed(2)}
+                    </span>
+                  )}
+                  {goal.targetDate && (
+                    <span className="text-muted-foreground">
+                      {format(new Date(goal.targetDate), "MMM yyyy")}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+        {generalGoals?.map((goal) => {
           const percentage = (goal.currentAmount / goal.targetAmount) * 100;
           
           return (
