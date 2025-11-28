@@ -224,9 +224,8 @@ export default function InsightsPage() {
               </div>
               <div className="space-y-2 flex-1">
                 <h3 className="font-semibold text-yellow-700 dark:text-yellow-400">Getting Started with AI Insights</h3>
-                <p className="text-sm text-muted-foreground">
-                  You have <span className="font-semibold">{dataAvailability.transactionCount}</span> transactions. 
-                  Add <span className="font-semibold">{5 - dataAvailability.transactionCount}</span> more to unlock AI-powered forecasts!
+                <p className="text-sm text-muted-foreground mb-3">
+                  You have <span className="font-semibold">{dataAvailability.transactionCount}</span> transactions. Here's what you need to unlock all features:
                 </p>
                 <div className="space-y-1">
                   {dataAvailability.recommendations.map((rec, idx) => (
