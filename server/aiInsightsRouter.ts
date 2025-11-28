@@ -4,6 +4,27 @@ import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
 
 export const aiInsightsRouter = router({
+  // Check if user has enough data for AI insights
+  checkDataAvailability: protectedProcedure.query(async ({ ctx }) => {
+    const transactions = await db.getAllTransactionsByUserId(ctx.user.id);
+    const goals = await db.getActiveGoals(ctx.user.id);
+    
+    return {
+      hasMinTransactions: transactions.length >= 5,
+      transactionCount: transactions.length,
+      hasGoals: goals.length > 0,
+      goalCount: goals.length,
+      canGenerateForecast: transactions.length >= 5,
+      canGenerateAlerts: transactions.length >= 3,
+      canGenerateAchievements: goals.length > 0,
+      recommendations: [
+        ...(transactions.length < 5 ? [`Add ${5 - transactions.length} more transactions to unlock AI forecasts`] : []),
+        ...(goals.length === 0 ? ["Create your first financial goal to track progress"] : []),
+        ...(transactions.length < 3 ? ["Add more transactions to get spending alerts"] : []),
+      ]
+    };
+  }),
+
   // Get all insights
   getAll: protectedProcedure
     .input(z.object({
@@ -43,7 +64,7 @@ export const aiInsightsRouter = router({
     const categories = await db.getAllCategories(ctx.user.id);
     
     if (transactions.length < 5) {
-      throw new Error("Need at least 5 transactions to generate meaningful forecasts");
+      throw new Error(`Insufficient data: You have ${transactions.length} transactions, but need at least 5 to generate meaningful forecasts. Add ${5 - transactions.length} more transactions first!`);
     }
 
     // Calculate statistics
