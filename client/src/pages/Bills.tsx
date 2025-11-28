@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Check, Calendar, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, differenceInDays } from "date-fns";
+import DashboardLayout from "@/components/DashboardLayout";
 
 export default function BillsPage() {
   const queryClient = useQueryClient();
@@ -79,16 +80,19 @@ export default function BillsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6 flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
-      </div>
+      <DashboardLayout>
+        <div className="container mx-auto p-6 flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+        </div>
+      </DashboardLayout>
     );
   }
 
   const activeBills = bills?.filter(b => b.isActive) || [];
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <DashboardLayout>
+      <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Bill Reminders</h1>
@@ -295,5 +299,6 @@ export default function BillsPage() {
         </Card>
       )}
     </div>
+    </DashboardLayout>
   );
 }
