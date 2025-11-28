@@ -4,9 +4,10 @@ import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "./_core/llm";
 import * as db from "./db";
 import { ENV } from "./_core/env";
+import type { Twilio } from "twilio";
 
 // Initialize Twilio only if credentials are available
-let twilioClient: any = null;
+let twilioClient: Twilio | null = null;
 
 async function initTwilio() {
   if (ENV.twilioAccountSid && ENV.twilioAuthToken) {
@@ -40,11 +41,12 @@ async function sendWhatsApp(to: string, message: string) {
       body: message,
     });
     console.log("[WhatsApp] Message sent successfully:", result.sid);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; code?: string; status?: number };
     console.error("[WhatsApp] Error sending message:", {
-      error: error.message,
-      code: error.code,
-      status: error.status,
+      error: err.message,
+      code: err.code,
+      status: err.status,
     });
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",

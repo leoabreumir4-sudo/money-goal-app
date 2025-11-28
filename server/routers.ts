@@ -1,6 +1,7 @@
 // /home/ubuntu/money-goal-app/server/routers.ts
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { invokeLLM } from "./_core/llm";
@@ -22,18 +23,7 @@ export const appRouter = router({
   chat: chatRouter, // AI Financial Advisor
   whatsapp: whatsappRouter, // WhatsApp integration
 
-  // TEMPORARY: Delete all users (REMOVE AFTER USE!)
-  _dangerDeleteAllUsers: publicProcedure.mutation(async () => {
-    const dbInstance = await db.getDb();
-    if (!dbInstance) throw new Error("Database not available");
-    
-    const { users } = await import("../drizzle/schema");
-    await dbInstance.delete(users);
-    
-    return { success: true, message: "All users deleted" };
-  }),
-
-  // Manter a rota de logout aqui por enquanto
+  // Logout procedure
   logout: publicProcedure.mutation(() => {
     // REMOVED: Cookie clearing logic. Client is now responsible for clearing localStorage.
     return {
@@ -45,8 +35,8 @@ export const appRouter = router({
   goals: router({
     create: protectedProcedure
       .input(z.object({
-        name: z.string(),
-        targetAmount: z.number(),
+        name: z.string().min(1, "Name is required").max(255, "Name too long"),
+        targetAmount: z.number().int().positive("Target amount must be positive"),
       }))
       .mutation(async ({ ctx, input }) => {
         await db.createGoal({
@@ -161,15 +151,24 @@ export const appRouter = router({
 
     create: protectedProcedure
       .input(z.object({
-        goalId: z.number(),
-        categoryId: z.number().optional(),
+        goalId: z.number().int().positive(),
+        categoryId: z.number().int().positive().optional(),
         type: z.enum(["income", "expense"]),
-        amount: z.number(),
-        reason: z.string(),
-        currency: z.string().optional(),
+        amount: z.number().int().positive("Amount must be positive"),
+        reason: z.string().min(1, "Reason is required").max(255, "Reason too long"),
+        currency: z.string().length(3, "Currency must be 3 characters (e.g., USD)").optional(),
         exchangeRate: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Validate goal exists and belongs to user
+        const goal = await db.getGoalById(input.goalId, ctx.user.id);
+        if (!goal) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Goal not found",
+          });
+        }
+
         // Auto-categorize if no categoryId provided
         let categoryId = input.categoryId;
         if (!categoryId) {
@@ -191,16 +190,13 @@ export const appRouter = router({
         });
         
         // Update goal's currentAmount
-        const goal = await db.getGoalById(input.goalId, ctx.user.id);
-        if (goal) {
-          const newAmount = input.type === "income" 
+        const newAmount = input.type === "income" 
             ? goal.currentAmount + input.amount
             : goal.currentAmount - input.amount;
           
           await db.updateGoal(input.goalId, ctx.user.id, {
             currentAmount: Math.max(0, newAmount), // Prevent negative amounts
           });
-        }
         
         return { success: true };
       }),
@@ -502,25 +498,41 @@ export const appRouter = router({
 
     togglePaid: protectedProcedure
       .input(z.object({
-        month: z.number(),
-        year: z.number(),
-        totalAmount: z.number(),
+        month: z.number().int().min(1).max(12, "Month must be between 1 and 12"),
+        year: z.number().int().min(2000).max(2100, "Year must be between 2000 and 2100"),
+        totalAmount: z.number().int().positive("Total amount must be positive"),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Check for existing payment (idempotency)
         const payments = await db.getMonthlyPaymentsByUserId(ctx.user.id);
         const existingPayment = payments.find(p => p.month === input.month && p.year === input.year);
 
         if (existingPayment) {
-          // Delete payment and transaction
+          // Unmark as paid: Delete payment and transaction
           if (existingPayment.transactionId) {
-            await db.deleteTransaction(existingPayment.transactionId, ctx.user.id);
+            try {
+              await db.deleteTransaction(existingPayment.transactionId, ctx.user.id);
+            } catch (error) {
+              // Transaction might already be deleted, log but continue
+              console.error("[MonthlyPayments] Transaction already deleted:", error);
+            }
           }
           await db.deleteMonthlyPayment(existingPayment.id, ctx.user.id);
           return { isPaid: false };
         } else {
+          // Mark as paid: Get active goal first
+          const activeGoal = await db.getActiveGoal(ctx.user.id);
+          if (!activeGoal) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "No active goal found. Please create a goal first.",
+            });
+          }
+
           // Create transaction first
           const transaction = await db.createTransaction({
             userId: ctx.user.id,
+            goalId: activeGoal.id,
             type: 'income',
             amount: input.totalAmount,
             reason: `AQWorlds Payment - ${input.month}/${input.year}`,

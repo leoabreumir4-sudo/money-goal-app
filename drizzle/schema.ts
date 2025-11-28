@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, text, timestamp, varchar, integer, boolean, serial, uuid } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, timestamp, varchar, integer, boolean, serial, uuid, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // Enums
@@ -42,7 +42,11 @@ export const goals = pgTable("goals", {
   createdDate: timestamp("createdDate").defaultNow().notNull(),
   archivedDate: timestamp("archivedDate"),
   completedDate: timestamp("completedDate"),
-});
+}, (table) => ({
+  userIdIdx: index("goals_userId_idx").on(table.userId),
+  statusIdx: index("goals_status_idx").on(table.status),
+  userStatusIdx: index("goals_userId_status_idx").on(table.userId, table.status),
+}));
 
 export type Goal = typeof goals.$inferSelect;
 export type InsertGoal = typeof goals.$inferInsert;
@@ -59,7 +63,10 @@ export const categories = pgTable("categories", {
   keywords: text("keywords").array(), // Array of keywords for auto-categorization
   isDefault: boolean("isDefault").default(false).notNull(), // System default categories
   createdDate: timestamp("createdDate").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("categories_userId_idx").on(table.userId),
+  isDefaultIdx: index("categories_isDefault_idx").on(table.isDefault),
+}));
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = typeof categories.$inferInsert;
@@ -79,7 +86,13 @@ export const transactions = pgTable("transactions", {
   currency: varchar("currency", { length: 3 }).default("USD"), // ISO currency code (USD, BRL, EUR, etc.)
   exchangeRate: text("exchangeRate"), // Exchange rate at time of transaction (for historical accuracy)
   createdDate: timestamp("createdDate").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("transactions_userId_idx").on(table.userId),
+  goalIdIdx: index("transactions_goalId_idx").on(table.goalId),
+  categoryIdIdx: index("transactions_categoryId_idx").on(table.categoryId),
+  userGoalIdx: index("transactions_userId_goalId_idx").on(table.userId, table.goalId),
+  createdDateIdx: index("transactions_createdDate_idx").on(table.createdDate),
+}));
 
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = typeof transactions.$inferInsert;
@@ -136,7 +149,11 @@ export const projects = pgTable("projects", {
   year: integer("year").notNull(),
   isPaid: boolean("isPaid").notNull().default(false),
   createdDate: timestamp("createdDate").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("projects_userId_idx").on(table.userId),
+  monthYearIdx: index("projects_month_year_idx").on(table.month, table.year),
+  userMonthYearIdx: index("projects_userId_month_year_idx").on(table.userId, table.month, table.year),
+}));
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
@@ -153,7 +170,11 @@ export const events = pgTable("events", {
   isDefault: integer("isDefault").default(0).notNull(), // 0 = custom, 1 = default event
   sortOrder: integer("sortOrder").default(0).notNull(), // For custom ordering via drag & drop
   createdDate: timestamp("createdDate").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdIdx: index("events_userId_idx").on(table.userId),
+  monthIdx: index("events_month_idx").on(table.month),
+  userMonthIdx: index("events_userId_month_idx").on(table.userId, table.month),
+}));
 
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = typeof events.$inferInsert;

@@ -307,7 +307,21 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     });
   }
 
-  const payload: any = {
+  interface GoogleAIPayload {
+    contents: Array<{
+      role: string;
+      parts: Array<{ text: string }>;
+    }>;
+    generationConfig: {
+      maxOutputTokens: number;
+      temperature: number;
+    };
+    tools?: Array<{
+      google_search_retrieval: Record<string, never>;
+    }>;
+  }
+
+  const payload: GoogleAIPayload = {
     contents,
     generationConfig: {
       maxOutputTokens: params.maxTokens || params.max_tokens || 2048,

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import { createServer } from "http";
 import net from "net";
 import fs from "fs";
@@ -47,6 +48,28 @@ async function startServer() {
   // Body parsers
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Rate limiting - protect against brute force attacks
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per windowMs
+    message: { error: "Too many authentication attempts, please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  const apiLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 100, // Limit each IP to 100 requests per minute
+    message: { error: "Too many requests, please slow down." },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Apply rate limiting to auth routes
+  app.use("/api/trpc/auth.register", authLimiter);
+  app.use("/api/trpc/auth.login", authLimiter);
+  app.use("/api/trpc", apiLimiter);
 
   /**
    * CORS configuration
