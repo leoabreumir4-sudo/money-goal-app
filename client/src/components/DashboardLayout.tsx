@@ -117,9 +117,7 @@ function DashboardLayoutContent({
     if (path === "/" || path === "/spending" || path === "/analytics") {
       utils.goals.getActive.prefetch();
     }
-    if (path === "/spending") {
-      utils.recurringExpenses.getAll.prefetch();
-    }
+    // Spending page prefetching handled in the page component
     if (path === "/goals") {
       utils.goals.getSavings.prefetch();
       utils.goals.getEmergencyFund.prefetch();

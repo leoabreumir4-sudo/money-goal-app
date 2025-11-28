@@ -235,10 +235,9 @@ async function buildUserFinancialContext(userId: string, userName?: string | nul
   if (!dbInstance) throw new Error("Database not available");
 
   // Get all user data in parallel
-  const [transactions, goals, recurringExpenses, categories, settings] = await Promise.all([
+  const [transactions, goals, categories, settings] = await Promise.all([
     db.getAllTransactionsByUserId(userId),
     db.getGoalsByUserId(userId),
-    db.getRecurringExpensesByUserId(userId),
     db.getCategoriesByUserId(userId),
     db.getUserSettings(userId),
   ]);
@@ -363,7 +362,7 @@ async function buildUserFinancialContext(userId: string, userName?: string | nul
   );
 
   // Recurring expenses
-  const activeRecurring = recurringExpenses.filter((e: any) => e.isActive !== false);
+  // Recurring expenses functionality removed
   const totalMonthlyRecurring = activeRecurring.reduce((sum: number, e: any) => {
     const monthlyAmount = e.frequency === 'monthly' ? e.amount :
                          e.frequency === 'yearly' ? e.amount / 12 :
@@ -464,21 +463,8 @@ async function buildUserFinancialContext(userId: string, userName?: string | nul
       total: formatMoney(cat.total),
     })),
     
-    // Recurring Commitments
-    recurringExpenses: activeRecurring.map((e: any) => {
-      const category = categories.find((c: any) => c.id === e.categoryId);
-      const monthlyAmount = e.frequency === 'monthly' ? e.amount :
-                           e.frequency === 'yearly' ? e.amount / 12 :
-                           e.frequency === 'weekly' ? e.amount * 4.33 :
-                           e.frequency === 'daily' ? e.amount * 30 : e.amount;
-      return {
-        name: e.name,
-        category: category?.name || "Other",
-        amount: formatMoney(monthlyAmount),
-        frequency: e.frequency,
-        currency: e.currency || "USD",
-      };
-    }),
+    // Recurring expenses functionality removed - now using Bills instead
+    bills: [], // Bills system handles recurring commitments now
     totalMonthlyRecurring: formatMoney(totalMonthlyRecurring),
     
     // Transaction count
@@ -578,10 +564,8 @@ export const chatRouter = router({
       prompts.push(`Is my spending on ${topCategory.name} normal?`);
     }
     
-    // Recurring expenses prompts
-    if (financialContext.recurringExpenses.length > 0) {
-      prompts.push("Should I cancel any subscriptions?");
-    }
+    // Bills-related prompts (replaces recurring expenses)
+    prompts.push("How can I optimize my monthly bills?");
     
     // Savings rate prompts
     if (financialContext.savingsRateRaw < 20) {

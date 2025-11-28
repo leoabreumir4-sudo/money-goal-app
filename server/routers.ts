@@ -327,54 +327,7 @@ export const appRouter = router({
       }),
   }),
 
-  // Recurring Expenses
-  recurringExpenses: router({
-    getAll: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getRecurringExpensesByUserId(ctx.user.id);
-    }),
-
-    create: protectedProcedure
-      .input(z.object({
-        categoryId: z.number(),
-        name: z.string(),
-        amount: z.number(),
-        currency: z.string().optional(),
-        frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
-        isActive: z.boolean().optional(),
-        dayOfMonth: z.number().min(1).max(31).optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await db.createRecurringExpense({
-          userId: ctx.user.id,
-          ...input,
-        });
-        return { success: true };
-      }),
-
-    update: protectedProcedure
-      .input(z.object({
-        id: z.number(),
-        categoryId: z.number().optional(),
-        name: z.string().optional(),
-        amount: z.number().optional(),
-        currency: z.string().optional(),
-        frequency: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
-        isActive: z.boolean().optional(),
-        dayOfMonth: z.number().min(1).max(31).optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const { id, ...data } = input;
-        await db.updateRecurringExpense(id, ctx.user.id, data);
-        return { success: true };
-      }),
-
-    delete: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        await db.deleteRecurringExpense(input.id, ctx.user.id);
-        return { success: true };
-      }),
-  }),
+  // Recurring Expenses functionality removed - now using Bills instead
 
   // Projects (AQWorlds)
   projects: router({

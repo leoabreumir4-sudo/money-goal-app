@@ -15,7 +15,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } fro
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
-import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 
 const COLORS = ['#3b82f6', '#22c55e', '#14b8a6', '#ec4899', '#8b5cf6', '#f59e0b', '#06b6d4', '#f97316'];
 
@@ -43,12 +42,7 @@ const convertToPreferredCurrency = (amount: number, fromCurrency: string, toCurr
 export default function Spending() {
   const { preferences } = usePreferences();
   const [selectedPeriod, setSelectedPeriod] = useState("This Month");
-  const [recurringDayOfMonth, setRecurringDayOfMonth] = useState(1);
-  const [recurringCategoryId, setRecurringCategoryId] = useState<number>(1);
-  const [recurringCurrency, setRecurringCurrency] = useState("USD");
-  const [recurringIsActive, setRecurringIsActive] = useState(true);
   const [filterType, setFilterType] = useState("All");
-  const [showOnlyRecurring, setShowOnlyRecurring] = useState(false);
   
   // Category details modal
   const [isCategoryDetailsOpen, setIsCategoryDetailsOpen] = useState(false);
@@ -74,111 +68,6 @@ export default function Spending() {
       return true;
     });
   }, [categoriesRaw]);
-
-  const createRecurringMutation = trpc.recurringExpenses.create.useMutation({
-    onSuccess: () => {
-      utils.recurringExpenses.getAll.invalidate();
-      setIsAddRecurringModalOpen(false);
-      setRecurringName("");
-      recurringAmountInput.reset();
-      setRecurringFrequency("monthly");
-      setRecurringDayOfMonth(1);
-      setRecurringCategoryId(categories[0]?.id || 1);
-      setRecurringCurrency("USD");
-      setRecurringIsActive(true);
-      toast.success(t("recurringExpenseAdded", preferences.language));
-    },
-  });
-
-  const updateRecurringMutation = trpc.recurringExpenses.update.useMutation({
-    onSuccess: () => {
-      utils.recurringExpenses.getAll.invalidate();
-      setIsEditRecurringModalOpen(false);
-      setEditingRecurring(null);
-      setRecurringName("");
-      recurringAmountInput.reset();
-      setRecurringFrequency("monthly");
-      setRecurringDayOfMonth(1);
-      setRecurringCategoryId(categories[0]?.id || 1);
-      setRecurringCurrency("USD");
-      setRecurringIsActive(true);
-      toast.success("Recurring expense updated!");
-    },
-  });
-
-  const deleteRecurringMutation = trpc.recurringExpenses.delete.useMutation({
-    onSuccess: () => {
-      utils.recurringExpenses.getAll.invalidate();
-      toast.success(t("recurringExpenseDeleted", preferences.language));
-    },
-  });
-
-  const handleEditRecurring = (expense: any) => {
-    setEditingRecurring(expense);
-    setRecurringName(expense.name);
-    recurringAmountInput.setValue((expense.amount / 100).toString());
-    setRecurringFrequency(expense.frequency);
-    setRecurringDayOfMonth(expense.dayOfMonth || 1);
-    setRecurringCategoryId(expense.categoryId);
-    setRecurringCurrency(expense.currency || "USD");
-    setRecurringIsActive(expense.isActive ?? true);
-    setIsEditRecurringModalOpen(true);
-  };
-
-  const handleDeleteRecurring = () => {
-    if (editingRecurring && confirm(t("deleteRecurringConfirm", preferences.language))) {
-      deleteRecurringMutation.mutate({ id: editingRecurring.id });
-      setIsEditRecurringModalOpen(false);
-      setEditingRecurring(null);
-    }
-  };
-
-  const handleUpdateRecurring = () => {
-    const amount = Math.round(recurringAmountInput.getNumericValue() * 100);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error(t("pleaseEnterValidAmount", preferences.language));
-      return;
-    }
-    
-    if (!recurringName.trim()) {
-      toast.error(t("pleaseEnterName", preferences.language));
-      return;
-    }
-
-    updateRecurringMutation.mutate({
-      id: editingRecurring.id,
-      name: recurringName,
-      amount,
-      currency: recurringCurrency,
-      frequency: recurringFrequency,
-      dayOfMonth: recurringDayOfMonth,
-      categoryId: recurringCategoryId,
-      isActive: recurringIsActive,
-    });
-  };
-
-  const handleAddRecurring = () => {
-    const amount = Math.round(recurringAmountInput.getNumericValue() * 100);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error(t("pleaseEnterValidAmount", preferences.language));
-      return;
-    }
-    
-    if (!recurringName.trim()) {
-      toast.error(t("pleaseEnterName", preferences.language));
-      return;
-    }
-
-    createRecurringMutation.mutate({
-      categoryId: recurringCategoryId,
-      name: recurringName,
-      amount,
-      currency: recurringCurrency,
-      frequency: recurringFrequency,
-      dayOfMonth: recurringDayOfMonth,
-      isActive: recurringIsActive,
-    });
-  };
 
   const expenseTransactions = useMemo(() => {
     const now = new Date();
@@ -210,7 +99,7 @@ export default function Spending() {
 
   const totalSpending = useMemo(() => {
     // Convert all transactions to user's preferred currency
-    const transactionsTotal = expenseTransactions.reduce((sum, t) => {
+    return expenseTransactions.reduce((sum, t) => {
       const convertedAmount = convertToPreferredCurrency(
         t.amount,
         t.currency || "USD",
@@ -219,696 +108,290 @@ export default function Spending() {
       );
       return sum + convertedAmount;
     }, 0);
-    
-    // Add monthly recurring to total (only active ones, already in user's preferred currency)
-    const recurringTotal = recurringExpenses
-      .filter(expense => expense.isActive !== false)
-      .reduce((sum, expense) => {
-        const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
-                            expense.frequency === 'yearly' ? expense.amount / 12 :
-                            expense.frequency === 'weekly' ? expense.amount * 4.33 :
-                            expense.frequency === 'daily' ? expense.amount * 30 : 0;
-        return sum + monthlyAmount;
-      }, 0);
-    return transactionsTotal + recurringTotal;
-  }, [expenseTransactions, recurringExpenses, preferences.currency]);
+  }, [expenseTransactions, preferences.currency]);
 
-  // Calculate total monthly recurring expenses (only active ones)
-  const totalMonthlyRecurring = useMemo(() => {
-    return recurringExpenses
-      .filter(expense => expense.isActive !== false) // Include active expenses (undefined counts as active for backwards compatibility)
-      .reduce((sum, expense) => {
-        // Convert all to monthly amount
-        const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
-                            expense.frequency === 'yearly' ? expense.amount / 12 :
-                            expense.frequency === 'weekly' ? expense.amount * 4.33 :
-                            expense.frequency === 'daily' ? expense.amount * 30 : 0;
-        
-        // Convert to user's preferred currency
-        const convertedAmount = convertToPreferredCurrency(
-          monthlyAmount,
-          expense.currency || "USD",
-          preferences.currency || "USD",
-          null
-        );
-        
-        return sum + convertedAmount;
-      }, 0);
-  }, [recurringExpenses, preferences.currency]);
-
-  // Group expenses by category (using real categories from database)
   const expensesByCategory = useMemo(() => {
     const grouped: Record<number, { name: string; value: number; emoji: string; color: string }> = {};
     
-    // Add real transactions if not filtering to only recurring
-    if (!showOnlyRecurring) {
-      expenseTransactions.forEach(t => {
-        const category = categories.find(c => c.id === t.categoryId);
-        // Use actual categoryId from transaction, or find "Other" category as fallback
-        const categoryId = t.categoryId || categories.find(c => c.name === "Other")?.id || 0;
-        const categoryName = category?.name || "Other";
-        const categoryEmoji = category?.emoji || "📦";
-        const categoryColor = category?.color || "#94a3b8";
-        
-        // Convert to user's preferred currency
-        const convertedAmount = convertToPreferredCurrency(
-          t.amount,
-          t.currency || "USD",
-          preferences.currency || "USD",
-          t.exchangeRate
-        );
-        
-        if (!grouped[categoryId]) {
-          grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
-        }
-        grouped[categoryId].value += convertedAmount;
-      });
-    }
+    expenseTransactions.forEach(t => {
+      const category = categories.find(c => c.id === t.categoryId);
+      // Use actual categoryId from transaction, or find "Other" category as fallback
+      const categoryId = t.categoryId || categories.find(c => c.name === "Other")?.id || 0;
+      const categoryName = category?.name || "Other";
+      const categoryEmoji = category?.emoji || "📦";
+      const categoryColor = category?.color || "#94a3b8";
+      
+      // Convert to user's preferred currency
+      const convertedAmount = convertToPreferredCurrency(
+        t.amount,
+        t.currency || "USD",
+        preferences.currency || "USD",
+        t.exchangeRate
+      );
+      
+      if (!grouped[categoryId]) {
+        grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
+      }
+      grouped[categoryId].value += convertedAmount;
+    });
     
-    // Add recurring expenses (converted to monthly, only active ones)
-    recurringExpenses
-      .filter(expense => expense.isActive !== false)
-      .forEach(expense => {
-        const monthlyAmount = expense.frequency === 'monthly' ? expense.amount :
-                            expense.frequency === 'yearly' ? expense.amount / 12 :
-                            expense.frequency === 'weekly' ? expense.amount * 4.33 :
-                            expense.frequency === 'daily' ? expense.amount * 30 : 0;
-        
-        const category = categories.find(c => c.id === expense.categoryId);
-        const categoryId = expense.categoryId;
-        const categoryName = category?.name || "Other";
-        const categoryEmoji = category?.emoji || "📦";
-        const categoryColor = category?.color || "#94a3b8";
-        
-        if (!grouped[categoryId]) {
-          grouped[categoryId] = { name: categoryName, value: 0, emoji: categoryEmoji, color: categoryColor };
-        }
-        grouped[categoryId].value += monthlyAmount;
-      });
-    
-    return Object.values(grouped)
+    return Object.entries(grouped)
+      .map(([id, data]) => ({ categoryId: Number(id), ...data }))
       .sort((a, b) => b.value - a.value);
-  }, [expenseTransactions, recurringExpenses, showOnlyRecurring, categories]);
+  }, [expenseTransactions, categories, preferences.currency]);
 
-  // Prepare data for pie chart
-  const pieChartData = useMemo(() => {
-    return expensesByCategory.map(item => ({
-      name: item.name,
-      value: item.value / 100, // Convert cents to dollars
-      color: item.color,
-    }));
-  }, [expensesByCategory]);
+  const chartData = expensesByCategory.map((category, index) => ({
+    name: category.name,
+    value: category.value,
+    emoji: category.emoji,
+    color: category.color || COLORS[index % COLORS.length],
+    categoryId: category.categoryId,
+  }));
 
-  // Get transactions for selected category
-  const categoryTransactions = useMemo(() => {
+  // Filter transactions by category for modal
+  const filteredTransactions = useMemo(() => {
     if (!selectedCategoryDetails) return [];
     
-    return expenseTransactions.filter(t => {
-      const category = categories.find(c => c.id === t.categoryId);
-      const categoryId = t.categoryId || categories.find(c => c.name === "Other")?.id || 0;
-      return categoryId === selectedCategoryDetails.categoryId;
-    }).sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
-  }, [expenseTransactions, selectedCategoryDetails, categories]);
+    return expenseTransactions.filter(t => t.categoryId === selectedCategoryDetails.categoryId);
+  }, [expenseTransactions, selectedCategoryDetails]);
 
-  const handleCategoryClick = (categoryName: string, categoryEmoji: string, categoryColor: string, categoryValue: number) => {
-    // Find the categoryId from expensesByCategory
-    const categoryData = expensesByCategory.find(c => c.name === categoryName);
-    if (!categoryData) return;
-    
-    // Find the actual category to get the ID
-    const category = categories.find(c => c.name === categoryName);
-    const categoryId = category?.id || categories.find(c => c.name === "Other")?.id || 0;
-    
-    setSelectedCategoryDetails({
-      name: categoryName,
-      emoji: categoryEmoji,
-      color: categoryColor,
-      value: categoryValue,
-      categoryId: categoryId,
-    });
-    setIsCategoryDetailsOpen(true);
+  const handleCategoryClick = (entry: any) => {
+    const category = expensesByCategory.find(c => c.name === entry.name);
+    if (category) {
+      setSelectedCategoryDetails(category);
+      setIsCategoryDetailsOpen(true);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold tracking-tight">Spending</h1>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-20" />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+            <Skeleton className="h-32" />
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-96" />
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-destructive to-destructive/80 rounded-xl shadow-lg">
-              <TrendingDown className="h-6 w-6 text-destructive-foreground" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">{t("spendingAnalysis", preferences.language)}</h1>
-              <p className="text-muted-foreground">{t("seeWhereMoney", preferences.language)}</p>
-            </div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            {t("spending", preferences.language)}
+          </h1>
+          <div className="flex gap-2">
+            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="This Month">{t("thisMonth", preferences.language)}</SelectItem>
+                <SelectItem value="Last Month">{t("lastMonth", preferences.language)}</SelectItem>
+                <SelectItem value="Last 3 Months">{t("last3Months", preferences.language)}</SelectItem>
+                <SelectItem value="This Year">{t("thisYear", preferences.language)}</SelectItem>
+                <SelectItem value="All Time">{t("allTime", preferences.language)}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Button onClick={() => setIsAddRecurringModalOpen(true)} className="bg-gradient-to-r from-destructive to-destructive/90 hover:shadow-lg hover:shadow-destructive/30 transition-all duration-300 flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            <span>{t("recurringExpense", preferences.language)}</span>
-          </Button>
         </div>
 
-        {/* Recurring Expenses Summary Card */}
-        {isLoading ? (
-          <Card className="bg-gradient-to-br from-destructive/15 via-destructive/10 to-destructive/5 border-destructive/30 shadow-lg shadow-destructive/5">
-            <CardContent className="py-6">
-              <div className="flex items-center justify-between h-full">
-                <div className="flex items-center gap-4">
-                  <Skeleton className="h-16 w-16 rounded-xl" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-5 w-48" />
-                    <Skeleton className="h-8 w-36" />
-                  </div>
-                </div>
-                <div className="text-right space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-32" />
-                </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="overflow-hidden relative bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-400/20 to-red-600/20 rounded-full -translate-y-16 translate-x-16" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-medium text-red-700 dark:text-red-300">
+                {t("totalSpending", preferences.language)}
+              </CardTitle>
+              <TrendingDown className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="text-2xl font-bold text-red-900 dark:text-red-100">
+                {formatCurrency(totalSpending / 100, preferences.currency)}
               </div>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                {selectedPeriod}
+              </p>
             </CardContent>
           </Card>
-        ) : recurringExpenses.length > 0 && (
-          <Card className="bg-gradient-to-br from-destructive/15 via-destructive/10 to-destructive/5 border-destructive/30 shadow-lg shadow-destructive/5 hover:shadow-xl hover:shadow-destructive/10 transition-all duration-300">
-            <CardContent className="py-6">
-              <div className="flex items-center justify-between h-full">
-                <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-xl bg-destructive/25 shadow-inner flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-7 w-7 text-destructive" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                      Total Monthly Recurring Expenses
-                    </p>
-                    <div className="text-4xl font-bold text-destructive leading-none">{formatCurrency(totalMonthlyRecurring, preferences.currency)}</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {recurringExpenses.length} {recurringExpenses.length === 1 ? 'expense' : 'expenses'}
-                  </p>
-                  <p className="text-lg font-bold text-foreground">
-                    Annual: {formatCurrency(totalMonthlyRecurring * 12, preferences.currency)}
-                  </p>
-                </div>
+
+          <Card className="overflow-hidden relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-blue-600/20 rounded-full -translate-y-16 translate-x-16" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                {t("categories", preferences.language)}
+              </CardTitle>
+              <BarChart3 className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                {expensesByCategory.length}
               </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                {t("activeCategories", preferences.language)}
+              </p>
             </CardContent>
           </Card>
-        )}
 
-        {/* Filters */}
-        <Card className="bg-gradient-to-br from-card to-card/80 border-border/50">
-          <CardContent className="py-3">
-            <div className="flex flex-wrap gap-2 items-center">
-              <div className="flex gap-2 items-center">
-                <Button
-                  variant={filterType === "All" ? "default" : "outline"}
-                  onClick={() => setFilterType("All")}
-                  size="sm"
-                >
-                  {t("all", preferences.language)}
-                </Button>
-                <Button
-                  variant={filterType === "By Category" ? "default" : "outline"}
-                  onClick={() => setFilterType("By Category")}
-                  size="sm"
-                >
-                  {t("byCategory", preferences.language)}
-                </Button>
-                <Button
-                  variant={filterType === "Fixed vs Variable" ? "default" : "outline"}
-                  onClick={() => setFilterType("Fixed vs Variable")}
-                  size="sm"
-                >
-                  {t("fixedVsVariable", preferences.language)}
-                </Button>
+          <Card className="overflow-hidden relative bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-full -translate-y-16 translate-x-16" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">
+                {t("avgPerCategory", preferences.language)}
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <div className="text-2xl font-bold text-green-900 dark:text-green-100">
+                {expensesByCategory.length > 0 
+                  ? formatCurrency((totalSpending / expensesByCategory.length) / 100, preferences.currency)
+                  : formatCurrency(0, preferences.currency)
+                }
               </div>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                {t("averageSpending", preferences.language)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="This Month">{t("thisMonth", preferences.language)}</SelectItem>
-                  <SelectItem value="Last Month">{t("lastMonth", preferences.language)}</SelectItem>
-                  <SelectItem value="Last 3 Months">{t("last3Months", preferences.language)}</SelectItem>
-                  <SelectItem value="This Year">{t("thisYear", preferences.language)}</SelectItem>
-                  <SelectItem value="All Time">All Time</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant={showOnlyRecurring ? "default" : "outline"}
-                onClick={() => setShowOnlyRecurring(!showOnlyRecurring)}
-                size="sm"
-              >
-                {t("showOnlyRecurring", preferences.language)}
-              </Button>
-            </div>
+        {/* Spending by Category Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              {t("spendingByCategory", preferences.language)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {chartData.length > 0 ? (
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={160}
+                      paddingAngle={5}
+                      dataKey="value"
+                      onClick={handleCategoryClick}
+                      className="cursor-pointer"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color}
+                          className="hover:opacity-80 transition-opacity"
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [
+                        formatCurrency(value / 100, preferences.currency), 
+                        t("amount", preferences.language)
+                      ]}
+                      labelFormatter={(label) => `${chartData.find(d => d.name === label)?.emoji} ${label}`}
+                    />
+                    <Legend 
+                      formatter={(value) => {
+                        const item = chartData.find(d => d.name === value);
+                        return `${item?.emoji} ${value}`;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-96 flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>{t("noDataAvailable", preferences.language)}</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Spending Distribution (Pie Chart) */}
-          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <div className="p-2.5 bg-gradient-to-br from-purple-500/20 to-purple-500/10 rounded-xl shadow-sm">
-                  <BarChart3 className="h-5 w-5 text-purple-500" />
-                </div>
-                <CardTitle className="text-foreground">{t("spendingDistribution", preferences.language)}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {pieChartData.length === 0 ? (
-                <div className="h-80 flex items-center justify-center text-muted-foreground">
-                  {t("noSpendingData", preferences.language)}
-                </div>
-              ) : (
-                <div className="relative">
-                  <ResponsiveContainer width="100%" height={350}>
-                    <PieChart onMouseEnter={() => {}} onMouseMove={() => {}} onClick={() => {}}>
-                      <Pie
-                        data={pieChartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={90}
-                        outerRadius={130}
-                        fill="#8884d8"
-                        dataKey="value"
-                        strokeWidth={0}
-                        isAnimationActive={true}
-                        animationDuration={600}
-                      >
-                        {pieChartData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={entry.color || COLORS[index % COLORS.length]} 
-                            stroke="none"
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        wrapperStyle={{ zIndex: 10000 }}
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0];
-                            return (
-                              <div className="bg-background border-2 border-border rounded-lg p-3 shadow-xl">
-                                <p className="font-semibold text-sm mb-1" style={{ color: data.payload.fill }}>
-                                  {data.name}
-                                </p>
-                                <p className="text-lg font-bold text-foreground">
-                                  {formatCurrency(data.value as number, preferences.currency)}
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-center">
-                      <div className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">{t("totalSpending", preferences.language)}</div>
-                      <div className="text-3xl font-bold text-foreground">{formatCurrency(totalSpending, preferences.currency)}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* By Category */}
-          <Card className="bg-gradient-to-br from-card to-card/80 border-border/50 hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-xl shadow-sm">
-                  <TrendingDown className="h-5 w-5 text-blue-500" />
-                </div>
-                <CardTitle className="text-foreground">{t("byCategory", preferences.language)}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
-                {expensesByCategory.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    {t("noExpensesYet", preferences.language)}
-                  </div>
-                ) : (
-                  expensesByCategory.map((item, index) => {
-                    const percentage = totalSpending > 0 ? (item.value / totalSpending) * 100 : 0;
-                    const color = item.color || COLORS[index % COLORS.length];
-                    
-                    return (
-                      <div 
-                        key={item.name} 
-                        className="space-y-2 cursor-pointer hover:bg-gradient-to-r hover:from-secondary/40 hover:to-secondary/20 p-3 rounded-lg transition-all duration-200 hover:shadow-md border border-transparent hover:border-border/50"
-                        onClick={() => handleCategoryClick(item.name, item.emoji, color, item.value)}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-full flex-shrink-0" 
-                              style={{ backgroundColor: color }}
-                            />
-                            <span className="text-lg mr-1">{item.emoji}</span>
-                            <span className="font-medium text-sm">{item.name}</span>
-                          </div>
-                          <div className="text-right flex items-center gap-2">
-                            <span className="font-bold text-foreground">{formatCurrency(item.value, preferences.currency)}</span>
-                            <span className="text-xs text-muted-foreground">• {percentage.toFixed(1)}%</span>
-                          </div>
-                        </div>
-                        <div className="w-full bg-secondary/50 rounded-full h-2">
-                          <div
-                            className="h-2 rounded-full transition-all"
-                            style={{ 
-                              width: `${percentage}%`,
-                              backgroundColor: color
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-
-
-
-
-        {/* Add Recurring Expense Modal */}
-        <Dialog open={isAddRecurringModalOpen} onOpenChange={setIsAddRecurringModalOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("addRecurringExpenseTitle", preferences.language)}</DialogTitle>
-              <DialogDescription>
-                {t("addRecurringExpenseDesc", preferences.language)}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 px-6 pb-2">
-              <div className="space-y-2">
-                <Label htmlFor="recurringName">{t("name", preferences.language)}</Label>
-                <Input
-                  id="recurringName"
-                  value={recurringName}
-                  onChange={(e) => setRecurringName(e.target.value)}
-                  placeholder="e.g., Netflix, Gym Membership"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="recurringCategory">Category</Label>
-                <Select 
-                  value={recurringCategoryId.toString()} 
-                  onValueChange={(v) => setRecurringCategoryId(parseInt(v))}
-                >
-                  <SelectTrigger id="recurringCategory">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(category => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.emoji} {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="recurringAmount">{t("amount", preferences.language)}</Label>
-                <Input
-                  id="recurringAmount"
-                  type="text"
-                  inputMode="decimal"
-                  value={recurringAmountInput.displayValue}
-                  onChange={(e) => recurringAmountInput.handleChange(e.target.value)}
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="recurringCurrency">Currency</Label>
-                <Select value={recurringCurrency} onValueChange={setRecurringCurrency}>
-                  <SelectTrigger id="recurringCurrency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">🇺🇸 USD</SelectItem>
-                    <SelectItem value="BRL">🇧🇷 BRL</SelectItem>
-                    <SelectItem value="EUR">🇪🇺 EUR</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="recurringFrequency">{t("frequency", preferences.language)}</Label>
-                <Select value={recurringFrequency} onValueChange={(v: any) => setRecurringFrequency(v)}>
-                  <SelectTrigger id="recurringFrequency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">{t("daily", preferences.language)}</SelectItem>
-                    <SelectItem value="weekly">{t("weekly", preferences.language)}</SelectItem>
-                    <SelectItem value="monthly">{t("monthly", preferences.language)}</SelectItem>
-                    <SelectItem value="yearly">{t("yearly", preferences.language)}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="recurringDayOfMonth">Day of Month (1-31)</Label>
-                <Input
-                  id="recurringDayOfMonth"
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={recurringDayOfMonth}
-                  onChange={(e) => setRecurringDayOfMonth(parseInt(e.target.value) || 1)}
-                  placeholder="1"
-                />
-              </div>
-
-              <div className="flex items-center justify-between space-x-2 py-2">
-                <div className="space-y-0.5">
-                  <Label htmlFor="recurringActive">Active</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Automatically create transactions on the specified day
-                  </p>
-                </div>
-                <Switch
-                  id="recurringActive"
-                  checked={recurringIsActive}
-                  onCheckedChange={setRecurringIsActive}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddRecurringModalOpen(false)}>{t("cancel", preferences.language)}</Button>
-              <Button onClick={handleAddRecurring}>{t("addExpense", preferences.language)}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Recurring Expense Modal */}
-        <Dialog open={isEditRecurringModalOpen} onOpenChange={setIsEditRecurringModalOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Recurring Expense</DialogTitle>
-              <DialogDescription>
-                Update the details of your recurring expense or delete it
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 px-6 pb-2">
-              <div className="space-y-2">
-                <Label htmlFor="editRecurringName">{t("name", preferences.language)}</Label>
-                <Input
-                  id="editRecurringName"
-                  value={recurringName}
-                  onChange={(e) => setRecurringName(e.target.value)}
-                  placeholder="e.g., Netflix, Gym Membership"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="editRecurringCategory">Category</Label>
-                <Select 
-                  value={recurringCategoryId.toString()} 
-                  onValueChange={(v) => setRecurringCategoryId(parseInt(v))}
-                >
-                  <SelectTrigger id="editRecurringCategory">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(category => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.emoji} {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="editRecurringAmount">{t("amount", preferences.language)}</Label>
-                <Input
-                  id="editRecurringAmount"
-                  type="text"
-                  inputMode="decimal"
-                  value={recurringAmountInput.displayValue}
-                  onChange={(e) => recurringAmountInput.handleChange(e.target.value)}
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="editRecurringCurrency">Currency</Label>
-                <Select value={recurringCurrency} onValueChange={setRecurringCurrency}>
-                  <SelectTrigger id="editRecurringCurrency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="USD">🇺🇸 USD</SelectItem>
-                    <SelectItem value="BRL">🇧🇷 BRL</SelectItem>
-                    <SelectItem value="EUR">🇪🇺 EUR</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="editRecurringFrequency">{t("frequency", preferences.language)}</Label>
-                <Select value={recurringFrequency} onValueChange={(v: any) => setRecurringFrequency(v)}>
-                  <SelectTrigger id="editRecurringFrequency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">{t("daily", preferences.language)}</SelectItem>
-                    <SelectItem value="weekly">{t("weekly", preferences.language)}</SelectItem>
-                    <SelectItem value="monthly">{t("monthly", preferences.language)}</SelectItem>
-                    <SelectItem value="yearly">{t("yearly", preferences.language)}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="editRecurringDayOfMonth">Day of Month (1-31)</Label>
-                <Input
-                  id="editRecurringDayOfMonth"
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={recurringDayOfMonth}
-                  onChange={(e) => setRecurringDayOfMonth(parseInt(e.target.value) || 1)}
-                  placeholder="1"
-                />
-              </div>
-
-              <div className="flex items-center justify-between space-x-2 py-2">
-                <div className="space-y-0.5">
-                  <Label htmlFor="editRecurringActive">Active</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Automatically create transactions on the specified day
-                  </p>
-                </div>
-                <Switch
-                  id="editRecurringActive"
-                  checked={recurringIsActive}
-                  onCheckedChange={setRecurringIsActive}
-                />
-              </div>
-            </div>
-            <DialogFooter className="flex justify-between">
-              <Button variant="destructive" onClick={handleDeleteRecurring}>
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
-              <Button onClick={handleUpdateRecurring}>Update</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
         {/* Category Details Modal */}
         <Dialog open={isCategoryDetailsOpen} onOpenChange={setIsCategoryDetailsOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-3">
-                <span className="text-3xl">{selectedCategoryDetails?.emoji}</span>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span>{selectedCategoryDetails?.name}</span>
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: selectedCategoryDetails?.color }}
-                    />
-                  </div>
-                  <div className="text-sm font-normal text-muted-foreground mt-1">
-                    {formatCurrency(selectedCategoryDetails?.value || 0, preferences.currency)} • {categoryTransactions.length} {categoryTransactions.length === 1 ? 'transaction' : 'transactions'}
-                  </div>
-                </div>
+              <DialogTitle className="flex items-center gap-2">
+                <span className="text-2xl">{selectedCategoryDetails?.emoji}</span>
+                {selectedCategoryDetails?.name}
+                <span className="text-muted-foreground">
+                  ({formatCurrency((selectedCategoryDetails?.value || 0) / 100, preferences.currency)})
+                </span>
               </DialogTitle>
+              <DialogDescription>
+                {t("transactionsInCategory", preferences.language)} • {selectedPeriod}
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-3 px-6 pb-4">
-              {categoryTransactions.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No transactions in this category</p>
-              ) : (
-                categoryTransactions.map((transaction) => {
-                  const convertedAmount = convertToPreferredCurrency(
-                    transaction.amount,
-                    transaction.currency || "USD",
-                    preferences.currency || "USD",
-                    transaction.exchangeRate
-                  );
-                  
-                  return (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-foreground">{transaction.reason}</p>
-                          {transaction.source && (
-                            <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                              transaction.source === 'wise' 
-                                ? 'bg-[#9fe870]/20 text-[#9fe870]' 
-                                : transaction.source === 'recurring'
-                                ? 'bg-purple-500/20 text-purple-400'
-                                : 'bg-blue-500/20 text-blue-400'
-                            }`}>
-                              {transaction.source === 'wise' ? 'Wise' : transaction.source === 'recurring' ? 'Auto' : 'CSV'}
-                            </span>
-                          )}
+
+            <div className="max-h-96 overflow-y-auto">
+              {filteredTransactions.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredTransactions.map((transaction) => (
+                    <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: selectedCategoryDetails?.color }} />
+                        <div>
+                          <div className="font-medium">{transaction.description}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(transaction.createdDate).toLocaleDateString(preferences.language === 'pt' ? 'pt-BR' : 'en-US')}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(transaction.createdDate).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-foreground">
-                          {formatCurrency(convertedAmount, preferences.currency)}
-                        </p>
+                        <div className="font-medium text-red-600">
+                          -{formatCurrency(
+                            convertToPreferredCurrency(
+                              transaction.amount,
+                              transaction.currency || "USD", 
+                              preferences.currency || "USD",
+                              transaction.exchangeRate
+                            ) / 100, 
+                            preferences.currency
+                          )}
+                        </div>
                         {transaction.currency !== preferences.currency && (
-                          <p className="text-xs text-muted-foreground">
-                            {formatCurrency(transaction.amount, transaction.currency)}
-                          </p>
+                          <div className="text-xs text-muted-foreground">
+                            {formatCurrency(transaction.amount / 100, transaction.currency || "USD")}
+                          </div>
                         )}
                       </div>
                     </div>
-                  );
-                })
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>{t("noTransactionsInCategory", preferences.language)}</p>
+                </div>
               )}
             </div>
           </DialogContent>
