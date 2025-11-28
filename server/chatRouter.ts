@@ -361,15 +361,8 @@ async function buildUserFinancialContext(userId: string, userName?: string | nul
     topCategories.map(c => `${c.emoji} ${c.name}: ${formatMoney(c.total)} total, ${formatMoney(c.avgMonthly)}/month`)
   );
 
-  // Recurring expenses
-  // Recurring expenses functionality removed
-  const totalMonthlyRecurring = activeRecurring.reduce((sum: number, e: any) => {
-    const monthlyAmount = e.frequency === 'monthly' ? e.amount :
-                         e.frequency === 'yearly' ? e.amount / 12 :
-                         e.frequency === 'weekly' ? e.amount * 4.33 :
-                         e.frequency === 'daily' ? e.amount * 30 : 0;
-    return sum + monthlyAmount;
-  }, 0);
+  // Recurring expenses functionality removed - now using Bills instead
+  const totalMonthlyRecurring = 0;
 
   // Current balance (from active goal)
   const currentBalance = activeGoal?.currentAmount || 0;
