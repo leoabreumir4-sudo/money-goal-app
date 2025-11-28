@@ -195,8 +195,22 @@ export default function Analytics() {
   });
 
   const handleSaveSavingTarget = () => {
-    // Remove formatting (commas and handle decimal point)
-    const numericValue = parseFloat(savingTarget.replace(/,/g, ''));
+    // Handle both US format (1,000.00) and Brazilian format (1.000,00)
+    let cleaned = savingTarget.trim();
+    
+    // Detect format based on last separator
+    const lastComma = cleaned.lastIndexOf(',');
+    const lastDot = cleaned.lastIndexOf('.');
+    
+    if (lastComma > lastDot) {
+      // Brazilian format: 1.000,00 → remove dots, replace comma with dot
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+    } else {
+      // US format: 1,000.00 → remove commas
+      cleaned = cleaned.replace(/,/g, '');
+    }
+    
+    const numericValue = parseFloat(cleaned);
     const target = Math.round(numericValue * 100);
     
     if (isNaN(target) || target <= 0) {
@@ -492,21 +506,9 @@ export default function Analytics() {
                   <Input
                     id="saving-target"
                     type="text"
-                    placeholder="1100"
+                    placeholder="500.00"
                     value={savingTarget}
-                    onChange={(e) => {
-                      const rawValue = e.target.value.replace(/[^\d]/g, '');
-                      if (rawValue === '' || rawValue === '0') {
-                        setSavingTarget('');
-                        return;
-                      }
-                      const numericValue = parseInt(rawValue, 10);
-                      const formatted = (numericValue / 100).toLocaleString(numberFormat, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      });
-                      setSavingTarget(formatted);
-                    }}
+                    onChange={(e) => setSavingTarget(e.target.value)}
                     className="pl-9"
                   />
                 </div>
