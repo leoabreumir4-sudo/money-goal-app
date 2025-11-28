@@ -303,8 +303,7 @@ export async function getEmergencyFund(userId: string) {
     .where(and(
       eq(goals.userId, userId), 
       eq(goals.goalType, "emergency"),
-      isNull(goals.archivedDate),
-      isNull(goals.completedDate)
+      eq(goals.status, "active")
     ))
     .limit(1);
   return result[0] ?? null;
@@ -320,8 +319,7 @@ export async function getSavingsGoals(userId: string) {
     .where(and(
       eq(goals.userId, userId),
       eq(goals.goalType, "savings"),
-      isNull(goals.archivedDate),
-      isNull(goals.completedDate)
+      eq(goals.status, "active")
     ))
     .orderBy(asc(goals.priority));
 }
@@ -341,7 +339,7 @@ export async function getArchivedGoals(userId: string) {
   if (!db) return [];
   
   return await db.select().from(goals)
-    .where(and(eq(goals.userId, userId), isNotNull(goals.archivedDate)))
+    .where(and(eq(goals.userId, userId), eq(goals.status, "archived")))
     .orderBy(desc(goals.archivedDate));
 }
 
