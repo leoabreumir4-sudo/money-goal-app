@@ -143,20 +143,29 @@ export async function getUserByEmail(email: string) {
     return undefined;
   }
 
-  // Seleciona apenas campos essenciais para evitar problemas com colunas ausentes
-  const result = await db
-    .select({
-      id: users.id,
-      openId: users.openId,
-      email: users.email,
-      name: users.name,
-      passwordHash: users.passwordHash,
-    })
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
+  try {
+    console.log(`[Database] Getting user by email: ${email}`);
+    
+    // Seleciona apenas campos essenciais para evitar problemas com colunas ausentes
+    const result = await db
+      .select({
+        id: users.id,
+        openId: users.openId,
+        email: users.email,
+        name: users.name,
+        passwordHash: users.passwordHash,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
-  return result.length > 0 ? result[0] : undefined;
+    console.log(`[Database] Query result: ${result.length} users found`);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.error(`[Database] Error getting user by email ${email}:`, error);
+    throw error;
+  }
 }
 
 export async function getUserByOpenId(openId: string) {

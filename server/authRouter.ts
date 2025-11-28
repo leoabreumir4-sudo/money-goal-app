@@ -83,42 +83,60 @@ export const authRouter = router({
   login: publicProcedure
     .input(loginSchema)
     .mutation(async ({ ctx, input }) => {
-      const user = await db.getUserByEmail(input.email);
+      try {
+        console.log(`[Auth] Login attempt for email: ${input.email}`);
+        
+        const user = await db.getUserByEmail(input.email);
+        console.log(`[Auth] User found: ${!!user}`);
 
-      if (!user || !user.passwordHash) {
+        if (!user || !user.passwordHash) {
+          console.log(`[Auth] Login failed: user not found or no password hash`);
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid email or password",
+          });
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          input.password,
+          user.passwordHash
+        );
+        console.log(`[Auth] Password valid: ${isPasswordValid}`);
+
+        if (!isPasswordValid) {
+          console.log(`[Auth] Login failed: invalid password`);
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid email or password",
+          });
+        }
+
+        // Create session token for the user
+        const token = await sdk.createSessionToken(user.openId, {
+          name: user.name || "",
+        });
+        console.log(`[Auth] Token created successfully`);
+
+        // Return the token for the client to store
+        return {
+          token,
+          user: {
+            id: user.id,
+            openId: user.openId,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
+        };
+      } catch (error) {
+        console.error(`[Auth] Login error for ${input.email}:`, error);
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid email or password",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Login failed due to server error",
         });
       }
-
-      const isPasswordValid = await bcrypt.compare(
-        input.password,
-        user.passwordHash
-      );
-
-      if (!isPasswordValid) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "Invalid email or password",
-        });
-      }
-
-      // Create session token for the user
-      const token = await sdk.createSessionToken(user.openId, {
-        name: user.name || "",
-      });
-
-      // Return the token for the client to store
-      return {
-        token,
-        user: {
-          id: user.id,
-          openId: user.openId,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-      };
     }),
 });
