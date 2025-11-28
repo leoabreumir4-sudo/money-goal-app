@@ -13,6 +13,10 @@ import Spending from "./pages/Spending";
 import Analytics from "./pages/Analytics";
 import Archived from "./pages/Archived";
 import Settings from "./pages/Settings";
+import Budgets from "./pages/Budgets";
+import Bills from "./pages/Bills";
+import Insights from "./pages/Insights";
+import Goals from "./pages/Goals";
 import { withAuth } from "./components/ProtectedRoute";
 
 // Wrap protected pages with authentication
@@ -23,6 +27,10 @@ const ProtectedSpending = withAuth(Spending);
 const ProtectedAnalytics = withAuth(Analytics);
 const ProtectedArchived = withAuth(Archived);
 const ProtectedSettings = withAuth(Settings);
+const ProtectedBudgets = withAuth(Budgets);
+const ProtectedBills = withAuth(Bills);
+const ProtectedInsights = withAuth(Insights);
+const ProtectedGoals = withAuth(Goals);
 
 function Router() {
   return (
@@ -38,6 +46,10 @@ function Router() {
       <Route path={"/analytics"} component={ProtectedAnalytics} />
       <Route path={"/archived"} component={ProtectedArchived} />
       <Route path={"/settings"} component={ProtectedSettings} />
+      <Route path={"/budgets"} component={ProtectedBudgets} />
+      <Route path={"/bills"} component={ProtectedBills} />
+      <Route path={"/insights"} component={ProtectedInsights} />
+      <Route path={"/goals"} component={ProtectedGoals} />
 
       {/* Rotas de Erro (Públicas) */}
       <Route path={"/404"} component={NotFound} />

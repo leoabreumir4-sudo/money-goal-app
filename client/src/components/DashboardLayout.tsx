@@ -23,7 +23,7 @@ import { APP_LOGO, APP_TITLE } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 import { trpc } from "@/lib/trpc";
-import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, MessageSquare, PieChart, BarChart3, Archive, Settings as SettingsIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, TrendingUp, MessageSquare, PieChart, BarChart3, Archive, Settings as SettingsIcon, Wallet, Calendar, Sparkles, Target } from "lucide-react";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { CSSProperties, useEffect, useRef, useState, useMemo } from "react";
@@ -33,6 +33,10 @@ import { Button } from "./ui/button";
 
 const menuItems = [
   { icon: LayoutDashboard, labelKey: "dashboard" as const, path: "/" },
+  { icon: Target, label: "Goals", path: "/goals" },
+  { icon: Wallet, label: "Budgets", path: "/budgets" },
+  { icon: Calendar, label: "Bills", path: "/bills" },
+  { icon: Sparkles, label: "AI Insights", path: "/insights" },
   { icon: TrendingUp, label: "AQWorlds", path: "/aqworlds" },
   { icon: MessageSquare, label: "Chat", path: "/chat" },
   { icon: PieChart, labelKey: "spending" as const, path: "/spending" },
@@ -115,6 +119,20 @@ function DashboardLayoutContent({
     }
     if (path === "/spending") {
       utils.recurringExpenses.getAll.prefetch();
+    }
+    if (path === "/goals") {
+      utils.goals.getSavings.prefetch();
+      utils.goals.getEmergencyFund.prefetch();
+    }
+    if (path === "/budgets") {
+      utils.budgets.getAll.prefetch();
+    }
+    if (path === "/bills") {
+      utils.billReminders.getAll.prefetch();
+    }
+    if (path === "/insights") {
+      utils.aiInsights.getAll.prefetch();
+      utils.aiInsights.getUnread.prefetch();
     }
   };
 
@@ -209,7 +227,8 @@ function DashboardLayoutContent({
               {menuItems.map((item, index) => {
                 const isActive = location === item.path;
                 const label = 'labelKey' in item ? t(item.labelKey, preferences?.language || 'en') : item.label;
-                const showDivider = index === 1 || index === 4;
+                // Dividers: after Dashboard, after AI Insights, after Analytics
+                const showDivider = index === 0 || index === 4 || index === 8;
                 return (
                   <div key={item.path}>
                     <SidebarMenuItem>
