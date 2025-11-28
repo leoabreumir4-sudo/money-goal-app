@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Target, TrendingUp, Shield, Archive, Trash2 } from "lucide-react";
+import { Plus, Target, TrendingUp, Shield, Archive, Trash2, RotateCcw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -50,6 +50,10 @@ export default function GoalsPage() {
   });
 
   const deleteGoal = trpc.goals.delete.useMutation({
+    onSuccess: () => queryClient.invalidateQueries(),
+  });
+
+  const unarchiveGoal = trpc.goals.unarchive.useMutation({
     onSuccess: () => queryClient.invalidateQueries(),
   });
 
@@ -303,13 +307,24 @@ export default function GoalsPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm">{goal.name}</CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteGoal.mutate({ id: goal.id })}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => unarchiveGoal.mutate({ id: goal.id })}
+                        title="Unarchive goal"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteGoal.mutate({ id: goal.id })}
+                        title="Delete goal"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -167,6 +167,17 @@ export const appRouter = router({
         await db.deleteGoal(input.id, ctx.user.id);
         return { success: true };
       }),
+
+    unarchive: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateGoal(input.id, ctx.user.id, {
+          status: "active",
+          archivedDate: null,
+          completedDate: null,
+        });
+        return { success: true };
+      }),
   }),
 
   // Transactions
