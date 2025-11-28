@@ -7,8 +7,10 @@ export const budgetRouter = router({
   // Get all budgets for user
   getAll: protectedProcedure.query(async ({ ctx }) => {
     try {
-      return await db.getBudgetsByUserId(ctx.user.openId);
+      console.log(`[BudgetRouter] Getting budgets for user id: ${ctx.user.id}, openId: ${ctx.user.openId}`);
+      return await db.getBudgetsByUserId(ctx.user.id);
     } catch (error) {
+      console.error(`[BudgetRouter] Error getting budgets:`, error);
       // If budgets table doesn't exist, return empty array
       if (error instanceof Error && error.message.includes('relation "budgets" does not exist')) {
         return [];

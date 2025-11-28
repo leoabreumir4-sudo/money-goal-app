@@ -723,17 +723,31 @@ export async function createBudget(budget: InsertBudget) {
   return result[0];
 }
 
-export async function getBudgetsByUserId(userId: string) {
+export async function getBudgetsByUserId(userIdOrOpenId: string) {
   const db = getDb();
   if (!db) return [];
   
   try {
-    console.log(`[Database] Getting budgets for userId: ${userId}`);
-    const result = await db.select().from(budgets).where(eq(budgets.userId, userId)).orderBy(asc(budgets.createdDate));
+    console.log(`[Database] Getting budgets for user: ${userIdOrOpenId}`);
+    
+    // First, get the actual UUID id from openId if needed
+    let actualUserId = userIdOrOpenId;
+    if (!userIdOrOpenId.match(/^[0-9a-f-]{36}$/i)) {
+      // It's an openId/email, need to get the UUID
+      const user = await getUserByOpenId(userIdOrOpenId);
+      if (!user) {
+        console.warn(`[Database] User not found for openId: ${userIdOrOpenId}`);
+        return [];
+      }
+      actualUserId = user.id;
+      console.log(`[Database] Resolved openId ${userIdOrOpenId} to UUID ${actualUserId}`);
+    }
+    
+    const result = await db.select().from(budgets).where(eq(budgets.userId, actualUserId)).orderBy(asc(budgets.createdDate));
     console.log(`[Database] Found ${result.length} budgets`);
     return result;
   } catch (error) {
-    console.error(`[Database] Error getting budgets for user ${userId}:`, error);
+    console.error(`[Database] Error getting budgets for user ${userIdOrOpenId}:`, error);
     if (error instanceof Error && (
       error.message.includes('relation "budgets" does not exist') ||
       error.message.includes('column') ||
