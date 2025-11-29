@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import type { Category } from "@shared/types";
-import { ArrowDown, ArrowUp, Pencil, Sparkles, Wallet, Target } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Sparkles, Wallet, Target, Plus } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { BankSync } from "@/components/BankSync";
@@ -16,8 +16,10 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 import { useCurrencyInput } from "@/hooks/useCurrencyInput";
+import { useIsMobile } from "@/hooks/useMobile";
 
 export default function Dashboard() {
+  const isMobile = useIsMobile();
   const { preferences } = usePreferences();
   const [isIncomeModalOpen, setIsIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
@@ -349,6 +351,350 @@ export default function Dashboard() {
     );
   }
 
+  // Mobile-first rendering
+  if (isMobile) {
+    return (
+      <DashboardLayout>
+        <div className="pb-20 space-y-4">
+          {/* Floating Action Buttons - Mobile Only */}
+          <div className="fixed bottom-4 left-4 right-4 z-50 flex gap-2">
+            <Button 
+              onClick={() => setIsIncomeModalOpen(true)}
+              className="flex-1 h-14 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg"
+              disabled={!activeGoal}
+            >
+              <ArrowUp className="mr-2 h-5 w-5" />
+              {t('addIncome', preferences.language as "en" | "pt" | "es")}
+            </Button>
+            <Button 
+              onClick={() => setIsExpenseModalOpen(true)}
+              className="flex-1 h-14 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg"
+              disabled={!activeGoal}
+            >
+              <ArrowDown className="mr-2 h-5 w-5" />
+              {t('addExpense', preferences.language as "en" | "pt" | "es")}
+            </Button>
+          </div>
+
+          {activeGoal ? (
+            <>
+              {/* Goal Card - Mobile Optimized */}
+              <Card className="border-0 bg-gradient-to-br from-primary/10 via-background to-purple-500/10 shadow-lg">
+                <CardContent className="p-4">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1 min-w-0 pr-2">
+                      <h2 className="text-lg font-bold text-foreground truncate mb-1">{activeGoal.name}</h2>
+                      <p className="text-xs text-muted-foreground">{t('savingForDream', preferences.language as "en" | "pt" | "es")}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={openEditGoalModal}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Progress Circle - Compact */}
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="relative w-32 h-32">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          stroke="currentColor"
+                          strokeWidth="10"
+                          fill="none"
+                          className="text-secondary"
+                        />
+                        <circle
+                          cx="64"
+                          cy="64"
+                          r="56"
+                          stroke="url(#gradient-mobile)"
+                          strokeWidth="10"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeDasharray={`${2 * Math.PI * 56}`}
+                          strokeDashoffset={`${2 * Math.PI * 56 * (1 - progressPercentage / 100)}`}
+                          className="transition-all duration-1000"
+                        />
+                        <defs>
+                          <linearGradient id="gradient-mobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#8056D4" />
+                            <stop offset="100%" stopColor="#8056D4" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                          {progressPercentage}%
+                        </span>
+                        <span className="text-[10px] text-muted-foreground mt-0.5">{t('complete', preferences.language as "en" | "pt" | "es")}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats - Compact Grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-background/80 backdrop-blur rounded-xl p-3 border border-border/50">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{t('current', preferences.language as "en" | "pt" | "es")}</span>
+                      </div>
+                      <p className="text-base font-bold text-foreground truncate mb-1">
+                        {formatCurrency(activeGoal.currentAmount, preferences.currency)}
+                      </p>
+                      {wiseBalance > 0 && (
+                        <div className="flex items-center gap-1 text-[9px] text-green-600 dark:text-green-400">
+                          <Wallet className="h-2.5 w-2.5" />
+                          <span className="truncate">+{formatCurrency(wiseBalance, preferences.currency)}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-background/80 backdrop-blur rounded-xl p-3 border border-border/50">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Target className="h-3.5 w-3.5 text-purple-500" />
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{t('target', preferences.language as "en" | "pt" | "es")}</span>
+                      </div>
+                      <p className="text-base font-bold text-foreground truncate mb-1">
+                        {formatCurrency(activeGoal.targetAmount, preferences.currency)}
+                      </p>
+                      <p className="text-[9px] text-primary font-medium truncate">
+                        {formatCurrency(Math.max(0, activeGoal.targetAmount - activeGoal.currentAmount), preferences.currency)} {t('left', preferences.language as "en" | "pt" | "es")}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Transactions - Mobile Optimized */}
+              <Card className="bg-card border-border">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-base mb-3 flex items-center justify-between">
+                    <span>{t('recentTransactions', preferences.language as "en" | "pt" | "es")}</span>
+                    <span className="text-xs text-muted-foreground font-normal">{recentTransactions.length} {t('transactions', preferences.language as "en" | "pt" | "es")}</span>
+                  </h3>
+                  {isLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-12 w-full" />
+                      ))}
+                    </div>
+                  ) : recentTransactions.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">{t('noTransactions', preferences.language as "en" | "pt" | "es")}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {recentTransactions.map((transaction) => (
+                        <div
+                          key={transaction.id}
+                          className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 active:bg-secondary/50 transition-colors"
+                          onClick={() => handleEditTransaction(transaction)}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div
+                              className={`p-1.5 rounded-full shrink-0 ${
+                                transaction.type === "income"
+                                  ? "bg-primary/20 text-primary"
+                                  : "bg-accent/20 text-accent"
+                              }`}
+                            >
+                              {transaction.type === "income" ? (
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              ) : (
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground truncate">{transaction.reason}</p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {new Date(transaction.createdDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                          <p
+                            className={`text-sm font-semibold shrink-0 ml-2 ${
+                              transaction.type === "income" ? "text-primary" : "text-accent"
+                            }`}
+                          >
+                            {transaction.type === "income" ? "+" : "-"}
+                            {formatCurrency(transaction.amount, transaction.currency || preferences.currency)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <Card className="bg-card border-border">
+              <CardContent className="py-16 text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Plus className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{t('noActiveGoal', preferences.language as "en" | "pt" | "es")}</h3>
+                <p className="text-sm text-muted-foreground mb-6 px-4">{t('createFirstGoal', preferences.language as "en" | "pt" | "es")}</p>
+                <Dialog open={isNewGoalModalOpen} onOpenChange={setIsNewGoalModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="h-12">{t('createGoal', preferences.language as "en" | "pt" | "es")}</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{t('createNewGoal', preferences.language as "en" | "pt" | "es")}</DialogTitle>
+                      <DialogDescription>{t('setNewGoal', preferences.language as "en" | "pt" | "es")}</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-5 px-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="goal-name">{t('goalName', preferences.language as "en" | "pt" | "es")}</Label>
+                        <Input
+                          id="goal-name"
+                          placeholder={t('goalNameExample', preferences.language as "en" | "pt" | "es")}
+                          value={newGoalName}
+                          onChange={(e) => setNewGoalName(e.target.value)}
+                          className="h-12"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="goal-target">{t('targetAmount', preferences.language as "en" | "pt" | "es")} ($)</Label>
+                        <Input
+                          id="goal-target"
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          value={newGoalTargetInput.displayValue}
+                          onChange={(e) => newGoalTargetInput.handleChange(e.target.value)}
+                          className="h-12"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter className="flex-col gap-2">
+                      <Button variant="outline" onClick={() => setIsNewGoalModalOpen(false)} className="w-full h-12">
+                        {t('cancel', preferences.language as "en" | "pt" | "es")}
+                      </Button>
+                      <Button onClick={handleCreateGoal} disabled={createGoalMutation.isPending} className="w-full h-12">
+                        {t('createGoal', preferences.language as "en" | "pt" | "es")}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Modals */}
+          <Dialog open={isIncomeModalOpen} onOpenChange={setIsIncomeModalOpen}>
+            <DialogContent className="w-[calc(100vw-2rem)]">
+              <DialogHeader>
+                <DialogTitle>{t('addIncome', preferences.language as "en" | "pt" | "es")}</DialogTitle>
+                <DialogDescription>{t('recordNewIncome', preferences.language as "en" | "pt" | "es")}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>{t('amount', preferences.language as "en" | "pt" | "es")} ({preferences.currency})</Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={incomeAmountInput.displayValue}
+                    onChange={(e) => incomeAmountInput.handleChange(e.target.value)}
+                    className="text-lg h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('description', preferences.language as "en" | "pt" | "es")}</Label>
+                  <Input
+                    placeholder={t('incomeExample', preferences.language as "en" | "pt" | "es")}
+                    value={incomeReason}
+                    onChange={(e) => setIncomeReason(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('categoryOptional', preferences.language as "en" | "pt" | "es")}</Label>
+                  <Select value={incomeCategory} onValueChange={setIncomeCategory}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder={t('autoDetectOrSelect', preferences.language as "en" | "pt" | "es")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id.toString()}>
+                          {cat.emoji} {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter className="gap-2 flex-col">
+                <Button variant="outline" onClick={() => setIsIncomeModalOpen(false)} className="w-full h-12">
+                  {t('cancel', preferences.language as "en" | "pt" | "es")}
+                </Button>
+                <Button onClick={handleAddIncome} disabled={createTransactionMutation.isPending} className="w-full h-12 bg-green-600 hover:bg-green-700">
+                  {createTransactionMutation.isPending ? t('adding', preferences.language as "en" | "pt" | "es") : t('addIncome', preferences.language as "en" | "pt" | "es")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isExpenseModalOpen} onOpenChange={setIsExpenseModalOpen}>
+            <DialogContent className="w-[calc(100vw-2rem)]">
+              <DialogHeader>
+                <DialogTitle>{t('addExpense', preferences.language as "en" | "pt" | "es")}</DialogTitle>
+                <DialogDescription>{t('recordNewExpense', preferences.language as "en" | "pt" | "es")}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>{t('amount', preferences.language as "en" | "pt" | "es")} ({preferences.currency})</Label>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={expenseAmountInput.displayValue}
+                    onChange={(e) => expenseAmountInput.handleChange(e.target.value)}
+                    className="text-lg h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('description', preferences.language as "en" | "pt" | "es")}</Label>
+                  <Input
+                    placeholder={t('expenseExample', preferences.language as "en" | "pt" | "es")}
+                    value={expenseReason}
+                    onChange={(e) => setExpenseReason(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('categoryOptional', preferences.language as "en" | "pt" | "es")}</Label>
+                  <Select value={expenseCategory} onValueChange={setExpenseCategory}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder={t('autoDetectOrSelect', preferences.language as "en" | "pt" | "es")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id.toString()}>
+                          {cat.emoji} {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter className="gap-2 flex-col">
+                <Button variant="outline" onClick={() => setIsExpenseModalOpen(false)} className="w-full h-12">
+                  {t('cancel', preferences.language as "en" | "pt" | "es")}
+                </Button>
+                <Button onClick={handleAddExpense} disabled={createTransactionMutation.isPending} className="w-full h-12 bg-red-600 hover:bg-red-700">
+                  {createTransactionMutation.isPending ? t('adding', preferences.language as "en" | "pt" | "es") : t('addExpense', preferences.language as "en" | "pt" | "es")}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Desktop rendering
   return (
     <DashboardLayout>
       <div className="p-3 md:p-6 space-y-4 md:space-y-6">
