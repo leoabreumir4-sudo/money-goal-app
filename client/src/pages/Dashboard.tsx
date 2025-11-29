@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import CategoryManager from "@/components/CategoryManager";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -51,6 +52,12 @@ export default function Dashboard() {
   const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [editTransactionReason, setEditTransactionReason] = useState("");
   const [editTransactionCategory, setEditTransactionCategory] = useState<string>("");
+  
+  // Category management states
+  const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryEmoji, setNewCategoryEmoji] = useState("💰");
+  const [newCategoryColor, setNewCategoryColor] = useState("#8b5cf6");
 
   const utils = trpc.useUtils();
   const { data: activeGoal, isLoading: goalLoading } = trpc.goals.getActive.useQuery();
@@ -108,6 +115,23 @@ export default function Dashboard() {
       setIsEditTransactionModalOpen(false);
       setEditingTransaction(null);
       toast.success("Transaction deleted successfully!");
+    },
+  });
+  
+  const createCategoryMutation = trpc.categories.create.useMutation({
+    onSuccess: () => {
+      utils.categories.getAll.invalidate();
+      setNewCategoryName("");
+      setNewCategoryEmoji("💰");
+      setNewCategoryColor("#8b5cf6");
+      toast.success("Categoria criada!");
+    },
+  });
+  
+  const deleteCategoryMutation = trpc.categories.delete.useMutation({
+    onSuccess: () => {
+      utils.categories.getAll.invalidate();
+      toast.success("Categoria deletada!");
     },
   });
 
@@ -254,6 +278,32 @@ export default function Dashboard() {
     
     if (confirm(message)) {
       deleteTransactionMutation.mutate({ id: editingTransaction.id });
+    }
+  };
+  
+  const handleCreateCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Nome da categoria é obrigatório");
+      return;
+    }
+    createCategoryMutation.mutate({
+      name: newCategoryName,
+      emoji: newCategoryEmoji,
+      color: newCategoryColor,
+    });
+  };
+  
+  const handleDeleteCategory = (id: number) => {
+    const category = categories.find(c => c.id === id);
+    if (!category) return;
+    
+    if (category.isDefault) {
+      toast.error("Não é possível deletar categorias padrão");
+      return;
+    }
+    
+    if (confirm(`Tem certeza que deseja deletar "${category.name}"?`)) {
+      deleteCategoryMutation.mutate({ id });
     }
   };
 
@@ -610,7 +660,18 @@ export default function Dashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('categoryOptional', preferences.language as "en" | "pt" | "es")}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>{t('categoryOptional', preferences.language as "en" | "pt" | "es")}</Label>
+                    <Button 
+                      type="button"
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setIsManageCategoriesOpen(true)}
+                      className="h-6 text-xs"
+                    >
+                      Gerenciar
+                    </Button>
+                  </div>
                   <Select value={incomeCategory} onValueChange={setIncomeCategory}>
                     <SelectTrigger className="h-12">
                       <SelectValue placeholder={t('autoDetectOrSelect', preferences.language as "en" | "pt" | "es")} />
@@ -664,7 +725,18 @@ export default function Dashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('categoryOptional', preferences.language as "en" | "pt" | "es")}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>{t('categoryOptional', preferences.language as "en" | "pt" | "es")}</Label>
+                    <Button 
+                      type="button"
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setIsManageCategoriesOpen(true)}
+                      className="h-6 text-xs"
+                    >
+                      Gerenciar
+                    </Button>
+                  </div>
                   <Select value={expenseCategory} onValueChange={setExpenseCategory}>
                     <SelectTrigger className="h-12">
                       <SelectValue placeholder={t('autoDetectOrSelect', preferences.language as "en" | "pt" | "es")} />
@@ -1408,6 +1480,22 @@ export default function Dashboard() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        {/* Category Manager Modal */}
+        <CategoryManager
+          open={isManageCategoriesOpen}
+          onOpenChange={setIsManageCategoriesOpen}
+          categories={categories}
+          onCreateCategory={handleCreateCategory}
+          onDeleteCategory={handleDeleteCategory}
+          newCategoryName={newCategoryName}
+          setNewCategoryName={setNewCategoryName}
+          newCategoryEmoji={newCategoryEmoji}
+          setNewCategoryEmoji={setNewCategoryEmoji}
+          newCategoryColor={newCategoryColor}
+          setNewCategoryColor={setNewCategoryColor}
+          isCreating={createCategoryMutation.isPending}
+        />
       </div>
     </DashboardLayout>
   );
