@@ -435,7 +435,7 @@ export default function Dashboard() {
 
                   {/* Stats - Compact Grid */}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-background/80 backdrop-blur rounded-xl p-3 border border-border/50">
+                    <div className="bg-background/80 backdrop-blur rounded-xl p-4 border border-border/50">
                       <div className="flex items-center gap-1.5 mb-2">
                         <Sparkles className="h-3.5 w-3.5 text-primary" />
                         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{t('current', preferences.language as "en" | "pt" | "es")}</span>
@@ -451,7 +451,7 @@ export default function Dashboard() {
                       )}
                     </div>
 
-                    <div className="bg-background/80 backdrop-blur rounded-xl p-3 border border-border/50">
+                    <div className="bg-background/80 backdrop-blur rounded-xl p-4 border border-border/50">
                       <div className="flex items-center gap-1.5 mb-2">
                         <Target className="h-3.5 w-3.5 text-purple-500" />
                         <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{t('target', preferences.language as "en" | "pt" | "es")}</span>

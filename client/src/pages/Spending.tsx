@@ -289,15 +289,15 @@ export default function Spending() {
           </CardHeader>
           <CardContent>
             {chartData.length > 0 ? (
-              <div className={isMobile ? "h-56" : "h-96"}>
+              <div className={isMobile ? "h-80" : "h-96"}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={chartData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={80}
-                      outerRadius={160}
+                      innerRadius={isMobile ? 50 : 80}
+                      outerRadius={isMobile ? 100 : 160}
                       paddingAngle={5}
                       dataKey="value"
                       onClick={handleCategoryClick}

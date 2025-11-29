@@ -188,9 +188,9 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
-          style={
-            {
+          className="bg-sidebar text-sidebar-foreground w-[80vw] max-w-[320px] p-0 [&>button]:hidden h-screen"
+          style=
+            {{
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
             } as React.CSSProperties
           }

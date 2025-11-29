@@ -11,8 +11,9 @@ export const formatCurrency = (amount: number, currency: string = "USD"): string
   
   const symbol = currencySymbols[currency] || "$";
   
-  // Format with European style: . for thousands, , for decimals
-  const formatted = value.toLocaleString("pt-BR", {
+  // Format based on currency locale
+  const locale = currency === "BRL" ? "pt-BR" : currency === "EUR" ? "de-DE" : "en-US";
+  const formatted = value.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -21,8 +22,8 @@ export const formatCurrency = (amount: number, currency: string = "USD"): string
 };
 
 // Format number without currency symbol (for display purposes)
-export const formatNumber = (value: number, decimals: number = 2): string => {
-  return value.toLocaleString("pt-BR", {
+export const formatNumber = (value: number, decimals: number = 2, locale: string = "en-US"): string => {
+  return value.toLocaleString(locale, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
