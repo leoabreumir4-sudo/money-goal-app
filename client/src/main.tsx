@@ -65,7 +65,9 @@ const trpcClient = trpc.createClient({
 
 import { PreferencesProvider } from "./contexts/PreferencesContext";
 
-// Register Service Worker for PWA
+// Register Service Worker for PWA (DISABLED - causing loading issues)
+// TODO: Fix Service Worker caching strategy to avoid conflicts with API
+/*
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
@@ -76,6 +78,17 @@ if ('serviceWorker' in navigator) {
       .catch((error) => {
         console.error('[PWA] Service Worker registration failed:', error);
       });
+  });
+}
+*/
+
+// Unregister existing service workers to fix loading issues
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      registration.unregister();
+      console.log('[PWA] Service Worker unregistered');
+    });
   });
 }
 
