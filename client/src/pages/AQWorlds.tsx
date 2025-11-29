@@ -16,6 +16,7 @@ import { formatNumber } from "@/lib/currency";
 import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
+import { useIsMobile } from "@/hooks/useMobile";
 
 const months = [
   "January", "February", "March", "April", "May", "June",
@@ -86,6 +87,7 @@ function MonthlyStatusButtonComponent({ month, year, totalAmount }: { month: num
 }
 
 export default function AQWorlds() {
+  const isMobile = useIsMobile();
   const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
@@ -418,15 +420,15 @@ export default function AQWorlds() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
+      <div className={`max-w-7xl mx-auto ${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
-              <Briefcase className="h-6 w-6 text-white" />
+            <div className={`bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg ${isMobile ? 'p-2' : 'p-3'}`}>
+              <Briefcase className={`text-white ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">AQWorlds Dashboard</h1>
-              <p className="text-muted-foreground">{user?.name || 'Artist'} - Artist Projects</p>
+              <h1 className={`font-bold ${isMobile ? 'text-xl' : 'text-3xl'}`}>AQWorlds Dashboard</h1>
+              <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-base'}`}>{user?.name || 'Artist'} - Artist Projects</p>
             </div>
           </div>
           <div className="flex gap-2">

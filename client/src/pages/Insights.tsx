@@ -7,8 +7,10 @@ import { Sparkles, TrendingUp, AlertTriangle, Trophy, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useIsMobile } from "@/hooks/useMobile";
 
 export default function InsightsPage() {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [isGenerating, setIsGenerating] = useState(false);
 

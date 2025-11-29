@@ -9,6 +9,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { toast } from "sonner";
 import AIMessage from "@/components/AIMessage";
+import { useIsMobile } from "@/hooks/useMobile";
 
 // Component to render action buttons based on AI suggestions
 function ActionButtons({ content, onAction }: { content: string; onAction: (action: string) => void }) {
@@ -69,6 +70,7 @@ function ActionButtons({ content, onAction }: { content: string; onAction: (acti
 }
 
 export default function Chat() {
+  const isMobile = useIsMobile();
   const { preferences } = usePreferences();
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -240,16 +242,16 @@ export default function Chat() {
 
   return (
     <DashboardLayout>
-      <div className="h-[calc(100vh-2rem)] flex flex-col p-6">
+      <div className={`flex flex-col ${isMobile ? 'h-[calc(100vh-4rem)] p-3' : 'h-[calc(100vh-2rem)] p-6'}`}>
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className={`flex items-center justify-between ${isMobile ? 'mb-3' : 'mb-6'}`}>
           <div className="flex items-center gap-3">
-            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-lg flex items-center justify-center">
-              <Sparkles className="h-7 w-7 text-primary-foreground" />
+            <div className={`rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-lg flex items-center justify-center ${isMobile ? 'h-10 w-10' : 'h-14 w-14'}`}>
+              <Sparkles className={`text-primary-foreground ${isMobile ? 'h-5 w-5' : 'h-7 w-7'}`} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Moni</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className={`font-bold text-foreground ${isMobile ? 'text-xl' : 'text-3xl'}`}>Moni</h1>
+              <p className={`text-muted-foreground ${isMobile ? 'text-[10px]' : 'text-sm'}`}>
                 {preferences.language === 'pt' ? 'Sua Consultora Financeira Inteligente' : 
                  preferences.language === 'es' ? 'Tu Asesora Financiera Inteligente' : 
                  'Your Intelligent Financial Advisor'}
@@ -271,17 +273,17 @@ export default function Chat() {
 
         {/* Chat Messages */}
         <Card className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-card to-card/80 border-border/50 shadow-xl relative">
-          <CardContent className="flex-1 overflow-y-auto p-6 space-y-4 relative" ref={messagesContainerRef}>
+          <CardContent className={`flex-1 overflow-y-auto space-y-4 relative ${isMobile ? 'p-3' : 'p-6'}`} ref={messagesContainerRef}>
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
-                <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-lg flex items-center justify-center">
-                  <Sparkles className="h-12 w-12 text-primary-foreground" />
+                <div className={`rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-lg flex items-center justify-center ${isMobile ? 'h-16 w-16' : 'h-24 w-24'}`}>
+                  <Sparkles className={`text-primary-foreground ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`} />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-bold text-foreground mb-3">
+                  <h2 className={`font-bold text-foreground ${isMobile ? 'text-xl mb-2' : 'text-3xl mb-3'}`}>
                     Hello! 👋
                   </h2>
-                  <p className="text-muted-foreground max-w-md mb-4 text-base">
+                  <p className={`text-muted-foreground max-w-md ${isMobile ? 'mb-2 text-xs' : 'mb-4 text-base'}`}>
                     I have access to all your financial data and can help you make smart money decisions. Ask me anything!
                   </p>
                 </div>

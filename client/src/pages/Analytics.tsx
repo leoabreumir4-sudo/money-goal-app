@@ -12,6 +12,7 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine } from 'recharts';
+import { useIsMobile } from "@/hooks/useMobile";
 
 // Currency conversion helper
 const convertToPreferredCurrency = (amount: number, fromCurrency: string, toCurrency: string, exchangeRate?: string | null): number => {
@@ -172,6 +173,7 @@ const CustomProjectionTooltip = ({
 };
 
 export default function Analytics() {
+  const isMobile = useIsMobile();
   const { preferences } = usePreferences();
   const lang = preferences?.language || 'en';
   const curr = preferences?.currency || 'USD';
@@ -308,15 +310,15 @@ export default function Analytics() {
 
   return (
     <DashboardLayout>
-      <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-2 md:p-3 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-lg">
-              <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
+      <div className={isMobile ? "space-y-3 pb-4" : "p-6 space-y-6"}>}
+        <div className={isMobile ? "mb-3" : "space-y-2"}>
+          <div className="flex items-center gap-2">
+            <div className={`p-2 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-lg ${isMobile ? 'hidden' : ''}`}>
+              <TrendingUp className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("analytics", lang)}</h1>
-              <p className="text-sm md:text-base text-muted-foreground">{t("trackFinancialPerformance", lang)}</p>
+              <h1 className={isMobile ? "text-xl font-bold" : "text-3xl font-bold text-foreground"}>{t("analytics", lang)}</h1>
+              <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-base'}`}>{t("trackFinancialPerformance", lang)}</p>
             </div>
           </div>
         </div>
@@ -425,7 +427,7 @@ export default function Analytics() {
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300} className="md:!h-[350px]">
+            <ResponsiveContainer width="100%" height={isMobile ? 200 : 300} className="md:!h-[350px]">
               <AreaChart data={monthlyData} key={`monthly-${monthlyData.length}`}>
                 <defs>
                   <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
@@ -658,7 +660,7 @@ export default function Analytics() {
 
                   {/* Chart */}
                   <div className="mt-6">
-                    <ResponsiveContainer width="100%" height={350}>
+                    <ResponsiveContainer width="100%" height={isMobile ? 250 : 350}>
                       <AreaChart data={projectionData} key={`projection-${projectionData.length}-${projectionPeriod}`}>
                         <defs>
                           <linearGradient id="colorAverage" x1="0" y1="0" x2="0" y2="1">

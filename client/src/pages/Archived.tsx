@@ -8,8 +8,10 @@ import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
+import { useIsMobile } from "@/hooks/useMobile";
 
 export default function Archived() {
+  const isMobile = useIsMobile();
   const { preferences } = usePreferences();
   const utils = trpc.useUtils();
   const { data: archivedGoals = [], isLoading } = trpc.goals.getArchived.useQuery();
@@ -35,16 +37,16 @@ export default function Archived() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      <div className={`max-w-7xl mx-auto ${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
         {/* Header */}
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center">
-              <Archive className="h-6 w-6 text-purple-500" />
+            <div className={`rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-12 w-12'}`}>
+              <Archive className={`text-purple-500 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'}`} />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-foreground">{t("archivedGoals", preferences.language)}</h1>
-              <p className="text-lg text-muted-foreground">{t("viewCompletedGoals", preferences.language)}</p>
+              <h1 className={`font-bold text-foreground ${isMobile ? 'text-xl' : 'text-4xl'}`}>{t("archivedGoals", preferences.language)}</h1>
+              <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-lg'}`}>{t("viewCompletedGoals", preferences.language)}</p>
             </div>
           </div>
         </div>
@@ -109,12 +111,12 @@ export default function Archived() {
           <>
             {/* Statistics Cards */}
             {archivedGoals.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className={`grid grid-cols-1 md:grid-cols-3 ${isMobile ? 'gap-3' : 'gap-6'}`}>
                 <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                        <Trophy className="h-5 w-5 text-green-500" />
+                  <CardHeader className={isMobile ? 'pb-2' : 'pb-3'}>
+                    <div className={`flex items-center ${isMobile ? 'gap-2' : 'gap-3'}`}>
+                      <div className={`rounded-lg bg-green-500/20 flex items-center justify-center ${isMobile ? 'h-8 w-8' : 'h-10 w-10'}`}>
+                        <Trophy className={`text-green-500 ${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
                       </div>
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         {t("totalCompleted", preferences.language) || "Metas Concluídas"}
@@ -122,10 +124,10 @@ export default function Archived() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    <div className={`font-bold text-green-600 dark:text-green-400 ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
                       {totalGoalsCompleted}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className={`text-muted-foreground mt-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
                       {t("allTimeAchievements", preferences.language) || "Conquistas de todos os tempos"}
                     </p>
                   </CardContent>

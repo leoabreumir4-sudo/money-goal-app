@@ -15,6 +15,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } fro
 import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
+import { useIsMobile } from "@/hooks/useMobile";
 
 const COLORS = ['#3b82f6', '#22c55e', '#14b8a6', '#ec4899', '#8b5cf6', '#f59e0b', '#06b6d4', '#f97316'];
 
@@ -40,6 +41,7 @@ const convertToPreferredCurrency = (amount: number, fromCurrency: string, toCurr
 };
 
 export default function Spending() {
+  const isMobile = useIsMobile();
   const { preferences } = usePreferences();
   const [selectedPeriod, setSelectedPeriod] = useState("This Month");
   const [filterType, setFilterType] = useState("All");
@@ -196,9 +198,9 @@ export default function Spending() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-4 md:space-y-6 p-3 md:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <div className={`max-w-7xl mx-auto ${isMobile ? 'p-3 space-y-3 pb-4' : 'p-6 space-y-6'}`}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <h1 className={`font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent ${isMobile ? 'text-xl' : 'text-3xl'}`}>
             {t("spending", preferences.language)}
           </h1>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -287,7 +289,7 @@ export default function Spending() {
           </CardHeader>
           <CardContent>
             {chartData.length > 0 ? (
-              <div className="h-64 md:h-96">
+              <div className={isMobile ? "h-56" : "h-96"}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie

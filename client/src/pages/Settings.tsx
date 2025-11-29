@@ -11,8 +11,10 @@ import { usePreferences } from "@/contexts/PreferencesContext";
 import { t } from "@/lib/i18n";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CheckCircle, HelpCircle, MessageSquare, Smartphone, MessageCircle } from "lucide-react";
+import { useIsMobile } from "@/hooks/useMobile";
 
 export default function Settings() {
+  const isMobile = useIsMobile();
   const utils = trpc.useUtils();
   const { data: settings } = trpc.settings.get.useQuery();
   const { preferences, updatePreferences } = usePreferences();
@@ -85,11 +87,11 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="p-3 md:p-6 space-y-4 md:space-y-6 max-w-4xl mx-auto">
+      <div className={`max-w-4xl mx-auto ${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
         {/* Header */}
         <div className="space-y-1">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">{t('settings', preferences.language)}</h1>
-          <p className="text-base md:text-lg text-muted-foreground">{t('customizeExperience', preferences.language)}</p>
+          <h1 className={`font-bold text-foreground ${isMobile ? 'text-xl' : 'text-4xl'}`}>{t('settings', preferences.language)}</h1>
+          <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-lg'}`}>{t('customizeExperience', preferences.language)}</p>
         </div>
 
         {/* Settings Card */}
@@ -100,9 +102,9 @@ export default function Settings() {
               {t('preferences', preferences.language)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6 md:space-y-8 pt-4 md:pt-6">
+          <CardContent className={isMobile ? 'space-y-5 pt-4' : 'space-y-8 pt-6'}>
             {/* Language */}
-            <div className="space-y-3 p-3 md:p-4 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
+            <div className={`space-y-3 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors ${isMobile ? 'p-3' : 'p-4'}`}>
               <div className="flex items-center gap-2">
                 <span className="text-xl">🌍</span>
                 <Label htmlFor="language" className="text-base font-semibold">{t('language', preferences.language)}</Label>

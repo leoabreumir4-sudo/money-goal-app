@@ -12,8 +12,10 @@ import { Plus, Target, TrendingUp, Shield, Archive, Trash2, RotateCcw } from "lu
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useIsMobile } from "@/hooks/useMobile";
 
 export default function GoalsPage() {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -107,11 +109,11 @@ export default function GoalsPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className={`container mx-auto ${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Financial Goals</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Track multiple goals with priorities</p>
+          <h1 className={isMobile ? "text-xl font-bold" : "text-3xl font-bold"}>Financial Goals</h1>
+          <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-base'}`}>Track multiple goals with priorities</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
@@ -239,7 +241,7 @@ export default function GoalsPage() {
       )}
 
       {/* Active Goals Grid */}
-      <div className="grid gap-3 md:gap-4 md:grid-cols-2">
+      <div className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
         {savingsGoals?.map((goal) => {
           const percentage = (goal.currentAmount / goal.targetAmount) * 100;
           

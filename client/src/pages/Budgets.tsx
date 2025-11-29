@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Plus, AlertTriangle, AlertCircle, XCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useIsMobile } from "@/hooks/useMobile";
 
 export default function BudgetsPage() {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -79,11 +81,11 @@ export default function BudgetsPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Budget Planning</h1>
-          <p className="text-muted-foreground">Set spending limits and track your budget</p>
+      <div className={`container mx-auto ${isMobile ? 'p-3 space-y-3' : 'p-6 space-y-6'}`}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div>
+            <h1 className={isMobile ? 'text-xl font-bold' : 'text-3xl font-bold'}>Budget Planning</h1>
+            <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-base'}`}>Set spending limits and track your budget</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
