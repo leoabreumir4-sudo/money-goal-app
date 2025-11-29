@@ -310,7 +310,7 @@ export default function Analytics() {
 
   return (
     <DashboardLayout>
-      <div className={isMobile ? "space-y-3 pb-4" : "p-6 space-y-6"}>}
+      <div className={isMobile ? "space-y-3 pb-4" : "p-6 space-y-6"}>
         <div className={isMobile ? "mb-3" : "space-y-2"}>
           <div className="flex items-center gap-2">
             <div className={`p-2 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-lg ${isMobile ? 'hidden' : ''}`}>
