@@ -196,14 +196,14 @@ export default function Spending() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <div className="space-y-4 md:space-y-6 p-3 md:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             {t("spending", preferences.language)}
           </h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Select period" />
               </SelectTrigger>
               <SelectContent>
@@ -227,8 +227,8 @@ export default function Spending() {
               </CardTitle>
               <TrendingDown className="h-4 w-4 text-red-500" />
             </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-2xl font-bold text-red-900 dark:text-red-100">
+            <CardContent className="relative z-10 pb-3 md:pb-4">
+              <div className="text-xl md:text-2xl font-bold text-red-900 dark:text-red-100 truncate">
                 {formatCurrency(totalSpending / 100, preferences.currency)}
               </div>
               <p className="text-xs text-red-600 dark:text-red-400 mt-1">
@@ -245,8 +245,8 @@ export default function Spending() {
               </CardTitle>
               <BarChart3 className="h-4 w-4 text-blue-500" />
             </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+            <CardContent className="relative z-10 pb-3 md:pb-4">
+              <div className="text-xl md:text-2xl font-bold text-blue-900 dark:text-blue-100">
                 {expensesByCategory.length}
               </div>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
@@ -263,8 +263,8 @@ export default function Spending() {
               </CardTitle>
               <DollarSign className="h-4 w-4 text-green-500" />
             </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="text-2xl font-bold text-green-900 dark:text-green-100">
+            <CardContent className="relative z-10 pb-3 md:pb-4">
+              <div className="text-xl md:text-2xl font-bold text-green-900 dark:text-green-100">
                 {expensesByCategory.length > 0 
                   ? formatCurrency((totalSpending / expensesByCategory.length) / 100, preferences.currency)
                   : formatCurrency(0, preferences.currency)
@@ -287,7 +287,7 @@ export default function Spending() {
           </CardHeader>
           <CardContent>
             {chartData.length > 0 ? (
-              <div className="h-96">
+              <div className="h-64 md:h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie

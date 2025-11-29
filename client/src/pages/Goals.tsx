@@ -107,15 +107,15 @@ export default function GoalsPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="container mx-auto p-3 md:p-6 space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Financial Goals</h1>
-          <p className="text-muted-foreground">Track multiple goals with priorities</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Financial Goals</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Track multiple goals with priorities</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2 text-sm md:text-base h-10 md:h-auto">
               <Plus className="h-4 w-4" />
               Create Goal
             </Button>
@@ -239,7 +239,7 @@ export default function GoalsPage() {
       )}
 
       {/* Active Goals Grid */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2">
         {savingsGoals?.map((goal) => {
           const percentage = (goal.currentAmount / goal.targetAmount) * 100;
           

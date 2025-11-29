@@ -85,11 +85,11 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6 max-w-4xl mx-auto">
+      <div className="p-3 md:p-6 space-y-4 md:space-y-6 max-w-4xl mx-auto">
         {/* Header */}
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold text-foreground">{t('settings', preferences.language)}</h1>
-          <p className="text-lg text-muted-foreground">{t('customizeExperience', preferences.language)}</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">{t('settings', preferences.language)}</h1>
+          <p className="text-base md:text-lg text-muted-foreground">{t('customizeExperience', preferences.language)}</p>
         </div>
 
         {/* Settings Card */}
@@ -100,9 +100,9 @@ export default function Settings() {
               {t('preferences', preferences.language)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8 pt-6">
+          <CardContent className="space-y-6 md:space-y-8 pt-4 md:pt-6">
             {/* Language */}
-            <div className="space-y-3 p-4 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
+            <div className="space-y-3 p-3 md:p-4 bg-muted/30 rounded-lg hover:bg-muted/40 transition-colors">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🌍</span>
                 <Label htmlFor="language" className="text-base font-semibold">{t('language', preferences.language)}</Label>
@@ -189,7 +189,7 @@ export default function Settings() {
             <Button 
               onClick={handleSaveChanges} 
               disabled={updateSettingsMutation.isPending}
-              className="w-full h-11 text-base font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all"
+              className="w-full h-11 md:h-12 text-base font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all"
             >
               {updateSettingsMutation.isPending ? t('saving', preferences.language) : t('saveChanges', preferences.language)}
             </Button>

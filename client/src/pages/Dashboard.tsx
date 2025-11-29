@@ -351,7 +351,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-3 md:p-6 space-y-4 md:space-y-6">
         {/* Modals for Income and Expense */}
         <div className="hidden">
           <Dialog open={isIncomeModalOpen} onOpenChange={setIsIncomeModalOpen}>
@@ -499,7 +499,7 @@ export default function Dashboard() {
         )}
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Recent Transactions */}
           <div className="lg:col-span-2">
             <Card className="bg-card border-border">
@@ -697,12 +697,12 @@ export default function Dashboard() {
               <>
                 {/* Modern Goal Card */}
                 <Card className="border-0 bg-gradient-to-br from-primary/5 via-background to-purple-500/5 shadow-xl">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 md:p-6">
                     {/* Header */}
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-bold text-foreground mb-1">{activeGoal.name}</h3>
-                        <p className="text-sm text-muted-foreground">{t('savingForDream', preferences.language as "en" | "pt" | "es")}</p>
+                    <div className="flex items-start justify-between mb-4 md:mb-6">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl md:text-2xl font-bold text-foreground mb-1 truncate">{activeGoal.name}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground">{t('savingForDream', preferences.language as "en" | "pt" | "es")}</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -715,8 +715,8 @@ export default function Dashboard() {
                     </div>
 
                     {/* Progress Circle */}
-                    <div className="flex items-center justify-center mb-6">
-                      <div className="relative w-40 h-40">
+                    <div className="flex items-center justify-center mb-4 md:mb-6">
+                      <div className="relative w-32 h-32 md:w-40 md:h-40">
                         {/* Glow Effect */}
                         <div className="absolute inset-0 blur-xl opacity-50">
                           <svg className="w-full h-full transform -rotate-90">
@@ -768,7 +768,7 @@ export default function Dashboard() {
                         
                         {/* Center Text */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                          <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
                             {progressPercentage}%
                           </span>
                           <span className="text-xs text-muted-foreground mt-1">{t('complete', preferences.language as "en" | "pt" | "es")}</span>
@@ -777,21 +777,21 @@ export default function Dashboard() {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2 md:gap-3">
                       {/* Current Amount */}
-                      <div className="bg-background/80 backdrop-blur rounded-2xl p-4 border border-border/50">
+                      <div className="bg-background/80 backdrop-blur rounded-xl md:rounded-2xl p-3 md:p-4 border border-border/50">
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Sparkles className="h-4 w-4 text-primary" />
+                          <div className="h-6 w-6 md:h-8 md:w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Sparkles className="h-3 w-3 md:h-4 md:w-4 text-primary" />
                           </div>
-                          <span className="text-xs font-medium text-muted-foreground">{t('current', preferences.language as "en" | "pt" | "es")}</span>
+                          <span className="text-[10px] md:text-xs font-medium text-muted-foreground">{t('current', preferences.language as "en" | "pt" | "es")}</span>
                         </div>
-                        <p className="text-xl font-bold text-foreground mb-1">
+                        <p className="text-base md:text-xl font-bold text-foreground mb-1 truncate">
                           {formatCurrency(activeGoal.currentAmount, preferences.currency)}
                         </p>
                         {wiseBalance > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                            <Wallet className="h-3 w-3" />
+                          <div className="flex items-center gap-1 text-[10px] md:text-xs text-green-600 dark:text-green-400">
+                            <Wallet className="h-2.5 w-2.5 md:h-3 md:w-3" />
                             <span>+{formatCurrency(wiseBalance, preferences.currency)}</span>
                             <span className="text-muted-foreground">• {t('wiseBalance', preferences.language as "en" | "pt" | "es")}</span>
                           </div>
@@ -799,17 +799,17 @@ export default function Dashboard() {
                       </div>
 
                       {/* Target Amount */}
-                      <div className="bg-background/80 backdrop-blur rounded-2xl p-4 border border-border/50">
+                      <div className="bg-background/80 backdrop-blur rounded-xl md:rounded-2xl p-3 md:p-4 border border-border/50">
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="h-8 w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                            <Target className="h-4 w-4 text-purple-500" />
+                          <div className="h-6 w-6 md:h-8 md:w-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                            <Target className="h-3 w-3 md:h-4 md:w-4 text-purple-500" />
                           </div>
-                          <span className="text-xs font-medium text-muted-foreground">{t('target', preferences.language as "en" | "pt" | "es")}</span>
+                          <span className="text-[10px] md:text-xs font-medium text-muted-foreground">{t('target', preferences.language as "en" | "pt" | "es")}</span>
                         </div>
-                        <p className="text-xl font-bold text-foreground mb-1">
+                        <p className="text-base md:text-xl font-bold text-foreground mb-1 truncate">
                           {formatCurrency(activeGoal.targetAmount, preferences.currency)}
                         </p>
-                        <p className="text-xs text-primary font-medium">
+                        <p className="text-[10px] md:text-xs text-primary font-medium truncate">
                           {formatCurrency(Math.max(0, activeGoal.targetAmount - activeGoal.currentAmount), preferences.currency)} {t('left', preferences.language as "en" | "pt" | "es")}
                         </p>
                       </div>
@@ -827,19 +827,19 @@ export default function Dashboard() {
                 </Card>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
                   <Button 
                     onClick={() => setIsIncomeModalOpen(true)}
-                    className="bg-gradient-to-r from-green-600 to-green-700 hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-white font-medium"
+                    className="bg-gradient-to-r from-green-600 to-green-700 hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300 text-white font-medium h-11 md:h-auto text-sm md:text-base"
                   >
-                    <ArrowUp className="mr-2 h-4 w-4" />
+                    <ArrowUp className="mr-1 md:mr-2 h-4 w-4" />
                     {t('addIncome', preferences.language as "en" | "pt" | "es")}
                   </Button>
                   <Button 
                     onClick={() => setIsExpenseModalOpen(true)}
-                    className="bg-gradient-to-r from-red-600 to-red-700 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300 text-white font-medium"
+                    className="bg-gradient-to-r from-red-600 to-red-700 hover:shadow-lg hover:shadow-red-500/30 transition-all duration-300 text-white font-medium h-11 md:h-auto text-sm md:text-base"
                   >
-                    <ArrowDown className="mr-2 h-4 w-4" />
+                    <ArrowDown className="mr-1 md:mr-2 h-4 w-4" />
                     {t('addExpense', preferences.language as "en" | "pt" | "es")}
                   </Button>
                 </div>

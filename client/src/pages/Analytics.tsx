@@ -308,15 +308,15 @@ export default function Analytics() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-3 md:p-6 space-y-4 md:space-y-6">
         <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-lg">
-              <TrendingUp className="h-6 w-6 text-primary-foreground" />
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="p-2 md:p-3 bg-gradient-to-br from-primary to-primary/80 rounded-xl shadow-lg">
+              <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{t("analytics", lang)}</h1>
-              <p className="text-muted-foreground">{t("trackFinancialPerformance", lang)}</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("analytics", lang)}</h1>
+              <p className="text-sm md:text-base text-muted-foreground">{t("trackFinancialPerformance", lang)}</p>
             </div>
           </div>
         </div>
@@ -368,49 +368,49 @@ export default function Analytics() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                      <ArrowUp className="h-6 w-6 text-primary" />
+                <CardHeader className="pb-2 md:pb-3">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="p-2 md:p-2.5 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                      <ArrowUp className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                     </div>
-                    <CardTitle className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("income", lang)}</CardTitle>
+                    <CardTitle className="text-xs md:text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("income", lang)}</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-primary mb-1">{formatCurrency(totalIncome, curr)}</p>
-                  <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
+                <CardContent className="pb-3 md:pb-4">
+                  <p className="text-2xl md:text-3xl font-bold text-primary mb-1 truncate">{formatCurrency(totalIncome, curr)}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">{t("last6Months", lang)}</p>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-to-br from-destructive/10 via-destructive/5 to-transparent border-destructive/20 hover:shadow-xl hover:shadow-destructive/10 transition-all duration-300 group">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-destructive/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                      <ArrowDown className="h-6 w-6 text-destructive" />
+                <CardHeader className="pb-2 md:pb-3">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="p-2 md:p-2.5 bg-destructive/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                      <ArrowDown className="h-5 w-5 md:h-6 md:w-6 text-destructive" />
                     </div>
-                    <CardTitle className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("expense", lang)}</CardTitle>
+                    <CardTitle className="text-xs md:text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("expense", lang)}</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-destructive mb-1">{formatCurrency(totalExpenses, curr)}</p>
-                  <p className="text-sm text-muted-foreground">{t("last6Months", lang)}</p>
+                <CardContent className="pb-3 md:pb-4">
+                  <p className="text-2xl md:text-3xl font-bold text-destructive mb-1 truncate">{formatCurrency(totalExpenses, curr)}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">{t("last6Months", lang)}</p>
                 </CardContent>
               </Card>
 
           <Card className="bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent border-green-500/20 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 group">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-green-500/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                  <TrendingUp className="h-6 w-6 text-green-500" />
+            <CardHeader className="pb-2 md:pb-3">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="p-2 md:p-2.5 bg-green-500/10 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-green-500" />
                 </div>
-                <CardTitle className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("netSavings", lang)}</CardTitle>
+                <CardTitle className="text-xs md:text-sm text-muted-foreground font-semibold uppercase tracking-wider">{t("netSavings", lang)}</CardTitle>
               </div>
             </CardHeader>
-            <CardContent>
-              <p className={`text-3xl font-bold mb-1 ${netFlow >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+            <CardContent className="pb-3 md:pb-4">
+              <p className={`text-2xl md:text-3xl font-bold mb-1 truncate ${ netFlow >= 0 ? 'text-green-500' : 'text-destructive'}`}>
                 {formatCurrency(netFlow, curr)}
               </p>
-              <p className="text-sm text-muted-foreground">{t("positiveFlow", lang)}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">{t("positiveFlow", lang)}</p>
             </CardContent>
           </Card>
         </div>
@@ -425,7 +425,7 @@ export default function Analytics() {
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
+            <ResponsiveContainer width="100%" height={300} className="md:!h-[350px]">
               <AreaChart data={monthlyData} key={`monthly-${monthlyData.length}`}>
                 <defs>
                   <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
