@@ -5,10 +5,10 @@
 
 INSERT INTO categories (name, emoji, color, "isDefault", keywords) VALUES
 -- Food & Dining
-('Food', '🍔', '#ef4444', true, ARRAY['food', 'meal', 'lunch', 'dinner', 'breakfast', 'alimentação', 'comida', 'refeição', 'almoço', 'jantar', 'café da manhã']),
-('Groceries', '🛒', '#f97316', true, ARRAY['grocery', 'groceries', 'supermarket', 'market', 'supermercado', 'mercado', 'compras']),
-('Restaurants', '🍽️', '#fb923c', true, ARRAY['restaurant', 'dining', 'eat out', 'restaurante', 'comer fora']),
-('Coffee', '☕', '#fdba74', true, ARRAY['coffee', 'cafe', 'starbucks', 'café', 'cafeteria']),
+('Food', '🍔', '#ef4444', true, ARRAY['food', 'meal', 'lunch', 'dinner', 'breakfast', 'burger', 'pizza', 'alimentação', 'comida', 'refeição', 'almoço', 'jantar', 'café da manhã', 'lanche']),
+('Groceries', '🛒', '#f97316', true, ARRAY['grocery', 'groceries', 'supermarket', 'market', 'supermercado', 'mercado', 'compras', 'padaria', 'bakery']),
+('Restaurants', '🍽️', '#fb923c', true, ARRAY['restaurant', 'dining', 'eat out', 'ifood', 'delivery', 'restaurante', 'comer fora', 'entrega']),
+('Coffee', '☕', '#fdba74', true, ARRAY['coffee', 'cafe', 'starbucks', 'café', 'cafeteria']);
 
 -- Transportation
 ('Transportation', '🚗', '#3b82f6', true, ARRAY['transport', 'travel', 'commute', 'transporte', 'viagem', 'deslocamento']),
@@ -23,10 +23,10 @@ INSERT INTO categories (name, emoji, color, "isDefault", keywords) VALUES
 ('Home Maintenance', '🔧', '#ddd6fe', true, ARRAY['maintenance', 'repair', 'home improvement', 'manutenção', 'reparo', 'conserto']),
 
 -- Entertainment
-('Entertainment', '🎬', '#ec4899', true, ARRAY['entertainment', 'fun', 'leisure', 'entretenimento', 'diversão', 'lazer']),
-('Movies', '🎞️', '#f472b6', true, ARRAY['movie', 'cinema', 'film', 'theater', 'filme', 'teatro']),
+('Entertainment', '🎬', '#ec4899', true, ARRAY['entertainment', 'fun', 'leisure', 'entretenimento', 'diversão', 'lazer', 'netflix', 'prime video', 'hbo']),
+('Movies', '🎞️', '#f472b6', true, ARRAY['movie', 'cinema', 'film', 'theater', 'filme', 'teatro', 'netflix', 'assinatura mensal']),
 ('Games', '🎮', '#f9a8d4', true, ARRAY['game', 'gaming', 'video game', 'steam', 'jogo', 'jogos', 'videogame']),
-('Music', '🎵', '#fbcfe8', true, ARRAY['music', 'spotify', 'concert', 'streaming', 'música', 'show', 'concerto']),
+('Music', '🎵', '#fbcfe8', true, ARRAY['music', 'spotify', 'concert', 'streaming', 'música', 'show', 'concerto', 'spotify premium']);
 
 -- Shopping
 ('Shopping', '🛍️', '#14b8a6', true, ARRAY['shopping', 'purchase', 'buy', 'compras', 'compra']),
@@ -36,9 +36,9 @@ INSERT INTO categories (name, emoji, color, "isDefault", keywords) VALUES
 
 -- Healthcare
 ('Healthcare', '⚕️', '#22c55e', true, ARRAY['healthcare', 'health', 'medical', 'saúde', 'médico']),
-('Pharmacy', '💊', '#4ade80', true, ARRAY['pharmacy', 'medicine', 'drug', 'prescription', 'farmácia', 'remédio', 'medicamento']),
+('Pharmacy', '💊', '#4ade80', true, ARRAY['pharmacy', 'medicine', 'drug', 'prescription', 'farmácia', 'remédio', 'medicamento', 'whey', 'protein', 'creatina', 'suplemento', 'supplement']),
 ('Gym', '💪', '#86efac', true, ARRAY['gym', 'fitness', 'workout', 'exercise', 'academia', 'treino', 'exercício']),
-('Doctor', '🩺', '#bbf7d0', true, ARRAY['doctor', 'medical', 'health', 'clinic', 'hospital', 'médico', 'saúde', 'clínica']),
+('Doctor', '🩺', '#bbf7d0', true, ARRAY['doctor', 'medical', 'health', 'clinic', 'hospital', 'médico', 'saúde', 'clínica']);
 
 -- Education
 ('Education', '📚', '#f59e0b', true, ARRAY['education', 'learning', 'study', 'educação', 'aprendizado', 'estudo']),
@@ -57,16 +57,16 @@ INSERT INTO categories (name, emoji, color, "isDefault", keywords) VALUES
 ('Flights', '🛫', '#67e8f9', true, ARRAY['flight', 'airline', 'plane', 'ticket', 'voo', 'passagem', 'avião']),
 
 -- Income
-('Salary', '💰', '#10b981', true, ARRAY['salary', 'wage', 'paycheck', 'income', 'salário', 'pagamento', 'receita']),
-('Freelance', '💼', '#34d399', true, ARRAY['freelance', 'contract', 'gig', 'freela', 'contrato', 'autônomo']),
+('Salary', '💰', '#10b981', true, ARRAY['salary', 'wage', 'paycheck', 'income', 'salário', 'pagamento', 'receita', 'artix', 'entertainment']),
+('Freelance', '💼', '#34d399', true, ARRAY['freelance', 'contract', 'gig', 'freela', 'contrato', 'autônomo', 'design', 'web dev', 'project']),
 ('Investment Income', '📊', '#6ee7b7', true, ARRAY['dividend', 'interest', 'profit', 'return', 'dividendo', 'juros', 'lucro', 'rendimento']),
-('Other Income', '🎁', '#a7f3d0', true, ARRAY['income', 'revenue', 'earning', 'gift', 'receita', 'renda', 'ganho', 'presente']),
+('Other Income', '🎁', '#a7f3d0', true, ARRAY['income', 'revenue', 'earning', 'gift', 'receita', 'renda', 'ganho', 'presente']);
 
 -- Other
 ('Other', '📦', '#94a3b8', true, ARRAY['other', 'misc', 'miscellaneous', 'outros', 'diversos']),
 ('Gifts', '🎁', '#cbd5e1', true, ARRAY['gift', 'present', 'donation', 'presente', 'doação']),
 ('Donations', '❤️', '#e2e8f0', true, ARRAY['donation', 'charity', 'contribution', 'doação', 'caridade', 'contribuição']),
-('Subscriptions', '📱', '#f1f5f9', true, ARRAY['subscription', 'membership', 'recurring', 'assinatura', 'recorrente']);
+('Subscriptions', '📱', '#f1f5f9', true, ARRAY['subscription', 'membership', 'recurring', 'assinatura', 'recorrente', 'netflix', 'spotify', 'amazon prime', 'chatgpt', 'premium', 'plus', 'mensal']);
 
 -- Note: Categories are stored in English but will display translated names based on user's language preference
 -- Supported languages: English (en), Portuguese (pt), Spanish (es)
