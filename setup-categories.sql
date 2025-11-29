@@ -1,0 +1,181 @@
+-- ========================================
+-- MoneyGoal App - Default Categories Setup
+-- ========================================
+-- 
+-- This script creates default categories with multilingual keyword support
+-- for automatic transaction categorization.
+--
+-- INSTRUCTIONS:
+-- 1. Delete all existing categories: DELETE FROM categories WHERE "isDefault" = true;
+-- 2. Run this script to insert fresh default categories
+-- 3. Frontend will display translated names based on user's language preference
+--
+-- FEATURES:
+-- - 45 comprehensive categories covering all financial needs
+-- - Multilingual keywords (English, Portuguese, Spanish)
+-- - Smart auto-categorization based on transaction descriptions
+-- - Color-coded categories with emojis
+--
+-- ========================================
+
+-- Clean up existing default categories
+DELETE FROM categories WHERE "isDefault" = true;
+
+-- Insert default categories with multilingual keywords
+INSERT INTO categories (name, emoji, color, "isDefault", keywords) VALUES
+
+-- ============ FOOD & DINING ============
+('Food', '🍔', '#ef4444', true, 
+  ARRAY['food', 'meal', 'lunch', 'dinner', 'breakfast', 'burger', 'pizza', 'alimentação', 'comida', 'refeição', 'almoço', 'jantar', 'café da manhã', 'lanche']),
+
+('Groceries', '🛒', '#f97316', true, 
+  ARRAY['grocery', 'groceries', 'supermarket', 'market', 'supermercado', 'mercado', 'compras', 'padaria', 'bakery']),
+
+('Restaurants', '🍽️', '#fb923c', true, 
+  ARRAY['restaurant', 'dining', 'eat out', 'ifood', 'delivery', 'restaurante', 'comer fora', 'entrega']),
+
+('Coffee', '☕', '#fdba74', true, 
+  ARRAY['coffee', 'cafe', 'starbucks', 'café', 'cafeteria']),
+
+-- ============ TRANSPORTATION ============
+('Transportation', '🚗', '#3b82f6', true, 
+  ARRAY['transport', 'travel', 'commute', 'transporte', 'viagem', 'deslocamento']),
+
+('Gas', '⛽', '#60a5fa', true, 
+  ARRAY['gas', 'fuel', 'petrol', 'gasoline', 'combustível', 'gasolina', 'posto']),
+
+('Public Transit', '🚌', '#93c5fd', true, 
+  ARRAY['transit', 'subway', 'bus', 'train', 'metro', 'transporte público', 'metrô', 'ônibus', 'trem']),
+
+('Uber/Taxi', '🚕', '#bfdbfe', true, 
+  ARRAY['uber', 'taxi', 'lyft', 'ride', 'táxi', 'corrida', '99']),
+
+-- ============ HOUSING ============
+('Housing', '🏠', '#8b5cf6', true, 
+  ARRAY['housing', 'home', 'property', 'moradia', 'casa', 'imóvel']),
+
+('Rent', '🔑', '#a78bfa', true, 
+  ARRAY['rent', 'rental', 'lease', 'aluguel', 'locação']),
+
+('Utilities', '💡', '#c4b5fd', true, 
+  ARRAY['utilities', 'electric', 'water', 'gas', 'internet', 'phone', 'contas', 'luz', 'água', 'telefone']),
+
+('Home Maintenance', '🔧', '#ddd6fe', true, 
+  ARRAY['maintenance', 'repair', 'home improvement', 'manutenção', 'reparo', 'conserto']),
+
+-- ============ ENTERTAINMENT ============
+('Entertainment', '🎬', '#ec4899', true, 
+  ARRAY['entertainment', 'fun', 'leisure', 'entretenimento', 'diversão', 'lazer']),
+
+('Movies', '🎞️', '#f472b6', true, 
+  ARRAY['movie', 'cinema', 'film', 'theater', 'filme', 'teatro']),
+
+('Games', '🎮', '#f9a8d4', true, 
+  ARRAY['game', 'gaming', 'video game', 'steam', 'jogo', 'jogos', 'videogame']),
+
+('Music', '🎵', '#fbcfe8', true, 
+  ARRAY['music', 'concert', 'streaming', 'música', 'show', 'concerto']),
+
+-- ============ SHOPPING ============
+('Shopping', '🛍️', '#14b8a6', true, 
+  ARRAY['shopping', 'purchase', 'buy', 'compras', 'compra']),
+
+('Clothing', '👕', '#2dd4bf', true, 
+  ARRAY['clothing', 'clothes', 'fashion', 'apparel', 'roupa', 'roupas', 'moda', 'vestuário']),
+
+('Electronics', '💻', '#5eead4', true, 
+  ARRAY['electronics', 'gadget', 'tech', 'computer', 'eletrônicos', 'tecnologia', 'computador']),
+
+('Books', '📖', '#99f6e4', true, 
+  ARRAY['book', 'books', 'reading', 'livro', 'livros', 'leitura']),
+
+-- ============ HEALTHCARE ============
+('Healthcare', '⚕️', '#22c55e', true, 
+  ARRAY['healthcare', 'health', 'medical', 'saúde', 'médico']),
+
+('Pharmacy', '💊', '#4ade80', true, 
+  ARRAY['pharmacy', 'medicine', 'drug', 'prescription', 'farmácia', 'remédio', 'medicamento', 'whey', 'protein', 'creatina', 'suplemento', 'supplement']),
+
+('Gym', '💪', '#86efac', true, 
+  ARRAY['gym', 'fitness', 'workout', 'exercise', 'academia', 'treino', 'exercício']),
+
+('Doctor', '🩺', '#bbf7d0', true, 
+  ARRAY['doctor', 'medical', 'health', 'clinic', 'hospital', 'médico', 'saúde', 'clínica']),
+
+-- ============ EDUCATION ============
+('Education', '📚', '#f59e0b', true, 
+  ARRAY['education', 'learning', 'study', 'educação', 'aprendizado', 'estudo']),
+
+('Tuition', '🎓', '#fbbf24', true, 
+  ARRAY['tuition', 'school', 'college', 'university', 'mensalidade', 'escola', 'faculdade', 'universidade']),
+
+('Courses', '📝', '#fcd34d', true, 
+  ARRAY['course', 'class', 'training', 'education', 'curso', 'aula', 'treinamento']),
+
+-- ============ FINANCIAL SERVICES ============
+('Financial', '💳', '#6366f1', true, 
+  ARRAY['financial', 'finance', 'money', 'financeiro', 'finanças', 'dinheiro']),
+
+('Bank Fees', '🏦', '#818cf8', true, 
+  ARRAY['bank', 'fee', 'charge', 'atm', 'banco', 'taxa', 'tarifa']),
+
+('Insurance', '🛡️', '#a5b4fc', true, 
+  ARRAY['insurance', 'premium', 'policy', 'seguro', 'apólice']),
+
+('Investments', '📈', '#c7d2fe', true, 
+  ARRAY['investment', 'stock', 'trading', 'crypto', 'investimento', 'ações', 'bolsa']),
+
+-- ============ TRAVEL ============
+('Travel', '✈️', '#06b6d4', true, 
+  ARRAY['travel', 'trip', 'vacation', 'tourism', 'viagem', 'férias', 'turismo']),
+
+('Hotels', '🏨', '#22d3ee', true, 
+  ARRAY['hotel', 'accommodation', 'lodging', 'airbnb', 'hospedagem', 'acomodação']),
+
+('Flights', '🛫', '#67e8f9', true, 
+  ARRAY['flight', 'airline', 'plane', 'ticket', 'voo', 'passagem', 'avião']),
+
+-- ============ INCOME ============
+('Salary', '💰', '#10b981', true, 
+  ARRAY['salary', 'wage', 'paycheck', 'income', 'salário', 'pagamento', 'receita', 'artix', 'entertainment']),
+
+('Freelance', '💼', '#34d399', true, 
+  ARRAY['freelance', 'contract', 'gig', 'freela', 'contrato', 'autônomo', 'design', 'web dev', 'project']),
+
+('Investment Income', '📊', '#6ee7b7', true, 
+  ARRAY['dividend', 'interest', 'profit', 'return', 'dividendo', 'juros', 'lucro', 'rendimento']),
+
+('Other Income', '🎁', '#a7f3d0', true, 
+  ARRAY['income', 'revenue', 'earning', 'gift', 'receita', 'renda', 'ganho', 'presente']),
+
+-- ============ SUBSCRIPTIONS ============
+('Subscriptions', '📱', '#f1f5f9', true, 
+  ARRAY['subscription', 'membership', 'recurring', 'assinatura', 'recorrente', 'netflix', 'spotify', 'amazon prime', 'chatgpt', 'premium', 'plus', 'mensal']),
+
+-- ============ OTHER ============
+('Other', '📦', '#94a3b8', true, 
+  ARRAY['other', 'misc', 'miscellaneous', 'outros', 'diversos']),
+
+('Gifts', '🎁', '#cbd5e1', true, 
+  ARRAY['gift', 'present', 'donation', 'presente', 'doação']),
+
+('Donations', '❤️', '#e2e8f0', true, 
+  ARRAY['donation', 'charity', 'contribution', 'doação', 'caridade', 'contribuição']);
+
+-- ========================================
+-- Verification Query
+-- ========================================
+-- Run this to verify categories were created:
+-- SELECT id, name, emoji, "isDefault", array_length(keywords, 1) as keyword_count FROM categories WHERE "isDefault" = true ORDER BY id;
+
+-- ========================================
+-- Translation Notes
+-- ========================================
+-- Categories are stored in English in the database
+-- Frontend translates display names based on user language:
+--   - English (en): Original name
+--   - Portuguese (pt): Translated via categoryTranslations.ts
+--   - Spanish (es): Translated via categoryTranslations.ts
+--
+-- User-created categories always display their original name
+-- ========================================
