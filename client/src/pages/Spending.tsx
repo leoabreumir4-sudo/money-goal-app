@@ -116,12 +116,16 @@ export default function Spending() {
     const grouped: Record<number, { name: string; value: number; emoji: string; color: string }> = {};
     
     expenseTransactions.forEach(t => {
+      // Pula transações sem categoria
+      if (!t.categoryId) return;
+      
       const category = categories.find(c => c.id === t.categoryId);
-      // Use actual categoryId from transaction, or find "Other" category as fallback
-      const categoryId = t.categoryId || categories.find(c => c.name === "Other")?.id || 0;
-      const categoryName = category?.name || "Other";
-      const categoryEmoji = category?.emoji || "📦";
-      const categoryColor = category?.color || "#94a3b8";
+      if (!category) return; // Pula se categoria não existe
+      
+      const categoryId = t.categoryId;
+      const categoryName = category.name;
+      const categoryEmoji = category.emoji;
+      const categoryColor = category.color;
       
       // Convert to user's preferred currency
       const convertedAmount = convertToPreferredCurrency(
@@ -252,7 +256,7 @@ export default function Spending() {
                 {expensesByCategory.length}
               </div>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                {t("activeCategories", preferences.language)}
+                {expensesByCategory.length === 1 ? "categoria ativa" : "categorias ativas"}
               </p>
             </CardContent>
           </Card>
@@ -273,7 +277,7 @@ export default function Spending() {
                 }
               </div>
               <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                {t("averageSpending", preferences.language)}
+                por categoria
               </p>
             </CardContent>
           </Card>
