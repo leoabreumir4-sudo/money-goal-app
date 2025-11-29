@@ -10,7 +10,7 @@ import { ArrowDown, ArrowUp, Pencil, Sparkles, Target, Wallet, Plus } from "luci
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { t } from "@/lib/i18n";
+import { t, translateCategory } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 
@@ -352,7 +352,7 @@ export default function DashboardMobile() {
                   <SelectContent>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id.toString()}>
-                        {cat.emoji} {cat.name}
+                        {cat.emoji} {translateCategory(cat.name, preferences.language)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -407,7 +407,7 @@ export default function DashboardMobile() {
                   <SelectContent>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id.toString()}>
-                        {cat.emoji} {cat.name}
+                        {cat.emoji} {translateCategory(cat.name, preferences.language)}
                       </SelectItem>
                     ))}
                   </SelectContent>

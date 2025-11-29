@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { translateCategory } from "@/lib/i18n";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
 interface Category {
   id: number;
@@ -46,6 +48,8 @@ export default function CategoryManager({
   setNewCategoryColor,
   isCreating = false,
 }: CategoryManagerProps) {
+  const { preferences } = usePreferences();
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -135,7 +139,7 @@ export default function CategoryManager({
                       {category.emoji}
                     </div>
                     <div>
-                      <p className="font-medium">{category.name}</p>
+                      <p className="font-medium">{translateCategory(category.name, preferences.language)}</p>
                       {category.isDefault && (
                         <p className="text-xs text-muted-foreground">Categoria padrão</p>
                       )}

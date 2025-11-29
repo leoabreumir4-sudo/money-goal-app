@@ -13,7 +13,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from 'recharts';
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { t } from "@/lib/i18n";
+import { t, translateCategory } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 import { useIsMobile } from "@/hooks/useMobile";
 
@@ -147,7 +147,7 @@ export default function Spending() {
   }, [expenseTransactions, categories, preferences.currency]);
 
   const chartData = expensesByCategory.map((category, index) => ({
-    name: category.name,
+    name: translateCategory(category.name, preferences.language),
     value: category.value,
     emoji: category.emoji,
     color: category.color || COLORS[index % COLORS.length],

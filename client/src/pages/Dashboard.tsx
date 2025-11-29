@@ -14,7 +14,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { BankSync } from "@/components/BankSync";
 import { usePreferences } from "@/contexts/PreferencesContext";
-import { t } from "@/lib/i18n";
+import { t, translateCategory } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/currency";
 import { useCurrencyInput } from "@/hooks/useCurrencyInput";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -302,7 +302,7 @@ export default function Dashboard() {
       return;
     }
     
-    if (confirm(`Tem certeza que deseja deletar "${category.name}"?`)) {
+    if (confirm(`Tem certeza que deseja deletar "${translateCategory(category.name, preferences.language)}"?`)) {
       deleteCategoryMutation.mutate({ id });
     }
   };
@@ -679,7 +679,7 @@ export default function Dashboard() {
                     <SelectContent>
                       {categories.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id.toString()}>
-                          {cat.emoji} {cat.name}
+                          {cat.emoji} {translateCategory(cat.name, preferences.language)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -744,7 +744,7 @@ export default function Dashboard() {
                     <SelectContent>
                       {categories.map((cat) => (
                         <SelectItem key={cat.id} value={cat.id.toString()}>
-                          {cat.emoji} {cat.name}
+                          {cat.emoji} {translateCategory(cat.name, preferences.language)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -818,7 +818,7 @@ export default function Dashboard() {
                           <SelectItem key={cat.id} value={cat.id.toString()}>
                             <div className="flex items-center gap-2">
                               <span>{cat.emoji}</span>
-                              <span>{cat.name}</span>
+                              <span>{translateCategory(cat.name, preferences.language)}</span>
                               <div 
                                 className="w-2 h-2 rounded-full ml-auto" 
                                 style={{ backgroundColor: cat.color }}
@@ -887,7 +887,7 @@ export default function Dashboard() {
                           <SelectItem key={cat.id} value={cat.id.toString()}>
                             <div className="flex items-center gap-2">
                               <span>{cat.emoji}</span>
-                              <span>{cat.name}</span>
+                              <span>{translateCategory(cat.name, preferences.language)}</span>
                               <div 
                                 className="w-2 h-2 rounded-full ml-auto" 
                                 style={{ backgroundColor: cat.color }}
@@ -949,7 +949,7 @@ export default function Dashboard() {
                       <SelectItem value="all">All Categories</SelectItem>
                       {categoriesWithTransactions.map(category => (
                         <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.emoji} {category.name}
+                          {category.emoji} {translateCategory(category.name, preferences.language)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1041,7 +1041,7 @@ export default function Dashboard() {
                                             }}
                                           >
                                             <span>{category.emoji}</span>
-                                            <span>{category.name}</span>
+                                            <span>{translateCategory(category.name, preferences.language)}</span>
                                           </span>
                                         ) : null;
                                       })()}
@@ -1446,7 +1446,7 @@ export default function Dashboard() {
                       <SelectItem key={cat.id} value={cat.id.toString()}>
                         <div className="flex items-center gap-2">
                           <span>{cat.emoji}</span>
-                          <span>{cat.name}</span>
+                          <span>{translateCategory(cat.name, preferences.language)}</span>
                           <div 
                             className="w-2 h-2 rounded-full ml-auto" 
                             style={{ backgroundColor: cat.color }}
