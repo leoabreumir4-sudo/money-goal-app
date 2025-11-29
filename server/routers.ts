@@ -66,7 +66,7 @@ export const appRouter = router({
       }),
 
     getAll: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getAllGoals(ctx.user.id);
+      return await db.getActiveGoals(ctx.user.id);
     }),
 
     getActive: protectedProcedure.query(async ({ ctx }) => {
