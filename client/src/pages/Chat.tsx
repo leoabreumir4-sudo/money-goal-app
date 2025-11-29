@@ -242,9 +242,9 @@ export default function Chat() {
 
   return (
     <DashboardLayout>
-      <div className={`flex flex-col ${isMobile ? 'h-[calc(100vh-4rem)] p-3' : 'h-[calc(100vh-2rem)] p-6'}`}>
+      <div className={`flex flex-col ${isMobile ? 'h-[calc(100vh-4rem)] px-3 pt-4 pb-3' : 'h-[calc(100vh-2rem)] p-6'}`}>
         {/* Header */}
-        <div className={`flex items-center justify-between ${isMobile ? 'mb-3' : 'mb-6'}`}>
+        <div className={`flex items-center justify-between ${isMobile ? 'mb-4' : 'mb-6'}`}>
           <div className="flex items-center gap-3">
             <div className={`rounded-xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-lg flex items-center justify-center ${isMobile ? 'h-10 w-10' : 'h-14 w-14'}`}>
               <Sparkles className={`text-primary-foreground ${isMobile ? 'h-5 w-5' : 'h-7 w-7'}`} />

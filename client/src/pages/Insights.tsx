@@ -80,18 +80,19 @@ export default function InsightsPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className={`container mx-auto ${isMobile ? 'p-3 space-y-3 pb-6' : 'p-6 space-y-6'}`}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Insights Financeiros com IA</h1>
-          <p className="text-muted-foreground">Análise e predições geradas por IA</p>
+          <h1 className={`font-bold ${isMobile ? 'text-xl' : 'text-3xl'}`}>Insights Financeiros com IA</h1>
+          <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-base'}`}>Ánálise e predições geradas por IA</p>
         </div>
-        <div className="flex gap-2">
+        <div className={`flex gap-2 ${isMobile ? 'flex-wrap w-full' : ''}`}>
           <Button
             variant="outline"
             onClick={() => generateAlerts.mutate()}
             disabled={generateAlerts.isPending || !dataAvailability?.canGenerateAlerts}
             title={!dataAvailability?.canGenerateAlerts ? `Precisa de mais ${3 - (dataAvailability?.transactionCount || 0)} transações` : ""}
+            className={isMobile ? 'text-xs flex-1' : ''}
           >
             {generateAlerts.isPending ? "Gerando..." : "Verificar Alertas"}
           </Button>
@@ -100,13 +101,14 @@ export default function InsightsPage() {
             onClick={() => generateAchievements.mutate()}
             disabled={generateAchievements.isPending || !dataAvailability?.canGenerateAchievements}
             title={!dataAvailability?.canGenerateAchievements ? "Crie sua primeira meta para desbloquear conquistas" : ""}
+            className={isMobile ? 'text-xs flex-1' : ''}
           >
             {generateAchievements.isPending ? "Verificando..." : "Verificar Conquistas"}
           </Button>
           <Button
             onClick={handleGenerateForecast}
             disabled={isGenerating || !dataAvailability?.canGenerateForecast}
-            className="gap-2"
+            className={`gap-2 ${isMobile ? 'text-xs flex-1' : ''}`}
             title={!dataAvailability?.canGenerateForecast ? `Precisa de mais ${5 - (dataAvailability?.transactionCount || 0)} transações` : ""}
           >
             <Sparkles className="h-4 w-4" />
@@ -118,8 +120,8 @@ export default function InsightsPage() {
       {/* Unread Count */}
       {unread && unread.length > 0 && (
         <Card className="border-purple-500/20 bg-purple-500/5">
-          <CardContent className="pt-6">
-            <p className="text-sm">
+          <CardContent className={isMobile ? 'pt-3 pb-3' : 'pt-6'}>
+            <p className={isMobile ? 'text-xs' : 'text-sm'}>
               <span className="font-semibold">{unread.length}</span> {unread.length !== 1 ? "novos insights esperando por você" : "novo insight esperando por você"}
             </p>
           </CardContent>

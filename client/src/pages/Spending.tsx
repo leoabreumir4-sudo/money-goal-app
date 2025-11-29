@@ -289,7 +289,7 @@ export default function Spending() {
           </CardHeader>
           <CardContent>
             {chartData.length > 0 ? (
-              <div className={isMobile ? "h-80" : "h-96"}>
+              <div className={isMobile ? "h-64" : "h-96"}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
